@@ -37,7 +37,10 @@ big-bang all-chapters (no releasable checkpoint).
 
 ## Part → Chapter outline (every deck topic + addition mapped)
 
-Legend: **[H]** hands-on (runnable example in BOTH stacks), **[C]** concept (paired SVG+.excalidraw diagram).
+Legend: **[H]** hands-on (runnable example in BOTH stacks), **[C]** concept.
+**Depth standard (every chapter):** 2,000–2,500 words of prose (excluding code listings, diagram
+captions and command output) and **≥1 paired SVG+.excalidraw diagram** embedded in the chapter —
+concept and hands-on alike, per the other patterncatalyst sites.
 
 **Part 0 — Prerequisites & the Lab** · _r01_
 _After this part, the reader has the contract-first toolchain running locally._
@@ -123,13 +126,18 @@ zero-reflection + reactive streaming · Ch22 FastAPI ASGI streaming + background
 Ch23 contract + integration + Newman + load · Ch24 compose + trace · Ch25 minikube ·
 AppA CRC · Ch26 capstone.
 
-## Diagrams (one per concept chapter, paired `.svg`+`.excalidraw` in `assets/diagrams/`)
+## Diagrams (≥1 per chapter, paired `.svg`+`.excalidraw` in `assets/diagrams/`)
 
+Every chapter embeds at least one figure. Named concept figures:
 `01-rest-constraints` · `02-decision-framework` (reused throughout) · `03-resource-model`
 · `05-idempotency-matrix` (Ch5) · `09-sub-resources` · `10-async-lifecycle` (202→poll→303)
 · `12-hateoas-state-machine` · `14-versioning-strategies` · `16-streaming-modes` ·
-`17-cross-protocol` · `19-http2-http3`. Each hands-on example also ships its own
-`architecture.{svg,excalidraw}` (CNDP convention).
+`17-cross-protocol` · `19-http2-http3`. Every remaining chapter gets a purpose-built figure
+too (e.g. Ch4 contract-first flow, Ch6 negotiation/status decision, Ch7 patch-vs-merge,
+Ch8 pagination strategies, Ch11 job lifecycle, Ch13 soft-delete+purge flow, Ch15 range-request
+sequence, Ch18 concurrency model, Ch20 living-contract CI loop, Ch21/22 request pipelines,
+Ch23 test pyramid, Ch24/25 deploy topology, Ch26 capstone architecture). Each hands-on example
+additionally ships its own `architecture.{svg,excalidraw}` (CNDP convention).
 
 ## Execution phases (checkpoint commit after each)
 
@@ -137,7 +145,7 @@ AppA CRC · Ch26 capstone.
   `contracts/openapi/shipping-api.yaml` (+ v1/v2 stubs for Ch14); `_plans/coverage-matrix.md`
   + `_plans/domain-glossary.md`; `.github/workflows/contracts.yml` (lint + build both stacks +
   run each `verify.sh` + fail on schema drift); port `scripts/generate_diagram.py`; add
-  `scripts/wordcount.sh` (1,900–2,500 gate); `_config.yml` exclude `contracts/`; **replace the
+  `scripts/wordcount.sh` (2,000–2,500 gate) + a per-chapter "has ≥1 diagram" check; `_config.yml` exclude `contracts/`; **replace the
   residual eBPF/Aya scaffold copy** in `index.html` and placeholder chapters. Commit `ci: contract-first spine`.
 - **Phase 2 — r01 content:** Parts 0–2 (Ch0–5) prose + both-stack examples + concept diagrams + deck-map seed.
 - **Phase 3 — r02:** Parts 3–4 (Ch6–9).
@@ -163,7 +171,7 @@ resolve; no eBPF/Aya residue.
 2. Every `examples/*` validates against `contracts/openapi/` in CI; a deliberate response-schema drift **fails** the build.
 3. Both stacks exist for every hands-on chapter and pass the **same** `verify.sh` (payload semantics, not status code).
 4. `_plans/coverage-matrix.md` maps all 14 deck topics + 10 additions to chapters; CI fails on a missing mapped file.
-5. Each chapter is 1,900–2,500 words (`scripts/wordcount.sh`); concept chapters have paired diagrams; verification footer flips only on green.
+5. Each chapter is 2,000–2,500 words excl. code/captions/output (`scripts/wordcount.sh`); **every** chapter embeds ≥1 paired SVG+.excalidraw diagram; verification footer flips only on green.
 6. `bundle exec jekyll build` green on every push; no residual eBPF/Aya scaffold copy.
 7. Runs on all three tiers: compose (Ch24), minikube (Ch25), CRC (Appendix A).
 8. Ch23 runs a Newman collection + a load test on the reused CNDP harness, green in CI.
