@@ -170,16 +170,14 @@ resolve; no eBPF/Aya residue.
 9. The deck covers every deck agenda item, translated to shipping/cargo; `lgtm-professional-voice` scan reports zero flagged tics.
 10. Hub `_data/sites.yml` has a live entry; release PR to `main` is green and deploys.
 
-## Open decisions for the reviewer
+## Resolved decisions (reviewer, 2026-10-11)
 
-- **Both stacks per chapter vs Quarkus-lead + FastAPI fast-follow.** Plan defaults to BOTH
-  stacks per hands-on chapter (honors the requirement, prevents divergence). Lever: if an
-  iteration gets heavy, FastAPI can fast-follow within the same iteration. **Confirm default.**
-- **Accent color** for this site (distinguish it from sibling gRPC/GraphQL/WebSockets sites).
-  Default: house amber. **Pick a color or keep amber.**
-- **Chapter count** ~26 + appendix across 12 parts. Trim/merge any part? (e.g. fold Ch9
-  sub-resources into Ch8.)
-- **minikube/CRC depth** — full chapters (plan) vs lighter appendices.
+- **Stacks:** BOTH Quarkus **and** FastAPI per hands-on chapter against the identical contract. ✅
+- **Accent:** house amber (consistent with the lgtm family). ✅
+- **Granularity:** keep 26 chapters + CRC appendix across 12 parts. ✅
+- **Runtime tiers:** minikube (Ch25) and CRC (Appendix A) as **full hands-on chapters**. ✅
+
+Plan approved at these settings. Execution begins at Phase 1 (contract & CI spine).
 
 ## Risks (and detection)
 
