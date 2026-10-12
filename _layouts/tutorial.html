@@ -7,7 +7,7 @@ layout: default
   Threads through site.docs (sorted by `order`), falling back to
   site.pages when docs/ isn't a Jekyll collection.
 {%- endcomment -%}
-{%- assign tutorial_docs = site.docs | sort: "order" -%}
+{%- assign tutorial_docs = site.docs | where_exp: "d", "d.overview != true" | sort: "order" -%}
 {%- if tutorial_docs.size == 0 -%}
   {%- assign tutorial_docs = site.pages | where_exp: "p", "p.order != nil" | sort: "order" -%}
 {%- endif -%}
@@ -48,7 +48,7 @@ layout: default
     </nav>
 
     <header class="tutorial__header">
-      <div class="tutorial__num" aria-hidden="true">{{ order_padded }}</div>
+      <div class="tutorial__num" aria-hidden="true">{% if page.overview %}★{% else %}{{ order_padded }}{% endif %}</div>
       <div class="tutorial__title-group">
         <h1>{{ page.title }}</h1>
         {%- if page.description -%}
@@ -58,7 +58,7 @@ layout: default
           {%- if page.duration -%}
             <span class="chip">⏱ {{ page.duration }}</span>
           {%- endif -%}
-          <span class="chip">Chapter {{ page.order }}</span>
+          {%- if page.overview -%}<span class="chip">Overview</span>{%- else -%}<span class="chip">Chapter {{ page.order }}</span>{%- endif -%}
           {%- if page.part -%}<span class="chip chip--accent">{{ page.part }}</span>{%- endif -%}
         </div>
       </div>
