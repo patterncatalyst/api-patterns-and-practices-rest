@@ -89,4 +89,4 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | 25 | `_docs/25-local-with-docker-compose.md` | Part 11 | draft |
 | 26 | `_docs/26-kubernetes-on-minikube.md` | Part 11 | draft |
 | A | `_docs/99-appendix-a-openshift-crc.md` | Part 11 | draft |
-| 27 | `_docs/27-complete-project.md` | Part 12 | planned |
+| 27 | `_docs/27-complete-project.md` | Part 12 | draft |
