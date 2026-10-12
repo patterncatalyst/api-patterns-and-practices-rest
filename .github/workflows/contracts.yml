@@ -62,6 +62,44 @@ jobs:
       - name: Build Jekyll
         run: bundle exec jekyll build --trace
 
+  k8s-manifests:
+    name: Validate Kubernetes manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL -o /tmp/kubeconform.tar.gz \
+            https://github.com/yannh/kubeconform/releases/latest/download/kubeconform-linux-amd64.tar.gz
+          tar -xzf /tmp/kubeconform.tar.gz -C /tmp kubeconform
+          sudo install -m 0755 /tmp/kubeconform /usr/local/bin/kubeconform
+          kubeconform -v
+
+      - name: Install helm
+        run: |
+          curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+      - name: Validate minikube kustomize manifests (strict)
+        run: |
+          if [ -d examples/26-minikube/k8s ]; then
+            kubectl kustomize examples/26-minikube/k8s | kubeconform -strict -summary
+          else
+            echo "examples/26-minikube/k8s not present yet"
+          fi
+
+      - name: Validate OpenShift/CRC Helm chart
+        run: |
+          if [ -d examples/99-appendix-a-openshift-crc/helm ]; then
+            helm lint examples/99-appendix-a-openshift-crc/helm
+            helm template examples/99-appendix-a-openshift-crc/helm | kubeconform -ignore-missing-schemas -summary
+          else
+            echo "examples/99-appendix-a-openshift-crc/helm not present yet"
+          fi
+
   discover-examples:
     name: Discover examples
     runs-on: ubuntu-latest

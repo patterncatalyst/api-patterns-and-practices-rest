@@ -45,7 +45,7 @@ layout: default
           {%- for doc in part_docs -%}
           <a class="card" href="{{ doc.url | relative_url }}">
             <div class="card__eyebrow">
-              {% if doc.order == 0 %}Overview{% else %}Chapter {{ doc.order }}{% endif %}
+              {% if doc.order == 0 %}Overview{% elsif doc.appendix %}Appendix {{ doc.appendix_label }}{% else %}Chapter {{ doc.order }}{% endif %}
             </div>
             <h3 class="card__title">{{ doc.title }}</h3>
             {%- if doc.description -%}
