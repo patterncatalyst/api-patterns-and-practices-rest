@@ -40,7 +40,7 @@ them.
   image makes the real assertion bounded and deterministic.
 - **Judgment call B (Ch26/Appendix A, clusterless CI): tier per chapter.** Ch26
   (minikube) earns "verified" by a **real local bring-up by the executor**
-  (minikube, `MINIKUBE_DRIVER=podman`) capturing proof (pods Ready, a live
+  (minikube, `MINIKUBE_DRIVER=docker`) capturing proof (pods Ready, a live
   request, a trace), PLUS static manifest validation in a **non-matrix** CI
   job. Appendix A (CRC) earns it by **static validation in that same non-matrix
   job + documented bring-up**, with real CRC bring-up **best-effort** (CRC is
@@ -107,7 +107,8 @@ discovery glob is `examples/*/verify.sh` (one level deep). Resolution:
   manifests + runner + README, no second copy of the service.
 - **Ch26 (minikube) — tier (i): real local bring-up + static CI.** The executor
   actually brings the stack up locally with the `lgtm-minikube-stack` skill,
-  **`MINIKUBE_DRIVER=podman`** (podman, not docker — prior project experience),
+  **`MINIKUBE_DRIVER=docker`** (docker driver — docker is already installed here;
+  minikube also supports containerd. CRC is separate: its own OpenShift-Local VM on crun.),
   and captures real proof into the chapter/README: `kubectl get pods` all
   Ready, a live request through the Ingress, and a trace visible in Grafana.
   CI adds a **non-matrix** `k8s-manifests` job that runs
@@ -190,7 +191,7 @@ shared `otel-lgtm` ports 3000/4317/4318/9090/3100/3200. Fresh picks below.
 - `examples/26-minikube` — **not in the matrix** (no cluster on the runner).
   Holds `k8s/` (kustomize: Deployment(s), Service, Ingress, probes,
   ConfigMap/Secret, HPA), `run-minikube.sh` (local bring-up via
-  `lgtm-minikube-stack`, `MINIKUBE_DRIVER=podman`), and README. **No
+  `lgtm-minikube-stack`, `MINIKUBE_DRIVER=docker`), and README. **No
   `verify.sh`.** Deploys the Ch25 images. CI: static `kustomize build |
   kubeconform` + `--dry-run=client` in the non-matrix `k8s-manifests` job.
   "Verified" also requires captured real-cluster proof (pods Ready, live
@@ -267,7 +268,7 @@ contiguous order sequence, so `99` is safe.
       moving on. This is the LGTM-in-CI risk gate. Then draft the prose
       (`lgtm-docker-stack` conventions go IN the executor prompt).
    b. **Ch26** `examples/26-minikube` — kustomize manifests deploying the Ch25
-      images; `run-minikube.sh` real local bring-up (`MINIKUBE_DRIVER=podman`,
+      images; `run-minikube.sh` real local bring-up (`MINIKUBE_DRIVER=docker`,
       `lgtm-minikube-stack`); capture proof (pods Ready, live request, trace);
       confirm static `k8s-manifests` job passes; NO `verify.sh`. Then prose.
    c. **Appendix A** `examples/99-appendix-a-openshift-crc` — restricted-v2 Helm
@@ -328,7 +329,7 @@ contiguous order sequence, so `99` is safe.
   discover-examples matrix list (must stay at its current count + Ch25 + Ch27
   only) and the guard.
 - **minikube/CRC local bring-up time** → Ch26 reuses Ch25 images (no rebuild),
-  `MINIKUBE_DRIVER=podman`; CRC bring-up is best-effort, not a gate. Detected by
+  `MINIKUBE_DRIVER=docker`; CRC bring-up is best-effort, not a gate. Detected by
   executor bring-up logs; CI relies on static validation, so a slow cluster
   never blocks the pipeline.
 - **Ch27 scope balloon** → assemble from existing chapter code; tracing and
