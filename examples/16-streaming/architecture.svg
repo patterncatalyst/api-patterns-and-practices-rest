@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 640" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="20" y="30" width="940" height="155" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="50" font-size="12" font-weight="700" fill="#1d1d1d">Chunked transfer encoding</text>
+<rect x="20" y="205" width="940" height="155" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="225" font-size="12" font-weight="700" fill="#1d1d1d">Server-Sent Events</text>
+<rect x="20" y="380" width="940" height="155" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="400" font-size="12" font-weight="700" fill="#1d1d1d">NDJSON</text>
+<rect x="40" y="75" width="240" height="70" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="160.0" y="100.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Server</text>
+<text x="160.0" y="117.5" font-size="11.5" fill="#555555" text-anchor="middle">Transfer-Encoding:</text>
+<text x="160.0" y="132.5" font-size="11.5" fill="#555555" text-anchor="middle">chunked</text>
+<rect x="810" y="75" width="130" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="875.0" y="108.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<text x="875.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">one connection</text>
+<rect x="305" y="83.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="355.0" y="115.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">chunk 1</text>
+<rect x="435" y="83.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="485.0" y="115.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">chunk 2</text>
+<rect x="565" y="83.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="615.0" y="115.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">chunk 3</text>
+<rect x="695" y="83.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="745.0" y="108.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">chunk 0</text>
+<text x="745.0" y="125.0" font-size="11.5" fill="#555555" text-anchor="middle">(end)</text>
+<rect x="40" y="250" width="240" height="70" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="160.0" y="275.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Server</text>
+<text x="160.0" y="292.5" font-size="11.5" fill="#555555" text-anchor="middle">Content-Type:</text>
+<text x="160.0" y="307.5" font-size="11.5" fill="#555555" text-anchor="middle">text/event-stream</text>
+<rect x="810" y="250" width="130" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="875.0" y="283.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<text x="875.0" y="300.0" font-size="11.5" fill="#555555" text-anchor="middle">one connection</text>
+<rect x="305" y="258.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="355.0" y="290.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">event: status</text>
+<rect x="435" y="258.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="485.0" y="290.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">event: status</text>
+<rect x="565" y="258.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="615.0" y="290.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">event: status</text>
+<rect x="695" y="258.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="745.0" y="283.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">id: 104</text>
+<text x="745.0" y="300.0" font-size="11.5" fill="#555555" text-anchor="middle">(resume pt)</text>
+<rect x="40" y="425" width="240" height="70" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="160.0" y="450.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Server</text>
+<text x="160.0" y="467.5" font-size="11.5" fill="#555555" text-anchor="middle">Content-Type:</text>
+<text x="160.0" y="482.5" font-size="11.5" fill="#555555" text-anchor="middle">application/x-ndjson</text>
+<rect x="810" y="425" width="130" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="875.0" y="458.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<text x="875.0" y="475.0" font-size="11.5" fill="#555555" text-anchor="middle">one connection</text>
+<rect x="305" y="433.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="355.0" y="465.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">{&quot;id&quot;:1}</text>
+<rect x="435" y="433.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="485.0" y="465.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">{&quot;id&quot;:2}</text>
+<rect x="565" y="433.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="615.0" y="465.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">{&quot;id&quot;:3}</text>
+<rect x="695" y="433.0" width="100" height="54" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="745.0" y="465.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">{&quot;id&quot;:4}</text>
+<path d="M280,110.0 L305,110.0" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M405,110.0 L435,110.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M535,110.0 L565,110.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M665,110.0 L695,110.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M795,110.0 L810,110.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="808.5" y="104.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">time →</text>
+<text x="808.5" y="104.0" font-size="11" fill="#555" text-anchor="middle">time →</text>
+<path d="M280,285.0 L305,285.0" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M405,285.0 L435,285.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M535,285.0 L565,285.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M665,285.0 L695,285.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M795,285.0 L810,285.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="808.5" y="279.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">time →</text>
+<text x="808.5" y="279.0" font-size="11" fill="#555" text-anchor="middle">time →</text>
+<path d="M280,460.0 L305,460.0" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M405,460.0 L435,460.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M535,460.0 L565,460.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M665,460.0 L695,460.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M795,460.0 L810,460.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="808.5" y="454.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">time →</text>
+<text x="808.5" y="454.0" font-size="11" fill="#555" text-anchor="middle">time →</text>
+<text x="32" y="175" font-size="11" fill="#555555" text-anchor="start">best fit: progressive download — client renders/saves bytes as they land, total size unknown up front</text>
+<text x="32" y="350" font-size="11" fill="#555555" text-anchor="start">best fit: live updates pushed to a browser — one-way, auto-reconnects via Last-Event-ID</text>
+<text x="32" y="525" font-size="11" fill="#555555" text-anchor="start">best fit: bulk export of many records — each line is a complete, independently parseable JSON object</text>
+<text x="490.0" y="570" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">All three keep one connection open and deliver pieces as they&#x27;re produced — they differ in framing, direction, and what a piece means to the client.</text>
+</svg>
