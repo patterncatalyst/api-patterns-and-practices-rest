@@ -1,0 +1,116 @@
+# Ch27 complete-project anchor — the integrative complete project: ONE booking
+# service, on BOTH stacks, that exercises the whole book's flow end to end
+# (contract-first create/read, keyset pagination, async confirmation,
+# HATEOAS, soft delete + GDPR purge, media-type versioning, an
+# incrementally-streamed NDJSON manifest, and a background CloudEvents
+# publish over Kafka). See README.md for the full capability-to-chapter
+# map.
+#
+# Kafka is a single-node broker in KRaft mode (no ZooKeeper), same pattern
+# as Ch21/Ch25: PLAINTEXT for the compose-network apps (advertised as
+# kafka:9092) and EXTERNAL for host tooling (advertised as
+# localhost:19093, published as 19093->9094).
+#
+# Tracing (the Grafana LGTM stack — Ch25 already proves trace export in
+# CI) and load testing (Newman — documented, local-only) are kept OUT of
+# this chapter's default `up` and OUT of verify.sh entirely, so this
+# project's CI gate stays focused and fast. The `lgtm` service below is
+# opt-in, behind `--profile observability`.
+#
+# Ports are UNIQUE across the repo's examples: Quarkus 8106, FastAPI 8025,
+# Kafka (external listener) 19093. Compose project: ch27-complete.
+#
+# Usage:
+#   docker compose up --build                       # kafka + quarkus + python (CI path)
+#   docker compose --profile observability up --build # + Grafana LGTM (local-only)
+
+services:
+  # ─── Broker (default, in CI) ───────────────────────────────────────────
+  kafka:
+    image: docker.io/apache/kafka:3.9.1
+    container_name: ch27-complete-kafka
+    ports:
+      - "19093:9094"
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: CONTROLLER://:9093,PLAINTEXT://:9092,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:19093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      # Only reports healthy once the broker actually accepts client
+      # connections on the internal listener — not just "process started".
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  quarkus:
+    build:
+      context: ./quarkus
+      dockerfile: Containerfile
+    container_name: ch27-complete-quarkus
+    ports:
+      - "8106:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/q/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  python:
+    build:
+      context: ./python
+      dockerfile: Containerfile
+    container_name: ch27-complete-python
+    ports:
+      - "8025:8000"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  # ─── Observability (opt-in, local-only, OUT of CI) ─────────────────────
+  # Ch25 already proves end-to-end trace export in CI; wiring OTel into
+  # THIS chapter's project too would duplicate that gate without adding coverage.
+  # `docker compose --profile observability up` brings up Grafana LGTM for
+  # local poking around — see README.md.
+  lgtm:
+    image: docker.io/grafana/otel-lgtm:0.36.0
+    container_name: ch27-complete-lgtm
+    profiles: ["observability"]
+    ports:
+      - "3000:3000" # Grafana UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "9090:9090" # Prometheus / Mimir query
+      - "3100:3100" # Loki
+      - "3200:3200" # Tempo query API
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s

@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 600" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="20" y="20" width="900" height="460" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="40" font-size="12" font-weight="700" fill="#1d1d1d">OpenShift Local (CRC)</text>
+<rect x="50" y="70" width="120" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="110.0" y="100.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<rect x="230" y="60" width="220" height="70" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="340.0" y="93.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Route</text>
+<text x="340.0" y="110.0" font-size="11.5" fill="#555555" text-anchor="middle">edge TLS termination</text>
+<rect x="510" y="60" width="200" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="610.0" y="93.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Service</text>
+<text x="610.0" y="110.0" font-size="11.5" fill="#555555" text-anchor="middle">booking-api</text>
+<rect x="560" y="170" width="130" height="60" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="625.0" y="205.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">pod</text>
+<rect x="710" y="170" width="130" height="60" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="775.0" y="205.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">pod</text>
+<rect x="510" y="270" width="200" height="70" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="610.0" y="303.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">DeploymentConfig</text>
+<text x="610.0" y="320.0" font-size="11.5" fill="#555555" text-anchor="middle">/ Deployment</text>
+<rect x="50" y="270" width="200" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="150.0" y="303.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">BuildConfig</text>
+<text x="150.0" y="320.0" font-size="11.5" fill="#555555" text-anchor="middle">S2I source-to-image</text>
+<rect x="50" y="380" width="200" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="150.0" y="413.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">git source</text>
+<text x="150.0" y="430.0" font-size="11.5" fill="#555555" text-anchor="middle">booking-api repo</text>
+<rect x="280" y="380" width="220" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="390.0" y="413.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">internal image registry</text>
+<text x="390.0" y="430.0" font-size="11.5" fill="#555555" text-anchor="middle">image-registry.openshift-image-registry.svc</text>
+<path d="M170,95 L230,95" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="206.0" y="89.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">HTTPS</text>
+<text x="206.0" y="89.0" font-size="11" fill="#555" text-anchor="middle">HTTPS</text>
+<path d="M450,95 L510,95" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="486.0" y="89.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">TLS terminated here</text>
+<text x="486.0" y="89.0" font-size="11" fill="#b8650a" text-anchor="middle">TLS terminated here</text>
+<path d="M610,130 L625,170" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M610,130 L775,170" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M610,270 L610,230" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="616.0" y="244.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">manages</text>
+<text x="616.0" y="244.0" font-size="11" fill="#b8650a" text-anchor="middle">manages</text>
+<path d="M150,380 L150,340" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="156.0" y="354.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">triggers build</text>
+<text x="156.0" y="354.0" font-size="11" fill="#555" text-anchor="middle">triggers build</text>
+<path d="M250,415 L280,415" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="271.0" y="409.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">pushes image</text>
+<text x="271.0" y="409.0" font-size="11" fill="#555" text-anchor="middle">pushes image</text>
+<path d="M390,380 L610,340" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="506.0" y="354.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">deploys</text>
+<text x="506.0" y="354.0" font-size="11" fill="#b8650a" text-anchor="middle">deploys</text>
+<text x="470.0" y="520" font-size="12" fill="#1d1d1d" text-anchor="middle">Route vs. Ingress: a Route is OpenShift&#x27;s own resource (host + TLS edge/passthrough/reencrypt on the Router); vanilla Kubernetes uses an Ingress against an Ingress controller instead — the two aren&#x27;t interchangeable.</text>
+<text x="470.0" y="560" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">The cluster builds its own image from source via S2I and deploys it — no external registry or CI push required to run on CRC.</text>
+</svg>

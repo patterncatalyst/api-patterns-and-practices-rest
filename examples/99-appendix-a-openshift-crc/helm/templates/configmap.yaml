@@ -1,0 +1,11 @@
+# appendix-a-config — shared env contract for both Deployments via envFrom.
+# Same mechanism as examples/26-minikube/k8s/base/configmap.yaml, repointed
+# at this chart's own release namespace.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: appendix-a-config
+  labels:
+    {{- include "appendix-a.labels" . | nindent 4 }}
+data:
+  {{- toYaml .Values.configMap | nindent 2 }}

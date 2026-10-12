@@ -1,0 +1,88 @@
+---
+title: "Complete project"
+order: 27
+part: "Complete project"
+description: "One booking service, on both stacks, assembling every pattern this book taught — contract-first resources, pagination, HATEOAS, async operations, versioning, soft delete, streaming, and multi-protocol contracts — into a single resource and proving it end to end."
+duration: "28 min"
+---
+
+Every chapter up to this one picked one axis of the shipping domain and built a narrow example around it: Chapter 8's booking existed to demonstrate a cursor, Chapter 12's to demonstrate `_links`, Chapter 21's to demonstrate a CloudEvents envelope. That narrowness was the right call for teaching one idea at a time, but it leaves an open question none of those chapters could answer on their own: do all these mechanics still work when they're not the only thing happening to a resource? A `_links` map that reflects a booking's lifecycle state has to keep reflecting it correctly once that same booking can also be paginated, versioned, soft-deleted, and streamed. A background worker that flips a booking to `CONFIRMED` has to coordinate with whatever else might be reading or writing that booking at the same moment. `examples/27-complete-project/` is where that question gets answered directly: one `Booking` resource, built on both Quarkus and FastAPI, carrying every capability the book taught instead of one apiece.
+
+Nothing in this chapter is a new idea. The contract is the same `contracts/schemas/shipping.schema.json` this book has extended since Chapter 4, not a new document started from scratch. The two stacks are the same Quarkus 3.40.1 LTS and FastAPI-on-Python-3.14 services every chapter has run since Chapter 0. What's new is the assembly: ten mechanics, each already proven correct in isolation by an earlier chapter's own `verify.sh`, now sharing one `BookingStore`, one HTTP surface, and one Kafka topic, with a single end-to-end script proving none of them interferes with another. That's a different, harder claim than "each pattern works" — it's "these patterns compose," and composing them is this chapter's entire job.
+
+The topology stays small by design, because this chapter's point is the protocol surface, not a new infrastructure story. `docker compose up --build` brings up three services under the project name `ch27-complete`: a single-node Kafka broker in KRaft mode, Quarkus on host port 8106, and FastAPI on 8025. Both applications keep their bookings in memory, exactly the way every other chapter in this book has — a Postgres container would fit the topology convention Chapter 25 established, but neither service needs it for anything this chapter is testing, and adding one here would mean a reader debugging a failed assertion has to rule out a database before reaching the protocol logic that's actually under test. The two application containers never talk to each other directly; they share nothing but the contract each independently implements and the Kafka topic each independently publishes to.
+
+## The capability tour
+
+Walking the service capability by capability, each one is the same mechanic an earlier chapter already taught, wired onto this one resource instead of its own narrow stand-in:
+
+- **Contract-first create and read (Chapter 4).** `POST /bookings` validates an incoming `BookingRequest`, creates a `Booking` in status `PENDING`, and answers `201 Created` with a `Location` header and a body validated against `#/$defs/Booking`. `GET /bookings/{id}` reads it back the same way. Nothing about this synchronous path changed from the anchor chapter; it's the foundation every other capability below sits on top of.
+- **Keyset pagination (Chapter 8).** `GET /bookings?limit=&cursor=` walks the booking collection using the cursor strategy Chapter 8 built, not offset pagination. `verify.sh` doesn't just check that a `nextCursor` comes back — it creates enough bookings to force a second page and asserts the second page's cursor is different from the first, not a repeat, catching the class of bug where a broken implementation returns the same page twice.
+- **HATEOAS `_links` (Chapter 12).** Every `Booking` and `BookingCollection` response carries a `_links` map driven by the same lifecycle state machine Chapter 12 built: `PENDING` exposes `confirm` and `cancel`, `CONFIRMED` exposes only `cancel`, and `IN_TRANSIT`/`DELIVERED`/`CANCELLED` expose nothing beyond `self`. A client follows the map instead of hard-coding which transitions are legal from which status.
+- **Async confirmation (Chapter 10).** `POST /bookings/{id}/confirmation` returns `202 Accepted` with a `Location` pointing at `/operations/{opId}`. Polling that operation returns `200` with status `RUNNING` until a background worker — a scheduled executor on Quarkus, an `asyncio.create_task` on Python — completes the confirmation on a short, deterministic delay, at which point the same poll returns `303 See Other` back to the now-`CONFIRMED` booking.
+- **Media-type versioning (Chapter 14).** The same `GET /bookings/{id}` answers two different representations of one booking depending on `Accept`: `application/vnd.shipping.booking.v1+json` returns the frozen shape (`cargoDescription`, `price`), while `.v2+json` returns the current one (`cargo[]`, `quote`). One resource, two contracts, negotiated by media type rather than a URL segment.
+- **Soft delete and GDPR purge (Chapter 13).** `DELETE /bookings/{id}` returns `204` and hides the booking behind a `404` by default, but `?includeDeleted=true` still finds it — `CANCELLED`, carrying `X-Audit-Deleted-At`/`X-Audit-Deleted-Reason` headers. `DELETE /bookings/{id}/purge` erases it for good; after that, even the audit view answers `404`.
+- **Incremental NDJSON manifest (Chapter 16).** `GET /bookings/{id}/manifest/export` streams a six-line NDJSON manifest of the booking's lifecycle, one `BookingEvent` line roughly every 250 milliseconds, using the `NdjsonMessageBodyWriter` raw-bytes fix Chapter 16 had to add for `application/x-ndjson` paired with a plain `String` return type on Quarkus.
+- **Background CloudEvents over Kafka (Chapter 21).** The instant a confirmation completes, the service publishes a CloudEvents-enveloped `BookingEvent` to `shipping.bookings.lifecycle` — `specversion`, a generated `id`, `source`, `type`, `subject` set to the booking's id, `time`, `datacontenttype`, and a `data` payload validated against the same shared schema a REST response uses.
+
+Every one of those eight items is lifted from a chapter's existing handler or store pattern, re-pointed at one aggregate. The glue connecting them is this chapter's own code: `OperationStore` calls `BookingEventPublisher` once a confirmation actually finishes rather than when the request was accepted; `HateoasLinks` reflects the identical state machine that `VersionMapper` and the soft-delete view both already respect; the manifest generator reuses the exact `BookingEvent` shape the Kafka publish sends. None of that glue reinvents a mechanic — it makes sure the mechanics agree with each other about what state the booking is actually in.
+
+## The shared-schema spine
+
+The capability most responsible for keeping that agreement intact never shows up as an endpoint: it's `contracts/schemas/shipping.schema.json`, the single JSON Schema file Chapter 21 established as the spine tying a synchronous REST response to an asynchronous Kafka event. `#/$defs/Booking` is what a `GET /bookings/{id}` call validates against; `#/$defs/BookingEvent` is what the `data` field of the CloudEvents envelope validates against. Both definitions reference the same `#/$defs/Location` for `origin` and `destination`, so a field added to one representation of a shipping location is available to the other without anyone hand-copying a type. `contracts/openapi/shipping-api.yaml` and `contracts/asyncapi/shipping-events.yaml` both `$ref` into that one file rather than inlining their own copies, and `verify.sh`'s second step greps both documents for the literal string `shipping.schema.json`, failing the run outright if either one stops pointing at the shared source. That's the guarantee this chapter's title depends on: the `Booking` a REST caller reads and the `BookingEvent` a Kafka consumer reads cannot drift apart on the fields they share, because there's exactly one place either field is declared.
+
+Sitting alongside that schema is `contracts/arazzo/booking-workflow.yaml`, naming the `bookAndConfirm` workflow Chapter 21 introduced: create the booking, request its confirmation, poll the resulting operation until it resolves, then fetch the confirmed booking. That sequence describes a client that drives confirmation itself through an explicit poll loop against the `createBooking`/`requestConfirmation`/`getOperation`/`getBooking` operations Chapter 10 put in the OpenAPI contract. This chapter's own services reach the identical outcome a different way — a background worker completes the confirmation and announces it over Kafka, with no polling client required — and both are real at once: Arazzo documents the sequence for a caller that wants to drive the workflow itself, while this service's own implementation drives it server-side and tells the rest of the system what happened. `check_arazzo.py`, run as part of `verify.sh`'s static checks, confirms the workflow document itself stays structurally sound — every step's `operationId` still resolves against `shippingApi`, the `sourceDescriptions` entry pointing back at the OpenAPI document — before either service container ever starts.
+
+## Running, tracing, testing across tiers
+
+This chapter's example runs the way nearly every example in this book has: `docker compose up --build` brings up Kafka (single-node, KRaft mode) plus both application containers under the project name `ch27-complete`, and `verify.sh` is the gate a push has to pass. It doesn't repeat the Compose-to-minikube-to-OpenShift progression Chapters 25, 26, and Appendix A already proved on the trimmed create/read surface those chapters share — nothing about moving a container from a Compose network onto a Kubernetes `Service` or an OpenShift `Route` depends on how many capabilities live inside that container, so that path was proven once rather than re-run here with a heavier resource behind it. The same two Containerfiles, the same health-probe shape, and the same `ConfigMap`/`Secret` wiring Chapter 26 built would carry this assembled `Booking` exactly as they carried Chapter 24's narrower one.
+
+Tracing follows the same reasoning. Chapter 25 already proved a single `POST /bookings` produces one continuous trace a reader can ask Tempo for by a chosen trace id; wiring OpenTelemetry into this chapter's two services too would duplicate a gate already proven without adding coverage, while making an already-broad `verify.sh` heavier still. The `lgtm` service is present here, real and startable behind `--profile observability`, for a reader who wants somewhere local to point an exporter while experimenting — just not wired into either application, and not part of the default `up` or the CI gate.
+
+Testing plays out across the pyramid Chapter 24 named. `verify.sh` is this chapter's contract-test layer, scaled from Chapter 24's four assertions to ten: every response body it collects gets checked against the matching `#/$defs` entry the same way every chapter since Chapter 4 has checked one, and every asynchronous wait stays bounded the way Chapter 10's confirmation protocol and Chapter 21's Kafka consume already established — a capped twelve-attempt poll for the confirmation operation, a twenty-second timeout on the Kafka consumer with an explicit non-empty-file guard against the console consumer's habit of exiting `0` on a silent timeout, and a minimum-spread check on the manifest's per-line arrival times that would catch a buffered implementation passing every status-code and shape assertion while still failing to stream. Newman and kcat remain the end-to-end and load tools this book has used since Chapter 24, documented in this chapter's README as local-only exercises against the same running stack, for the same reason Chapter 24 kept them out of its own gate: a correctness gate and a load run have different failure budgets, and folding one into the other makes both slower and less trustworthy.
+
+Repeatability gets its own check, because a ten-point flow against a shared Kafka topic is exactly the kind of script that can pass once and then fail on a second run from leftover state. `verify.sh` tears the stack down with `docker compose down -v --remove-orphans` once both stacks finish, and each Kafka consume inside the run uses a PID-suffixed consumer group so two runs in the same CI matrix never collide on group state. Running `bash verify.sh` twice back to back is the manual version of the same check: no leftover container, network, volume, or consumer group should survive between the two runs, and the second run's assertions should read identically to the first. The README's drift probe makes the manifest's timing assertion concrete by breaking it as an exercise — buffering the NDJSON export instead of streaming it still returns the right status code, the right `Content-Type`, and the right number of valid `BookingEvent` lines, so every assertion that stops at shape still passes; only the per-line spread check catches that all six lines arrived in one burst rather than roughly 250 milliseconds apart, which is exactly the distinction a shape-only contract test is structurally unable to draw.
+
+What the tour above doesn't show is how the pieces hand off to each other in code. The clearest handoff is the confirmation worker completing a booking and publishing its event in the same step, on both stacks:
+
+{% include codetabs.html langs="Quarkus|Python" %}
+
+```java
+private void completeConfirmation(String opId, BookingStore bookingStore) {
+    OperationRecord record = operations.get(opId);
+    if (record == null) {
+        return;
+    }
+    synchronized (record) {
+        Booking confirmed = bookingStore.confirm(record.bookingId);
+        record.status.set(OperationStatus.SUCCEEDED);
+        record.completedAt = nowUtc();
+        record.resource = "/bookings/" + record.bookingId;
+        if (confirmed != null && confirmed.status() == BookingStatus.CONFIRMED) {
+            eventPublisher.publishConfirmed(confirmed, BookingStatus.PENDING);
+        }
+    }
+}
+```
+
+```python
+async def _complete_confirmation(op_id: str) -> None:
+    await asyncio.sleep(CONFIRMATION_DELAY_SECONDS)
+    record = _operations.get(op_id)
+    if record is None:
+        return
+    confirmed = store.confirm(record.booking_id)
+    record.status = OperationStatus.SUCCEEDED
+    record.completed_at = _now_utc()
+    record.resource = f"/bookings/{record.booking_id}"
+    if confirmed is not None and confirmed.status == BookingStatus.CONFIRMED:
+        events.publish_confirmed(confirmed, BookingStatus.PENDING)
+```
+
+The operation (Chapter 10) and the CloudEvent (Chapter 21) complete in the same breath, off the same `BookingStore.confirm()` call, which is exactly the kind of interaction a chapter built around either mechanic alone would never need to get right.
+
+{% include excalidraw.html file="27-complete-project" alt="A single Booking resource, on Quarkus and FastAPI, surrounded by every pattern the book taught — contract-first create/read, keyset pagination, HATEOAS links, async confirmation, media-type versioning, soft delete and purge, an NDJSON manifest, and a background CloudEvents publish to Kafka — all reading and writing the one shared JSON Schema and the Arazzo workflow tying the request sequence together." caption="Figure 27.1 — One Booking resource, both stacks, every pattern this book taught assembled around it." %}
+
+## Decision
+
+<div class="callout callout--safe"><p class="callout__title">Decision</p><p>Looking back across the whole book, a handful of these patterns belong in nearly every API a team builds, and the rest are situational — the distinction a reader should walk away able to make for their own service. Contract-first request/response (Chapter 4), a `Problem` body for errors, and pagination for any collection that can grow without bound apply to almost any REST API regardless of domain; skipping them tends to cost a team a rewrite later rather than save it real effort now. HATEOAS, media-type versioning, soft delete with a GDPR purge path, and NDJSON streaming are correct answers to specific conditions — a state machine complex enough that a client benefits from being told its options, more than one representation of a resource that has to coexist, a legal retention requirement, a payload too large or too slow to buffer — and the right call for a given API is to adopt each one only once that condition is actually true for it, not because this book covered it. Async operations and a second, event-based contract apply once an operation takes long enough that a caller shouldn't hold a connection open for it, or once a system has a second audience for a state change beyond whoever asked for it directly. The test a reader can run against their own API: name the specific failure a pattern prevents, and check whether that failure is one their system can actually have. If it can't, the pattern is an API's future problem being solved for it today, at a cost — more surface, more to document, more for the next engineer to learn — this book pays once, in a single chapter, so a reader doesn't have to pay it by trial and error in a production incident.</p></div>

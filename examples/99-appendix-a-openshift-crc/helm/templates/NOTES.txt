@@ -1,0 +1,21 @@
+Appendix A deployed to namespace "{{ .Release.Namespace }}".
+
+Watch the rollout:
+  oc get pods -n {{ .Release.Namespace }} -w
+
+Each app is reachable over its own edge-TLS Route (plain HTTP redirects to
+HTTPS):
+{{- range $name, $svc := .Values.services }}
+{{- if $svc.route }}
+  {{ $name }}:  oc get route {{ $name }} -n {{ $.Release.Namespace }} -o jsonpath='{.spec.host}'
+{{- end }}
+{{- end }}
+
+Trigger (or re-trigger) a service's in-cluster build from its Ch25 source:
+  oc start-build <service> --from-dir=examples/25-local-with-docker-compose/<app> --follow -n {{ .Release.Namespace }}
+
+Then roll the Deployment to pick up the freshly pushed tag:
+  oc rollout restart deployment/<service> -n {{ .Release.Namespace }}
+
+See run-crc.sh for the full, scripted sequence (build both services, wait
+for rollout, print both Route URLs and a sample curl).

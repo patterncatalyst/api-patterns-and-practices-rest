@@ -1,0 +1,11 @@
+# Entrypoint kustomization — this is the path the CI `k8s-manifests` job
+# invokes directly: `kubectl kustomize examples/26-minikube/k8s`
+# (.github/workflows/contracts.yml). It simply points at the minikube
+# overlay, so `kubectl kustomize examples/26-minikube/k8s` and
+# `kubectl kustomize examples/26-minikube/k8s/overlays/minikube` build the
+# identical manifest set.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - overlays/minikube

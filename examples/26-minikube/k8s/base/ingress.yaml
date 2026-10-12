@@ -1,0 +1,46 @@
+# booking-ingress — the concrete contrast with compose's networking.
+#
+# In compose.yaml (examples/25-local-with-docker-compose), each app gets
+# its own published host port (quarkus -> localhost:8105, python ->
+# localhost:8024) and the two containers reach each other, when they need
+# to, by Docker Compose's embedded DNS (plain service name, e.g. `lgtm`).
+# There is no routing layer: the client picks the port.
+#
+# On minikube, neither Service is reachable from outside the cluster at
+# all (ClusterIP only) — a single Ingress resource is the one HTTP entry
+# point, and it ROUTES by host + path rather than by port: both apps sit
+# behind the same host (booking.ch26.local) and are told apart purely by
+# URL path prefix (/quarkus vs /python). `nginx.ingress.kubernetes.io/
+# rewrite-target` strips the matched prefix before proxying, since neither
+# app's own routes are mounted under /quarkus or /python (BookingResource/
+# main.py both mount at the root /bookings) — the regex capture group `(.*)`
+# in each path becomes `$2` in the rewrite target.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: booking-ingress
+  namespace: ch26-booking
+  labels:
+    app.kubernetes.io/part-of: ch26-booking
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: booking.ch26.local
+      http:
+        paths:
+          - path: /quarkus(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: quarkus-service
+                port:
+                  number: 8080
+          - path: /python(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: python-service
+                port:
+                  number: 8000

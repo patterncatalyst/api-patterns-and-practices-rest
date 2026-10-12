@@ -1,0 +1,32 @@
+# quarkus-booking-hpa — CPU-based HorizontalPodAutoscaler for the Quarkus
+# side (compose has no analogue at all: a fixed set of containers,
+# scaled only by hand with `docker compose up --scale`). Requires the
+# `metrics-server` minikube addon (run-minikube.sh enables it) so the
+# autoscaling controller has a CPU-utilization source to read from.
+#
+# Scoped to one app deliberately (Ch26's acceptance bar is "at least one"):
+# Quarkus is the service with real JVM warm-up/CPU cost under load, the
+# more illustrative case for a CPU-based autoscaler. python-booking is left
+# unscaled to keep the contrast visible — not every Deployment needs an
+# HPA, and adding one to both would be the same pattern twice.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: quarkus-booking-hpa
+  namespace: ch26-booking
+  labels:
+    app.kubernetes.io/part-of: ch26-booking
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: quarkus-booking
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70

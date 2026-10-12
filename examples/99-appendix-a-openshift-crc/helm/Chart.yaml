@@ -1,0 +1,24 @@
+apiVersion: v2
+name: appendix-a-openshift-crc
+description: >-
+  Appendix A — the same two Ch25 booking services (Quarkus + FastAPI,
+  identical sources and Containerfiles under
+  examples/25-local-with-docker-compose/) redeployed to OpenShift Local
+  (CRC) with OpenShift-native primitives: per-app Routes with edge TLS
+  termination (the contrast with Ch26's single minikube Ingress), and an
+  in-cluster Docker-strategy BuildConfig that builds straight into the
+  integrated image registry — no external registry, no host container
+  engine required to get an image into the cluster. See this directory's
+  README.md for the full compose -> minikube -> CRC contrast table and the
+  real/documented bring-up.
+type: application
+version: 1.0.0
+appVersion: "1.0"
+keywords:
+  - openshift
+  - routes
+  - edge-tls
+  - buildconfig
+  - s2i
+maintainers:
+  - name: patterncatalyst

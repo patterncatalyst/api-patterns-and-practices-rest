@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+# Images: run-minikube.sh builds both app images directly into the
+# minikube node's container runtime via `minikube image build` (driver-
+# agnostic — no `eval $(minikube docker-env)` dance, no separate `image
+# load` step), tagged exactly as named here. base/*.yaml deliberately
+# references generic placeholder names (booking/quarkus:latest,
+# booking/python:latest); this is the one place the real, pinned tag is
+# named, same base/overlay split as
+# ~/Dev/modernizing-enterprise-applications/deploy/k8s/overlays/minikube's
+# `images:` block.
+images:
+  - name: booking/quarkus
+    newName: booking/quarkus
+    newTag: "1.0"
+  - name: booking/python
+    newName: booking/python
+    newTag: "1.0"
+
+replicas:
+  - name: quarkus-booking
+    count: 1
+  - name: python-booking
+    count: 1

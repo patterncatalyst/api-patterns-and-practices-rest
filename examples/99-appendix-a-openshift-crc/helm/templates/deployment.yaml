@@ -1,0 +1,82 @@
+{{- $root := . -}}
+{{- range $name, $svc := .Values.services }}
+{{- $res := index $root.Values.resources $svc.size }}
+---
+# {{ $name }} — the SAME image as examples/25-local-with-docker-compose/
+# {{ $name }} (built from its unmodified Containerfile by this chart's
+# BuildConfig, not a third copy of the app).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "appendix-a.labels" $root | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+        app.kubernetes.io/part-of: appendix-a-booking
+    spec:
+      containers:
+        - name: {{ $name }}
+          image: "{{ include "appendix-a.image" (list $root $name) }}"
+          imagePullPolicy: {{ $root.Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ $svc.port }}
+          envFrom:
+            - configMapRef:
+                name: appendix-a-config
+            - secretRef:
+                name: appendix-a-secret
+          startupProbe:
+            httpGet: { path: {{ $svc.probes.startup }}, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet: { path: {{ $svc.probes.readiness }}, port: http }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet: { path: {{ $svc.probes.liveness }}, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: {{ $res.requests.cpu }}
+              memory: {{ $res.requests.memory }}
+            limits:
+              cpu: {{ $res.limits.cpu }}
+              memory: {{ $res.limits.memory }}
+          # No runAsUser: both Ch25 Containerfiles already build for an
+          # arbitrary assigned UID in group 0 (the Quarkus side's UBI
+          # openjdk-25-runtime base is built for it; the Python side's
+          # `COPY --chown=1001:0` is explicit about it), so whatever UID
+          # OpenShift's default `restricted-v2` SCC assigns — not the
+          # Containerfile's own USER 185 / USER 1001 — runs the container
+          # unmodified. Unlike mea's Postgres/Kafka StatefulSets (which
+          # pin a specific UID and need a ServiceAccount granted the
+          # nonroot-v2 SCC), these stateless app Deployments need no SCC
+          # grant at all — the default restricted-v2 SCC is enough.
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+{{- end }}

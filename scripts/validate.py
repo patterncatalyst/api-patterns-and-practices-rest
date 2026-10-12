@@ -60,6 +60,12 @@ EXCALIDRAW_INCLUDE_RE = re.compile(
 # must have a file on disk (and a diagram).
 CLAIMED_STATUSES = {"draft", "verified"}
 
+# Cluster-tier example dirs: these require a live cluster and must never carry
+# a verify.sh, or the clusterless CI examples matrix would auto-discover and
+# fail on them. See .github/workflows/contracts.yml's k8s-manifests job for
+# their (cluster-free, static) validation instead.
+CLUSTER_TIER_DIRS = ["examples/26-minikube", "examples/99-appendix-a-openshift-crc"]
+
 
 class Failure:
     def __init__(self, check: str, message: str) -> None:
@@ -329,6 +335,22 @@ def check_coverage(failures: list[Failure]) -> None:
             )
 
 
+def check_cluster_dir_no_verify(failures: list[Failure]) -> None:
+    for rel_dir in CLUSTER_TIER_DIRS:
+        dir_path = REPO_ROOT / rel_dir
+        if not dir_path.is_dir():
+            continue
+        for hit in sorted(dir_path.rglob("verify.sh")):
+            failures.append(
+                Failure(
+                    "cluster-dir-no-verify",
+                    f"{hit.relative_to(REPO_ROOT)}: cluster-tier dir must not have a "
+                    "verify.sh (would be auto-discovered by the clusterless examples "
+                    "matrix); validate via the k8s-manifests CI job instead",
+                )
+            )
+
+
 def main() -> int:
     failures: list[Failure] = []
 
@@ -346,6 +368,7 @@ def main() -> int:
     check_diagram_pairs(all_parsed, failures)
     check_shell_syntax(failures)
     check_coverage(failures)
+    check_cluster_dir_no_verify(failures)
 
     checks = [
         "front-matter",
@@ -356,6 +379,7 @@ def main() -> int:
         "bash-syntax",
         "coverage",
         "chapter-diagram",
+        "cluster-dir-no-verify",
     ]
     print(f"Validated {len(doc_paths)} _docs file(s) and {len(part_paths)} _parts file(s).")
     for check in checks:

@@ -1,0 +1,35 @@
+{{- $root := . -}}
+{{- range $name, $svc := .Values.services }}
+{{- if $svc.route }}
+---
+# {{ $name }} Route — the headline contrast with Ch26's minikube Ingress.
+# Ch26 fronts BOTH apps behind one Ingress host (booking.ch26.local),
+# telling them apart by path prefix (/quarkus, /python) because minikube
+# has no cluster-native router and a single nginx-ingress controller was
+# the cheapest way to expose two backends. OpenShift has a router built in:
+# each app gets ITS OWN Route, its own real external hostname
+# (<name>-<namespace>.apps-crc.testing on CRC, served by the cluster's
+# `ingress` operator) — no ingress controller to install, no per-path
+# rewrite-target gymnastics. `termination: edge` means TLS ends at the
+# router, not in the app (neither booking service terminates TLS itself);
+# `insecureEdgeTerminationPolicy: Redirect` sends plain HTTP straight to
+# HTTPS rather than serving it unencrypted.
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "appendix-a.labels" $root | nindent 4 }}
+spec:
+  to:
+    kind: Service
+    name: {{ $name }}
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+{{- end }}
+{{- end }}
