@@ -23,10 +23,10 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | D2 | Resource design | Ch3 | `_docs/03-designing-around-resources.md` | draft |
 | D3 | OpenAPI | Ch4 | `_docs/04-contract-first-openapi.md` | verified |
 | D4 | HTTP methods + idempotency | Ch5 | `_docs/05-http-methods-idempotency.md` | verified |
-| D5 | HTTP semantics | Ch6 | `_docs/06-content-negotiation-status-codes.md` | planned |
-| D6 | JSON Patch vs Merge Patch | Ch7 | `_docs/07-partial-updates.md` | planned |
-| D7 | Filtering & pagination | Ch8 | `_docs/08-filtering-projection-pagination.md` | planned |
-| D8 | Sub-resources | Ch9 | `_docs/09-sub-resources.md` | planned |
+| D5 | HTTP semantics | Ch6 | `_docs/06-content-negotiation-status-codes.md` | verified |
+| D6 | JSON Patch vs Merge Patch | Ch7 | `_docs/07-partial-updates.md` | verified |
+| D7 | Filtering & pagination | Ch8 | `_docs/08-filtering-projection-pagination.md` | verified |
+| D8 | Sub-resources | Ch9 | `_docs/09-sub-resources.md` | draft |
 | D9 | Async / long-running operations | Ch10 | `_docs/10-async-long-running-operations.md` | planned |
 | D10 | Rerunnable jobs | Ch11 | `_docs/11-rerunnable-jobs.md` | planned |
 | D11 | HATEOAS | Ch12 | `_docs/12-hateoas.md` | planned |
@@ -67,10 +67,10 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | 3 | `_docs/03-designing-around-resources.md` | Part 2 | draft |
 | 4 | `_docs/04-contract-first-openapi.md` | Part 2 | verified |
 | 5 | `_docs/05-http-methods-idempotency.md` | Part 2 | verified |
-| 6 | `_docs/06-content-negotiation-status-codes.md` | Part 3 | planned |
-| 7 | `_docs/07-partial-updates.md` | Part 3 | planned |
-| 8 | `_docs/08-filtering-projection-pagination.md` | Part 4 | planned |
-| 9 | `_docs/09-sub-resources.md` | Part 4 | planned |
+| 6 | `_docs/06-content-negotiation-status-codes.md` | Part 3 | verified |
+| 7 | `_docs/07-partial-updates.md` | Part 3 | verified |
+| 8 | `_docs/08-filtering-projection-pagination.md` | Part 4 | verified |
+| 9 | `_docs/09-sub-resources.md` | Part 4 | draft |
 | 10 | `_docs/10-async-long-running-operations.md` | Part 5 | planned |
 | 11 | `_docs/11-rerunnable-jobs.md` | Part 5 | planned |
 | 12 | `_docs/12-hateoas.md` | Part 6 | planned |

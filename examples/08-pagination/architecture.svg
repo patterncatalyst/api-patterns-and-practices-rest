@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 440" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="30" y="30" width="160" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="110.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Strategy</text>
+<rect x="200" y="30" width="290" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="345.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Request shape</text>
+<rect x="500" y="30" width="250" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="625.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Response shape</text>
+<rect x="760" y="30" width="150" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="835.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Behavior</text>
+<rect x="30" y="100" width="160" height="110" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="110.0" y="160.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Offset / limit</text>
+<rect x="200" y="100" width="290" height="110" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="345.0" y="153.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings</text>
+<text x="345.0" y="170.0" font-size="11.5" fill="#555555" text-anchor="middle">?offset=40&amp;limit=20</text>
+<rect x="500" y="100" width="250" height="110" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="625.0" y="153.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">{&quot;items&quot;:[...],</text>
+<text x="625.0" y="170.0" font-size="11.5" fill="#555555" text-anchor="middle">&quot;total&quot;:538}</text>
+<rect x="760" y="100" width="150" height="110" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="835.0" y="160.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Simple; drifts under concurrent inserts/deletes</text>
+<rect x="30" y="218" width="160" height="110" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="110.0" y="278.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Keyset / cursor</text>
+<rect x="200" y="218" width="290" height="110" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="345.0" y="271.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings</text>
+<text x="345.0" y="288.0" font-size="11.5" fill="#555555" text-anchor="middle">?cursor=eyJpZCI6NDJ9&amp;limit=20</text>
+<rect x="500" y="218" width="250" height="110" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="625.0" y="271.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">{&quot;items&quot;:[...],</text>
+<text x="625.0" y="288.0" font-size="11.5" fill="#555555" text-anchor="middle">&quot;nextCursor&quot;:&quot;...&quot;}</text>
+<rect x="760" y="218" width="150" height="110" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="835.0" y="278.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Stable under writes; cursor is opaque</text>
+<rect x="30" y="336" width="160" height="110" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="110.0" y="396.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Seek / after_id</text>
+<rect x="200" y="336" width="290" height="110" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="345.0" y="389.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings</text>
+<text x="345.0" y="406.0" font-size="11.5" fill="#555555" text-anchor="middle">?after_id=42&amp;limit=20</text>
+<rect x="500" y="336" width="250" height="110" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="625.0" y="389.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">{&quot;items&quot;:[...],</text>
+<text x="625.0" y="406.0" font-size="11.5" fill="#555555" text-anchor="middle">&quot;nextAfterId&quot;:187}</text>
+<rect x="760" y="336" width="150" height="110" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="835.0" y="396.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Stable; needs a sortable unique key</text>
+<text x="470" y="410" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">`limit` is always capped server-side (e.g. max 100) — an unbounded limit is a DoS vector.</text>
+</svg>

@@ -51,6 +51,8 @@ paths:
                 $ref: '../schemas/shipping.schema.json#/$defs/BookingCollection'
         '400':
           $ref: '#/components/responses/Problem'
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
     post:
       operationId: createBooking
       summary: Create a booking.
@@ -93,6 +95,8 @@ paths:
                 $ref: '../schemas/shipping.schema.json#/$defs/Booking'
         '404':
           $ref: '#/components/responses/Problem'
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
     put:
       operationId: replaceBooking
       summary: Replace a booking (idempotent full update).
@@ -172,6 +176,8 @@ paths:
                   $ref: '../schemas/shipping.schema.json#/$defs/Cargo'
         '404':
           $ref: '#/components/responses/Problem'
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
     post:
       operationId: addCargo
       summary: Add a cargo item to a booking.
@@ -237,6 +243,8 @@ paths:
             application/json:
               schema:
                 $ref: '../schemas/shipping.schema.json#/$defs/Operation'
+        '406':
+          $ref: '#/components/responses/NotAcceptable'
         '303':
           description: Operation succeeded; follow Location to the result resource.
           headers:
@@ -332,6 +340,12 @@ components:
   responses:
     Problem:
       description: RFC 9457 problem details.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../schemas/shipping.schema.json#/$defs/Problem'
+    NotAcceptable:
+      description: No representation matches the request's Accept header (406).
       content:
         application/problem+json:
           schema:
