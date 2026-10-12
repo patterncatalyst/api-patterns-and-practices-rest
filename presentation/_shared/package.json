@@ -1,0 +1,14 @@
+{
+  "name": "api-patterns-rest-presentation-shared",
+  "version": "1.0.0",
+  "description": "Shared Red Hat deck scaffold for the API Patterns & Practices: REST decks (100 concepts + Quarkus + Python implementations). Bundled deck-helpers.js, Scene diagram engine (dgen.py), brand assets, and rendered concept diagrams reused by every deck.",
+  "private": true,
+  "scripts": {
+    "diagrams": "python3 build_diagrams.py"
+  },
+  "author": "Robert Sedor",
+  "license": "MIT",
+  "dependencies": {
+    "pptxgenjs": "^4.0.1"
+  }
+}
