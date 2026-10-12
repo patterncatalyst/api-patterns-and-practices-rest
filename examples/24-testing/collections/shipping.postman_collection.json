@@ -1,0 +1,223 @@
+{
+  "info": {
+    "name": "Ch24 Shipping Booking API",
+    "description": "Vendored/adapted from cloud-native-design-patterns/examples/28-newman. End-to-end functional + schema assertions against the booking create/read surface (examples/24-testing), run against BOTH the Quarkus and FastAPI stacks by verify.sh via --env-var baseUrl=<stack>. The 'Load' folder is a tiny, bounded, deterministic repeat run (newman -n) used to assert the create path holds up under N back-to-back iterations without asserting absolute latency.",
+    "_postman_id": "ch24-shipping-v1",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8103" },
+    { "key": "bookingId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Functional",
+      "item": [
+        {
+          "name": "Create booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"origin\":{\"unLocode\":\"USNYC\",\"name\":\"New York\",\"country\":\"US\"},\"destination\":{\"unLocode\":\"NLRTM\",\"name\":\"Rotterdam\",\"country\":\"NL\"},\"cargo\":[{\"description\":\"Palletized electronics\",\"type\":\"GENERAL\",\"dimensions\":{\"weightKg\":1200.5,\"volumeM3\":4.2},\"hazardous\":false}],\"requestedPickup\":\"2026-02-01\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const bookingSchema = {",
+                  "  type: 'object',",
+                  "  required: ['id', 'status', 'origin', 'destination', 'cargo', 'createdAt'],",
+                  "  properties: {",
+                  "    id: { type: 'string', pattern: '^bkg_[0-9A-HJKMNP-TV-Z]{26}$' },",
+                  "    status: { type: 'string', enum: ['PENDING', 'CONFIRMED', 'IN_TRANSIT', 'DELIVERED', 'CANCELLED'] },",
+                  "    origin: { type: 'object', required: ['unLocode'] },",
+                  "    destination: { type: 'object', required: ['unLocode'] },",
+                  "    cargo: { type: 'array', minItems: 1 },",
+                  "    quote: {",
+                  "      type: 'object',",
+                  "      properties: {",
+                  "        currency: { type: 'string', pattern: '^[A-Z]{3}$' },",
+                  "        amount: { type: 'string', pattern: '^-?[0-9]+\\\\.[0-9]{2}$' }",
+                  "      }",
+                  "    },",
+                  "    createdAt: { type: 'string' }",
+                  "  }",
+                  "};",
+                  "",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('has Location header', () => pm.response.to.have.header('Location'));",
+                  "pm.test('body matches Booking schema', () => pm.response.to.have.jsonSchema(bookingSchema));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('status is PENDING', () => pm.expect(body.status).to.eql('PENDING'));",
+                  "pm.test('quote.amount is 3001.25 (1200.5kg * 2.50)', () => pm.expect(body.quote.amount).to.eql('3001.25'));",
+                  "",
+                  "pm.collectionVariables.set('bookingId', body.id);",
+                  "pm.collectionVariables.set('bookingLocation', pm.response.headers.get('Location'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get booking",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bookings/{{bookingId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const bookingSchema = {",
+                  "  type: 'object',",
+                  "  required: ['id', 'status', 'origin', 'destination', 'cargo', 'createdAt'],",
+                  "  properties: {",
+                  "    id: { type: 'string', pattern: '^bkg_[0-9A-HJKMNP-TV-Z]{26}$' },",
+                  "    status: { type: 'string' },",
+                  "    cargo: { type: 'array', minItems: 1 },",
+                  "    createdAt: { type: 'string' }",
+                  "  }",
+                  "};",
+                  "",
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('body matches Booking schema', () => pm.response.to.have.jsonSchema(bookingSchema));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('id matches the created booking', () => pm.expect(body.id).to.eql(pm.collectionVariables.get('bookingId')));",
+                  "pm.test('origin.unLocode matches', () => pm.expect(body.origin.unLocode).to.eql('USNYC'));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject invalid booking (missing cargo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"origin\":{\"unLocode\":\"USNYC\"},\"destination\":{\"unLocode\":\"NLRTM\"}}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const problemSchema = {",
+                  "  type: 'object',",
+                  "  required: ['title', 'status'],",
+                  "  properties: {",
+                  "    title: { type: 'string' },",
+                  "    status: { type: 'integer' }",
+                  "  }",
+                  "};",
+                  "",
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('content-type is application/problem+json', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "});",
+                  "pm.test('body matches Problem schema', () => pm.response.to.have.jsonSchema(problemSchema));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('status field is 400', () => pm.expect(body.status).to.eql(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get nonexistent booking",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bookings/bkg_00000000000000000000000000"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const problemSchema = {",
+                  "  type: 'object',",
+                  "  required: ['title', 'status'],",
+                  "  properties: {",
+                  "    title: { type: 'string' },",
+                  "    status: { type: 'integer' }",
+                  "  }",
+                  "};",
+                  "",
+                  "pm.test('404 Not Found', () => pm.response.to.have.status(404));",
+                  "pm.test('content-type is application/problem+json', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/problem+json');",
+                  "});",
+                  "pm.test('body matches Problem schema', () => pm.response.to.have.jsonSchema(problemSchema));",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test('status field is 404', () => pm.expect(body.status).to.eql(404));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Load",
+      "item": [
+        {
+          "name": "Create booking (load)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": "{{baseUrl}}/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"origin\":{\"unLocode\":\"USNYC\",\"name\":\"New York\",\"country\":\"US\"},\"destination\":{\"unLocode\":\"NLRTM\",\"name\":\"Rotterdam\",\"country\":\"NL\"},\"cargo\":[{\"description\":\"Palletized electronics\",\"type\":\"GENERAL\",\"dimensions\":{\"weightKg\":1200.5,\"volumeM3\":4.2},\"hazardous\":false}],\"requestedPickup\":\"2026-02-01\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Bounded, deterministic load check: asserts SUCCESS and SCHEMA",
+                  "// CONFORMANCE on every one of the N iterations newman -n runs this",
+                  "// request for — not an absolute latency number. See README.md for",
+                  "// why this harness deliberately avoids timing assertions.",
+                  "const bookingSchema = {",
+                  "  type: 'object',",
+                  "  required: ['id', 'status', 'origin', 'destination', 'cargo', 'createdAt'],",
+                  "  properties: {",
+                  "    id: { type: 'string', pattern: '^bkg_[0-9A-HJKMNP-TV-Z]{26}$' },",
+                  "    status: { type: 'string' },",
+                  "    cargo: { type: 'array', minItems: 1 }",
+                  "  }",
+                  "};",
+                  "",
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('has Location header', () => pm.response.to.have.header('Location'));",
+                  "pm.test('body matches Booking schema', () => pm.response.to.have.jsonSchema(bookingSchema));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
