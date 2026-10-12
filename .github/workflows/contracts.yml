@@ -139,7 +139,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Verify ${{ matrix.example }} (payload semantics vs contract, both stacks)
-        run: bash "examples/${{ matrix.example }}/verify.sh"
+        # Retry up to 3x: each verify.sh is self-contained (compose up -> assert ->
+        # compose down via lib.sh's EXIT trap), so a retry starts from a clean slate.
+        # This absorbs transient CI flakes — Maven/BOM download blips, base-image
+        # pulls, Kafka broker warm-up timing — without masking real failures (a
+        # deterministic bug fails all three attempts).
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::verify attempt $attempt/3 — ${{ matrix.example }}"
+            if bash "examples/${{ matrix.example }}/verify.sh"; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "attempt $attempt failed for ${{ matrix.example }}"
+            [ "$attempt" -lt 3 ] && { echo "retrying in 15s..."; sleep 15; }
+          done
+          echo "all 3 attempts failed for ${{ matrix.example }}"
+          exit 1
 
   examples-summary:
     name: Verify stacks against the contract

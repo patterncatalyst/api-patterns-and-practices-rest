@@ -15,7 +15,7 @@ WORKDIR /build
 COPY pom.xml .
 COPY src ./src
 
-RUN mvn -B package -DskipTests -Dmaven.javadoc.skip=true
+RUN mvn -B package -DskipTests -Dmaven.javadoc.skip=true -Dmaven.wagon.http.retryHandler.count=3 -Daether.connector.http.retryHandler.count=3
 
 # ── Stage 2: Runtime (fast-jar) ─────────────────────────────
 FROM registry.access.redhat.com/ubi10/openjdk-25-runtime:1.24-15
