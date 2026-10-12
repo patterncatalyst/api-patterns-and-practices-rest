@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 970 740" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="30" y="30" width="150" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="105.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Strategy</text>
+<rect x="190" y="30" width="330" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="355.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Request shape</text>
+<rect x="530" y="30" width="200" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="630.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Where it lives</text>
+<rect x="740" y="30" width="200" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="840.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Caching implication</text>
+<rect x="30" y="100" width="150" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="105.0" y="150.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">URI path</text>
+<rect x="190" y="100" width="330" height="90" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="355.0" y="150.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /v1/bookings/42</text>
+<rect x="530" y="100" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="630.0" y="150.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">version segment in the path</text>
+<rect x="740" y="100" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="840.0" y="150.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">cache key includes the path — works with standard HTTP caches as-is</text>
+<rect x="30" y="198" width="150" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="105.0" y="248.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Query parameter</text>
+<rect x="190" y="198" width="330" height="90" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="355.0" y="248.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings/42?version=1</text>
+<rect x="530" y="198" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="630.0" y="248.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">version in the query string</text>
+<rect x="740" y="198" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="840.0" y="248.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">caches must vary on the query string; some CDNs strip unknown params</text>
+<rect x="30" y="296" width="150" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="105.0" y="346.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Custom header</text>
+<rect x="190" y="296" width="330" height="90" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="355.0" y="339.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings/42</text>
+<text x="355.0" y="356.0" font-size="11.5" fill="#555555" text-anchor="middle">X-API-Version: 1</text>
+<rect x="530" y="296" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="630.0" y="346.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">version in a request header</text>
+<rect x="740" y="296" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="840.0" y="346.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">needs Vary: X-API-Version or a cache serves the wrong version next</text>
+<rect x="30" y="394" width="150" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="105.0" y="444.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Media type</text>
+<rect x="190" y="394" width="330" height="90" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="355.0" y="437.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings/42</text>
+<text x="355.0" y="454.0" font-size="11.5" fill="#555555" text-anchor="middle">Accept: application/vnd.shipping.v1+json</text>
+<rect x="530" y="394" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="630.0" y="444.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">version in the negotiated media type</text>
+<rect x="740" y="394" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="840.0" y="444.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">needs Vary: Accept; version and representation negotiated together</text>
+<rect x="140" y="522" width="330" height="130" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="305.0" y="562.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">v1 response body</text>
+<text x="305.0" y="579.5" font-size="11.5" fill="#555555" text-anchor="middle">{</text>
+<text x="305.0" y="594.5" font-size="11.5" fill="#555555" text-anchor="middle">  &quot;price&quot;: 420.00,</text>
+<text x="305.0" y="609.5" font-size="11.5" fill="#555555" text-anchor="middle">  &quot;cargoDescription&quot;: &quot;20ft reefer, frozen goods&quot;</text>
+<text x="305.0" y="624.5" font-size="11.5" fill="#555555" text-anchor="middle">}</text>
+<rect x="500" y="522" width="330" height="130" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="665.0" y="562.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">v2 response body</text>
+<text x="665.0" y="579.5" font-size="11.5" fill="#555555" text-anchor="middle">{</text>
+<text x="665.0" y="594.5" font-size="11.5" fill="#555555" text-anchor="middle">  &quot;quote&quot;: {&quot;amount&quot;:420.00,&quot;currency&quot;:&quot;USD&quot;},</text>
+<text x="665.0" y="609.5" font-size="11.5" fill="#555555" text-anchor="middle">  &quot;cargo&quot;: [{&quot;description&quot;:&quot;20ft reefer, frozen goods&quot;}]</text>
+<text x="665.0" y="624.5" font-size="11.5" fill="#555555" text-anchor="middle">}</text>
+<path d="M470,587 L500,587" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<text x="491.0" y="581.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">breaking shape change</text>
+<text x="491.0" y="581.0" font-size="11" fill="#b8650a" text-anchor="middle">breaking shape change</text>
+<text x="485" y="702" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">Query-param and header/media-type strategies need Vary or an intermediate cache serves the wrong version to the next client — URI versioning avoids this because the version is already part of the cache key.</text>
+</svg>
