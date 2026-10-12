@@ -39,15 +39,15 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | # | Addition | Chapter | File | Status |
 |---|---|---|---|---|
 | A1 | API decision framework | Ch2 | `_docs/02-api-decision-framework.md` | draft |
-| A2 | OpenAPI (in depth) | Ch20 | `_docs/20-openapi-in-depth.md` | draft |
+| A2 | OpenAPI (in depth) | Ch20 | `_docs/20-openapi-in-depth.md` | verified |
 | A3 | Streaming (SSE / NDJSON / chunked) | Ch16 | `_docs/16-streaming-deep-dive.md` | verified |
 | A4 | Cross-protocol choices | Ch17 | `_docs/17-cross-protocol-choices.md` | draft |
 | A5 | Back-end I/O concurrency | Ch18 | `_docs/18-backend-io-concurrency.md` | verified |
 | A6 | HTTP/2 & HTTP/3 | Ch19 | `_docs/19-http2-http3.md` | verified |
-| A7 | Multi-protocol contracts (OpenAPI/AsyncAPI/CloudEvents/Arazzo + xRegistry) | Ch21 | `_docs/21-multi-protocol-contracts.md` | draft |
-| A8 | Quarkus REST in depth | Ch22 | `_docs/22-quarkus-rest-in-depth.md` | draft |
-| A9 | FastAPI in depth | Ch23 | `_docs/23-fastapi-in-depth.md` | draft |
-| A10 | Full testing (contract + integration + Newman + load) | Ch24 | `_docs/24-testing-rest-apis.md` | draft |
+| A7 | Multi-protocol contracts (OpenAPI/AsyncAPI/CloudEvents/Arazzo + xRegistry) | Ch21 | `_docs/21-multi-protocol-contracts.md` | verified |
+| A8 | Quarkus REST in depth | Ch22 | `_docs/22-quarkus-rest-in-depth.md` | verified |
+| A9 | FastAPI in depth | Ch23 | `_docs/23-fastapi-in-depth.md` | verified |
+| A10 | Full testing (contract + integration + Newman + load) | Ch24 | `_docs/24-testing-rest-apis.md` | verified |
 
 ## Runtime-tier additions → chapters (3)
 
@@ -81,11 +81,11 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | 17 | `_docs/17-cross-protocol-choices.md` | Part 7 | draft |
 | 18 | `_docs/18-backend-io-concurrency.md` | Part 8 | verified |
 | 19 | `_docs/19-http2-http3.md` | Part 8 | verified |
-| 20 | `_docs/20-openapi-in-depth.md` | Part 9 | draft |
-| 21 | `_docs/21-multi-protocol-contracts.md` | Part 9 | draft |
-| 22 | `_docs/22-quarkus-rest-in-depth.md` | Part 9 | draft |
-| 23 | `_docs/23-fastapi-in-depth.md` | Part 9 | draft |
-| 24 | `_docs/24-testing-rest-apis.md` | Part 10 | draft |
+| 20 | `_docs/20-openapi-in-depth.md` | Part 9 | verified |
+| 21 | `_docs/21-multi-protocol-contracts.md` | Part 9 | verified |
+| 22 | `_docs/22-quarkus-rest-in-depth.md` | Part 9 | verified |
+| 23 | `_docs/23-fastapi-in-depth.md` | Part 9 | verified |
+| 24 | `_docs/24-testing-rest-apis.md` | Part 10 | verified |
 | 25 | `_docs/25-local-with-docker-compose.md` | Part 11 | planned |
 | 26 | `_docs/26-kubernetes-on-minikube.md` | Part 11 | planned |
 | A | `_docs/99-appendix-a-openshift-crc.md` | Part 11 | planned |
