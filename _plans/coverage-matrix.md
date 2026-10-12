@@ -21,8 +21,8 @@ unverified) · `verified` (both stacks run green, footer flipped).
 |---|---|---|---|---|
 | D1 | APIs & patterns | Ch1 | `_docs/01-apis-and-patterns.md` | draft |
 | D2 | Resource design | Ch3 | `_docs/03-designing-around-resources.md` | draft |
-| D3 | OpenAPI | Ch4 | `_docs/04-contract-first-openapi.md` | draft |
-| D4 | HTTP methods + idempotency | Ch5 | `_docs/05-http-methods-idempotency.md` | draft |
+| D3 | OpenAPI | Ch4 | `_docs/04-contract-first-openapi.md` | verified |
+| D4 | HTTP methods + idempotency | Ch5 | `_docs/05-http-methods-idempotency.md` | verified |
 | D5 | HTTP semantics | Ch6 | `_docs/06-content-negotiation-status-codes.md` | planned |
 | D6 | JSON Patch vs Merge Patch | Ch7 | `_docs/07-partial-updates.md` | planned |
 | D7 | Filtering & pagination | Ch8 | `_docs/08-filtering-projection-pagination.md` | planned |
@@ -61,12 +61,12 @@ unverified) · `verified` (both stacks run green, footer flipped).
 
 | Ch | File | Part | Status |
 |---|---|---|---|
-| 0 | `_docs/00-prerequisites-and-the-lab.md` | Part 0 | draft |
+| 0 | `_docs/00-prerequisites-and-the-lab.md` | Part 0 | verified |
 | 1 | `_docs/01-apis-and-patterns.md` | Part 1 | draft |
 | 2 | `_docs/02-api-decision-framework.md` | Part 1 | draft |
 | 3 | `_docs/03-designing-around-resources.md` | Part 2 | draft |
-| 4 | `_docs/04-contract-first-openapi.md` | Part 2 | draft |
-| 5 | `_docs/05-http-methods-idempotency.md` | Part 2 | draft |
+| 4 | `_docs/04-contract-first-openapi.md` | Part 2 | verified |
+| 5 | `_docs/05-http-methods-idempotency.md` | Part 2 | verified |
 | 6 | `_docs/06-content-negotiation-status-codes.md` | Part 3 | planned |
 | 7 | `_docs/07-partial-updates.md` | Part 3 | planned |
 | 8 | `_docs/08-filtering-projection-pagination.md` | Part 4 | planned |
