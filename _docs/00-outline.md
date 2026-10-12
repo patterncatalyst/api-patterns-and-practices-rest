@@ -1,6 +1,7 @@
 ---
 title: "Outline"
 order: 0
+overview: true
 part: "Prerequisites & the Lab"
 description: "What this site covers and how it's organized — 27 chapters across 12 parts, both stacks against one contract."
 ---
