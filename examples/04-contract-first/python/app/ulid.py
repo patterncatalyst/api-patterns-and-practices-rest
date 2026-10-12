@@ -7,6 +7,7 @@ L, O, U). Mirrors app/../quarkus/.../Ulid.java bit for bit.
 """
 from __future__ import annotations
 
+import hashlib
 import os
 import time
 
@@ -26,3 +27,19 @@ def generate_ulid() -> str:
     timestamp_ms = int(time.time() * 1000)
     randomness = int.from_bytes(os.urandom(10), "big")
     return _encode(timestamp_ms, 10) + _encode(randomness, 16)
+
+
+def generate_deterministic_ulid(seed: str) -> str:
+    """A deterministic, non-random "ULID-shaped" id derived from `seed` —
+    same seed in, same 26-char Crockford string out, every time.
+
+    Used by PUT (full replace), NOT by POST: an idempotent replace must
+    converge on the SAME resource state (including sub-resource ids like
+    Cargo.id) when called twice with the same body, whereas a create must
+    mint a genuinely new id every call. Mirrors
+    ../quarkus/.../Ulid.java#deterministic bit for bit (SHA-256, first 17
+    hash bytes -> 26 Crockford chars).
+    """
+    digest = hashlib.sha256(seed.encode("utf-8")).digest()
+    value = int.from_bytes(digest[:17], "big")
+    return _encode(value, 26)

@@ -119,7 +119,12 @@ public class BookingResource {
             return invalid;
         }
 
-        List<Cargo> cargoItems = toCargoItems(request.cargo());
+        // Deterministic (not random) cargo ids: PUT must be idempotent, so
+        // replacing a booking with the SAME body twice has to produce the
+        // SAME Cargo.id for each item both times — toCargoItems() mints a
+        // fresh random id every call, which POST correctly wants but PUT
+        // must not.
+        List<Cargo> cargoItems = toCargoItemsForReplace(id, request.cargo());
         Booking replaced = new Booking(
                 existing.id(),
                 existing.status(),
@@ -248,6 +253,19 @@ public class BookingResource {
         List<Cargo> items = new ArrayList<>(requests.size());
         for (CargoRequest cr : requests) {
             items.add(new Cargo("crg_" + Ulid.generate(), cr.description(), cr.type(), cr.dimensions(), cr.hazardousOrDefault()));
+        }
+        return items;
+    }
+
+    /** Like {@link #toCargoItems}, but with deterministic ids keyed on
+     * (bookingId, index) so a PUT replace is idempotent — see the comment
+     * at the {@code replaceBooking} call site. */
+    private List<Cargo> toCargoItemsForReplace(String bookingId, List<CargoRequest> requests) {
+        List<Cargo> items = new ArrayList<>(requests.size());
+        for (int i = 0; i < requests.size(); i++) {
+            CargoRequest cr = requests.get(i);
+            String id = "crg_" + Ulid.deterministic(bookingId + ":" + i);
+            items.add(new Cargo(id, cr.description(), cr.type(), cr.dimensions(), cr.hazardousOrDefault()));
         }
         return items;
     }

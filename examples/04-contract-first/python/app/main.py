@@ -28,7 +28,7 @@ from app.models import (
     Problem,
 )
 from app.quote import compute_quote
-from app.ulid import generate_ulid
+from app.ulid import generate_deterministic_ulid, generate_ulid
 
 app = FastAPI(title="shipping-python-ch04")
 
@@ -120,9 +120,13 @@ def replace_booking(booking_id: str, payload: BookingRequest) -> JSONResponse:
     if existing is None:
         return _problem(404, "Booking not found", f"No booking with id {booking_id}")
 
+    # Deterministic (not random) cargo ids: PUT must be idempotent, so
+    # replacing a booking with the SAME body twice has to produce the SAME
+    # Cargo.id for each item both times — generate_ulid() mints a fresh
+    # random id every call, which POST correctly wants but PUT must not.
     cargo_items = [
-        Cargo(id=f"crg_{generate_ulid()}", **item.model_dump())
-        for item in payload.cargo
+        Cargo(id=f"crg_{generate_deterministic_ulid(f'{booking_id}:{i}')}", **item.model_dump())
+        for i, item in enumerate(payload.cargo)
     ]
     updated = Booking(
         id=existing.id,

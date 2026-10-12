@@ -135,6 +135,26 @@ run_stack_tests() {
   put_destination="$(jq -r '.destination.unLocode' "$body_file")"
   [[ "$put_destination" == "SGSIN" ]] || fail "$stack PUT did not replace destination (got $put_destination)"
 
+  # -- PUT /bookings/{id} again with the SAME body -> identical state
+  #    (idempotent), modulo the volatile updatedAt timestamp -------------
+  local put_2_file="$TMP_DIR/${stack}-put2.json"
+  status="$(curl -sS -o "$put_2_file" -w '%{http_code}' \
+    -X PUT -H 'Content-Type: application/json' -d "$put_payload" "$base/bookings/$booking_id")"
+  assert_status 200 "$status" "$stack PUT /bookings/{id} (2nd, same body)"
+  validate_body Booking "$put_2_file"
+
+  local put_1_stable put_2_stable
+  put_1_stable="$TMP_DIR/${stack}-put1-stable.json"
+  put_2_stable="$TMP_DIR/${stack}-put2-stable.json"
+  jq -S 'del(.updatedAt)' "$body_file" > "$put_1_stable"
+  jq -S 'del(.updatedAt)' "$put_2_file" > "$put_2_stable"
+  if ! diff -u "$put_1_stable" "$put_2_stable" >/dev/null; then
+    echo "lib.sh: PUT responses diverged (ignoring updatedAt):" >&2
+    diff -u "$put_1_stable" "$put_2_stable" >&2 || true
+    fail "$stack two identical PUT /bookings/{id} calls produced DIFFERENT resource state — PUT must be idempotent"
+  fi
+  echo "lib.sh: ok — $stack two identical PUTs produced byte-identical state (updatedAt excluded)"
+
   # -- PATCH /bookings/{id} with application/merge-patch+json -> 200 ------
   status="$(curl -sS -o "$body_file" -w '%{http_code}' \
     -X PATCH -H 'Content-Type: application/merge-patch+json' -d '{"requestedPickup":"2026-03-01"}' \
