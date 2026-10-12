@@ -1,0 +1,95 @@
+# Ch25 local-with-docker-compose anchor — the full local dev substrate:
+# both app stacks, Postgres (present in the topology from day one per the
+# Ch0 convention; neither app persists to it — this chapter's subject is
+# tracing, not storage), and the Grafana LGTM observability stack.
+#
+# Unlike every earlier chapter, `lgtm` here is a DEFAULT service, not an
+# opt-in `observability` profile: tracing IS the point of this chapter.
+# `docker compose up` brings up everything; verify.sh health-gates on the
+# Tempo query API (`:3200/ready`) before asserting any trace, since the
+# Grafana healthcheck below only proves the lgtm container's HTTP frontend
+# is up — not that Tempo has finished its own startup inside it.
+#
+# Ports are unique across the repo's examples: Quarkus on 8105->8080,
+# FastAPI on 8024->8000. Compose project: ch25-compose.
+#
+# Usage:
+#   docker compose up --build          # everything: both apps, postgres, lgtm
+
+services:
+  quarkus:
+    build:
+      context: ./quarkus
+      dockerfile: Containerfile
+    container_name: ch25-shipping-quarkus
+    ports:
+      - "8105:8080"
+    depends_on:
+      lgtm:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/q/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  python:
+    build:
+      context: ./python
+      dockerfile: Containerfile
+    container_name: ch25-shipping-python
+    ports:
+      - "8024:8000"
+    depends_on:
+      lgtm:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  postgres:
+    image: docker.io/library/postgres:17-alpine
+    container_name: ch25-shipping-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=shipping
+      - POSTGRES_USER=shipping
+      - POSTGRES_PASSWORD=shipping
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U shipping -d shipping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  # ─── Observability (DEFAULT — not profile-gated) ───────────────────────
+  # This chapter's whole point is a request traced end to end, so `lgtm`
+  # starts with everything else, not behind `--profile observability`.
+  lgtm:
+    image: docker.io/grafana/otel-lgtm:0.36.0
+    container_name: ch25-lgtm
+    ports:
+      - "3000:3000" # Grafana UI
+      - "4317:4317" # OTLP gRPC (Quarkus exports here)
+      - "4318:4318" # OTLP HTTP (FastAPI exports here)
+      - "9090:9090" # Prometheus / Mimir query
+      - "3100:3100" # Loki
+      - "3200:3200" # Tempo query API — verify.sh polls /ready, then
+                     # /api/traces/<fixed-trace-id>
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    healthcheck:
+      # The otel-lgtm image's base (UBI/RHEL-derived) ships curl, not wget.
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
