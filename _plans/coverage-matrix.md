@@ -53,7 +53,7 @@ unverified) · `verified` (both stacks run green, footer flipped).
 
 | # | Addition | Chapter | File | Status |
 |---|---|---|---|---|
-| T1 | Docker/Podman Compose tier | Ch0 / Ch25 | `_docs/25-local-with-docker-compose.md` | planned |
+| T1 | Docker/Podman Compose tier | Ch0 / Ch25 | `_docs/25-local-with-docker-compose.md` | draft |
 | T2 | minikube tier | Ch26 | `_docs/26-kubernetes-on-minikube.md` | planned |
 | T3 | CRC / OpenShift Local tier | Appendix A | `_docs/99-appendix-a-openshift-crc.md` | planned |
 
@@ -86,7 +86,7 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | 22 | `_docs/22-quarkus-rest-in-depth.md` | Part 9 | verified |
 | 23 | `_docs/23-fastapi-in-depth.md` | Part 9 | verified |
 | 24 | `_docs/24-testing-rest-apis.md` | Part 10 | verified |
-| 25 | `_docs/25-local-with-docker-compose.md` | Part 11 | planned |
+| 25 | `_docs/25-local-with-docker-compose.md` | Part 11 | draft |
 | 26 | `_docs/26-kubernetes-on-minikube.md` | Part 11 | planned |
 | A | `_docs/99-appendix-a-openshift-crc.md` | Part 11 | planned |
 | 27 | `_docs/27-complete-project.md` | Part 12 | planned |
