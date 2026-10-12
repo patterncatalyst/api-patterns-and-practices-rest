@@ -26,11 +26,11 @@ spine), simplest-first (release cadence), reader-outcome (pedagogy). Status:
   Core payload types live once in shared JSON Schema components under `contracts/schemas/` and are
   **reused** by both the OpenAPI and AsyncAPI documents (no duplicated type definitions); a
   microservice that pairs REST calls with background event streaming is the worked example. Gets a
-  dedicated chapter (Ch21), a recurring "which contract?" Decision box, and is applied in the capstone.
+  dedicated chapter (Ch21), a recurring "which contract?" Decision box, and is applied in the complete project.
 - **Outcome-driven.** Every Part opens with an "after this part, the reader can…"
   capability. The **API decision framework** is a first-class chapter early (Ch2) and
   recurs as a "Decision" callout closing each concept chapter, then is exercised whole
-  in the capstone.
+  in the complete project.
 - **Auditable coverage.** `_plans/coverage-matrix.md` maps every deck topic and every
   requested addition to a chapter; CI fails if a mapped chapter file is missing.
 - **Behavioral verification.** Each example carries a `verify.sh` that asserts payload
@@ -114,9 +114,9 @@ _After this part, the reader can run and observe the API where its Kubernetes be
 - **Ch26** Kubernetes differences on minikube: ingress vs compose networking, probes, config/secrets, HPA. [H] — *addition: minikube tier*
 - **Appendix A** OpenShift Local (CRC): Routes, edge TLS, in-cluster build (use the `lgtm-crc` skill). [H] — *addition: CRC tier*
 
-**Part 12 — Capstone** · _r06_
+**Part 12 — Complete project** · _r06_
 _After this part, the reader can make and defend a complete REST design decision end to end._
-- **Ch27** Capstone: the shipping/cargo booking API end to end — contract-first booking + cargo, async confirmation (202→poll→303), keyset pagination, HATEOAS, media-type versioning, soft delete + purge, streamed manifest, **plus a background CloudEvents stream (AsyncAPI) sharing schemas with the REST contract and an Arazzo workflow tying the sequence together**, traced through LGTM, contract-validated and load-tested in both stacks. [H] — *integrative*
+- **Ch27** Complete project: the shipping/cargo booking API end to end — contract-first booking + cargo, async confirmation (202→poll→303), keyset pagination, HATEOAS, media-type versioning, soft delete + purge, streamed manifest, **plus a background CloudEvents stream (AsyncAPI) sharing schemas with the REST contract and an Arazzo workflow tying the sequence together**, traced through LGTM, contract-validated and load-tested in both stacks. [H] — *integrative*
 
 **Coverage:** 27 chapters + CRC appendix across 12 parts. All deck topics and all additions (incl. the multi-protocol-contracts thread) map to a chapter (maintained in `_plans/coverage-matrix.md`, CI-checked).
 
@@ -135,7 +135,7 @@ REST booking (OpenAPI) + background CloudEvents stream described by AsyncAPI, bo
 same `contracts/schemas/` components, with an Arazzo workflow for booking→routing→tracking · Ch22
 Quarkus zero-reflection + reactive streaming · Ch23 FastAPI ASGI streaming + background tasks ·
 Ch24 contract + integration + Newman + load · Ch25 compose + trace · Ch26 minikube ·
-AppA CRC · Ch27 capstone.
+AppA CRC · Ch27 complete project.
 
 ## Diagrams (≥1 per chapter, paired `.svg`+`.excalidraw` in `assets/diagrams/`)
 
@@ -148,7 +148,7 @@ Arazzo + shared schema components, REST+events microservice). Every remaining ch
 purpose-built figure too (e.g. Ch4 contract-first flow, Ch6 negotiation/status decision, Ch7
 patch-vs-merge, Ch8 pagination strategies, Ch11 job lifecycle, Ch13 soft-delete+purge flow, Ch15
 range-request sequence, Ch18 concurrency model, Ch20 living-contract CI loop, Ch22/23 request
-pipelines, Ch24 test pyramid, Ch25/26 deploy topology, Ch27 capstone architecture). Each hands-on
+pipelines, Ch24 test pyramid, Ch25/26 deploy topology, Ch27 complete project architecture). Each hands-on
 example additionally ships its own `architecture.{svg,excalidraw}` (CNDP convention).
 
 ## Execution phases (checkpoint commit after each)
@@ -167,7 +167,7 @@ example additionally ships its own `architecture.{svg,excalidraw}` (CNDP convent
 - **Phase 4 — r03:** Parts 5–6 (Ch10–14).
 - **Phase 5 — r04:** Parts 7–8 (Ch15–19).
 - **Phase 6 — r05:** Parts 9–10 (Ch20–24); vendor the CNDP load/Newman harness.
-- **Phase 7 — r06:** Part 11 (Ch25–26 + Appendix A, minikube + CRC) and Part 12 (Ch27 capstone).
+- **Phase 7 — r06:** Part 11 (Ch25–26 + Appendix A, minikube + CRC) and Part 12 (Ch27 complete project).
 - **Phase 8 — Deck + polish + release:** build the conference deck from the site via `lgtm-presentation`
   (coffee-shop→cargo), `lgtm-professional-voice` sweep, hub entry in
   `patterncatalyst-workshops-tutorials-list/_data/sites.yml`, tag + release via `lgtm-github`.
@@ -192,7 +192,7 @@ resolve; no eBPF/Aya residue.
 8. Ch23 runs a Newman collection + a load test on the reused CNDP harness, green in CI.
 9. The deck covers every deck agenda item, translated to shipping/cargo; `lgtm-professional-voice` scan reports zero flagged tics.
 10. Hub `_data/sites.yml` has a live entry; release PR to `main` is green and deploys.
-11. Core payload types are defined once in `contracts/schemas/` and referenced by BOTH the OpenAPI and AsyncAPI documents (no duplicated type definitions); events validate against CloudEvents; an Arazzo workflow describes the capstone sequence; artifacts are published to Apicurio Registry (xRegistry touchpoint).
+11. Core payload types are defined once in `contracts/schemas/` and referenced by BOTH the OpenAPI and AsyncAPI documents (no duplicated type definitions); events validate against CloudEvents; an Arazzo workflow describes the complete project sequence; artifacts are published to Apicurio Registry (xRegistry touchpoint).
 
 ## Resolved decisions (reviewer, 2026-10-11)
 
