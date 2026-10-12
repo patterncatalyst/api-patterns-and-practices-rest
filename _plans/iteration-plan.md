@@ -12,7 +12,7 @@ spine), simplest-first (release cadence), reader-outcome (pedagogy). Status:
 
 ## Approach
 
-- **Contract-first spine.** One OpenAPI 3.1 contract (`contracts/openapi/shipping-api.yaml`,
+- **Contract-first spine.** One OpenAPI contract (`contracts/openapi/shipping-api.yaml`,
   booking + cargo domain) is the single source of truth. It is authored before the
   first implementation and a CI job validates **both** the Quarkus and FastAPI
   implementations against it — drift fails the build.
@@ -20,7 +20,7 @@ spine), simplest-first (release cadence), reader-outcome (pedagogy). Status:
   Python/FastAPI example against the identical contract (per the project requirement).
   Iterations stage work by *parts*, not by stack, so the two never diverge.
 - **Contracts across the sync/async divide (cross-cutting thread).** The site threads the four
-  contract languages and shows when each applies and how they compose: **OpenAPI 3.1** (synchronous
+  contract languages and shows when each applies and how they compose: **OpenAPI** (synchronous
   request/response), **AsyncAPI 3** (event channels / background streaming), **CloudEvents** (the
   event envelope + metadata), and **Arazzo** (multi-step API workflows/sequences across calls).
   Core payload types live once in shared JSON Schema components under `contracts/schemas/` and are
@@ -60,9 +60,9 @@ _After this part, the reader can decide whether REST fits an interaction and nam
 - **Ch2** The API decision framework (which pattern/style/transport; the criteria axes reused in every Decision box). [C] — *addition: decision framework*
 
 **Part 2 — Designing resources with a contract** · _r01_
-_After this part, the reader can model a domain as resources and express it as an OpenAPI 3.1 contract CI enforces against both stacks._
+_After this part, the reader can model a domain as resources and express it as an OpenAPI contract CI enforces against both stacks._
 - **Ch3** Designing around resources: nouns not verbs, don't mirror the DB, collections vs items, chatty-API/extraneous-fetch anti-patterns. [C] — *deck: resource design*
-- **Ch4** Contract-first with OpenAPI 3.1: author bookings+cargo, CI validation wired, both stacks scaffolded to serve it. [H] (anchor) — *deck: OpenAPI; addition: OpenAPI 3.1*
+- **Ch4** Contract-first with OpenAPI: author bookings+cargo, CI validation wired, both stacks scaffolded to serve it. [H] (anchor) — *deck: OpenAPI; addition: OpenAPI*
 - **Ch5** HTTP methods & the idempotency matrix. [H] — *deck: HTTP methods + idempotency*
 
 **Part 3 — HTTP semantics done right** · _r02_
@@ -99,7 +99,7 @@ _After this part, the reader can reason about backend concurrency and HTTP/2-3 b
 
 **Part 9 — Multi-protocol contracts & framework deep-dives** · _r05_
 _After this part, the reader can treat the contract as living, compose REST with event contracts, and build idiomatic REST in each stack._
-- **Ch20** OpenAPI 3.1 in depth: JSON Schema 2020-12 alignment, type arrays/nullable, webhooks, generation in both stacks, drift detection. [H] — *addition: OpenAPI 3.1 depth*
+- **Ch20** OpenAPI in depth: JSON Schema 2020-12 alignment, type arrays/nullable, webhooks, generation in both stacks, drift detection. [H] — *addition: OpenAPI depth*
 - **Ch21** Multi-protocol contracts — OpenAPI + AsyncAPI 3 + CloudEvents + Arazzo: what each solves and when to reach for it; **schema reuse** (shared JSON Schema components referenced by both the OpenAPI and AsyncAPI docs); pairing REST calls with background **event streaming** in one microservice; CloudEvents as the event envelope; **Arazzo** describing the multi-step booking→routing→tracking workflow; **registry** touchpoint — publish/resolve the OpenAPI + AsyncAPI + schema artifacts in **Apicurio Registry** (already in the stack; CNCF, aligning to the **xRegistry** spec) and show the **xRegistry** model/API via Apicurio and/or the xRegistry reference server. (Apicurio xRegistry compliance is on its roadmap — verify support level at authoring time; OpenMetadata is a data catalog, not an xRegistry impl.) [H] — *addition: multi-protocol contracts (OpenAPI/AsyncAPI/CloudEvents/Arazzo + xRegistry via Apicurio)*
 - **Ch22** Quarkus REST in depth: build-time metadata, zero-reflection @RestHeader/@RestQuery, reactive-first streaming of files/large JSON/NDJSON, LangChain4j SSE, Camel Quarkus/CXF, JobRunr. [H] — *addition: Quarkus section*
 - **Ch23** FastAPI in depth: ASGI streaming, StreamingResponse/SSE, BackgroundTasks, threads vs async for I/O, GIL/free-threaded. [H] — *addition: FastAPI corollary*
@@ -175,7 +175,7 @@ example additionally ships its own `architecture.{svg,excalidraw}` (CNDP convent
 Each code phase is executed as a relay (Sonnet executors per chapter/example, Opus validation
 against the acceptance criteria) with a checkpoint commit per chapter that lands green.
 
-**"Shippable r01"** = Jekyll builds clean with Parts 0–2 authored to depth; the OpenAPI 3.1
+**"Shippable r01"** = Jekyll builds clean with Parts 0–2 authored to depth; the OpenAPI
 contract exists and CI validates **both** stacks against it on Docker Compose; every r01
 hands-on chapter has verified-run Quarkus + FastAPI examples; r01 diagrams paired; nav/cards
 resolve; no eBPF/Aya residue.
@@ -212,6 +212,6 @@ Plan approved at these settings. Execution begins at Phase 1 (contract & CI spin
 - HTTP/3/QUIC hard to demo behind compose/ingress (UDP) — Ch19 tier-gates h3, documents fallback, verifies h2 everywhere.
 - SSE/chunked buffered behind K8s ingress — Ch16/Ch25 behavioral test asserts incremental delivery.
 - CNDP load-harness shape (`examples/28-newman`) — confirm/vendor early in Phase 6; pin under `examples/_harness/` if needed.
-- OpenAPI 3.1 tooling gaps (3.1 / JSON-Schema-2020-12 support uneven) — choose a 3.1-capable validator in Phase 1; assert 3.1 constructs.
+- OpenAPI / JSON-Schema-2020-12 tooling gaps (support can be uneven) — choose a capable validator in Phase 1; assert modern constructs.
 - Scope overrun (26 ch × 2 stacks) — r01–r06 cadence; each iteration independently shippable.
 - Toolchain pin drift (latest LTS, UBI 10) — pin in Ch0 + Containerfiles; CI build is the canary.

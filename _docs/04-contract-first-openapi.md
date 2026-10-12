@@ -1,12 +1,12 @@
 ---
-title: "Contract-first with OpenAPI 3.1"
+title: "Contract-first with OpenAPI"
 order: 4
 part: "Designing resources with a contract"
-description: "Author the bookings and cargo contract as one OpenAPI 3.1 document, scaffold both stacks to serve it, and wire the CI gate that fails the build when a response drifts from the schema."
+description: "Author the bookings and cargo contract as one OpenAPI document, scaffold both stacks to serve it, and wire the CI gate that fails the build when a response drifts from the schema."
 duration: "30 min"
 ---
 
-Chapter 3 named the resources: `Booking` as the aggregate root, `Cargo` nested beneath it, `Location` as reference data outside the boundary. None of that becomes an API until someone writes down the exact shape of a request and a response, and decides where that writing lives. This chapter puts it in one place — a single OpenAPI 3.1 document — before either stack has a line of handler code, and wires a CI job that fails the build the moment an implementation stops matching it. That ordering is the pivot every later hands-on chapter turns on: each one starts from the contract, not from whichever stack happened to get written first.
+Chapter 3 named the resources: `Booking` as the aggregate root, `Cargo` nested beneath it, `Location` as reference data outside the boundary. None of that becomes an API until someone writes down the exact shape of a request and a response, and decides where that writing lives. This chapter puts it in one place — a single OpenAPI document — before either stack has a line of handler code, and wires a CI job that fails the build the moment an implementation stops matching it. That ordering is the pivot every later hands-on chapter turns on: each one starts from the contract, not from whichever stack happened to get written first.
 
 ## Contract-first versus code-first
 
@@ -18,7 +18,7 @@ Contract-first inverts the order. `contracts/openapi/shipping-api.yaml` is writt
 
 ## Anatomy of the shipping contract
 
-The contract spans two files with a strict division of labor. `contracts/schemas/shipping.schema.json` is JSON Schema 2020-12 — the same draft OpenAPI 3.1 aligned itself with, which is what makes the next part possible — and holds every payload type the domain needs under `$defs`: `Booking`, `Cargo`, `Money`, `Location`, `Problem`, and more. `contracts/openapi/shipping-api.yaml` holds everything JSON Schema doesn't describe: the paths, the HTTP methods, the status codes, the headers. It never redefines a payload shape; it references one.
+The contract spans two files with a strict division of labor. `contracts/schemas/shipping.schema.json` is JSON Schema 2020-12 — the same draft modern OpenAPI aligns with, which is what makes the next part possible — and holds every payload type the domain needs under `$defs`: `Booking`, `Cargo`, `Money`, `Location`, `Problem`, and more. `contracts/openapi/shipping-api.yaml` holds everything JSON Schema doesn't describe: the paths, the HTTP methods, the status codes, the headers. It never redefines a payload shape; it references one.
 
 Here's the `POST /bookings` operation reaching into the shared schema for both its request and its success response:
 

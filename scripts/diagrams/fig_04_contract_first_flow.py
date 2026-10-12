@@ -10,7 +10,7 @@ W, H = 960, 500
 
 nodes = [
     {"x": 370, "y": 30, "w": 220, "h": 70,
-     "lines": ["OpenAPI 3.1 contract", "shipping/cargo booking"], "style": "accent"},
+     "lines": ["OpenAPI contract", "shipping/cargo booking"], "style": "accent"},
 
     {"x": 80, "y": 150, "w": 260, "h": 80,
      "lines": ["Quarkus scaffold", "generated from contract"], "style": "box"},

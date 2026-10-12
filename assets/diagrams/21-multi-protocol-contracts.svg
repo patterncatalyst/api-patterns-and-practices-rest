@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 760" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="20" y="25" width="900" height="90" rx="12" fill="#fff8ef" stroke="#ddd"/>
+<text x="32" y="45" font-size="12" font-weight="700" fill="#1d1d1d">single source of truth</text>
+<rect x="20" y="140" width="430" height="190" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="160" font-size="12" font-weight="700" fill="#1d1d1d">sync REST path — $ref&#x27;d by OpenAPI</text>
+<rect x="490" y="140" width="430" height="190" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="502" y="160" font-size="12" font-weight="700" fill="#1d1d1d">event path — $ref&#x27;d by AsyncAPI</text>
+<rect x="20" y="355" width="900" height="110" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="375" font-size="12" font-weight="700" fill="#1d1d1d">Arazzo workflow — spans multiple services as one business process</text>
+<rect x="20" y="490" width="900" height="160" rx="12" fill="#fff3e0" stroke="#ddd"/>
+<text x="32" y="510" font-size="12" font-weight="700" fill="#1d1d1d">governance tier — local-only, tier-gated OUT of CI</text>
+<rect x="340" y="55" width="260" height="50" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="470.0" y="78.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">contracts/schemas/*.json</text>
+<text x="470.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">shared JSON Schema $defs</text>
+<rect x="40" y="180" width="150" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="115.0" y="210.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">REST client</text>
+<rect x="230" y="180" width="190" height="50" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="325.0" y="203.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">OpenAPI / REST</text>
+<text x="325.0" y="220.0" font-size="11.5" fill="#555555" text-anchor="middle">endpoint</text>
+<rect x="230" y="260" width="190" height="50" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="325.0" y="290.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Service</text>
+<rect x="510" y="260" width="190" height="50" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="605.0" y="283.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">CloudEvents envelope</text>
+<text x="605.0" y="300.0" font-size="11.5" fill="#555555" text-anchor="middle">BookingEvent</text>
+<rect x="730" y="260" width="170" height="50" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="815.0" y="290.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Kafka (KRaft)</text>
+<rect x="730" y="180" width="170" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="815.0" y="210.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Consumer</text>
+<rect x="60" y="395" width="240" height="50" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="180.0" y="425.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">booking</text>
+<rect x="350" y="395" width="240" height="50" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="470.0" y="425.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">routing</text>
+<rect x="640" y="395" width="240" height="50" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="760.0" y="425.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">tracking</text>
+<rect x="100" y="535" width="320" height="90" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="260.0" y="570.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Apicurio Registry</text>
+<text x="260.0" y="587.5" font-size="11.5" fill="#555555" text-anchor="middle">schema/artifact registry</text>
+<text x="260.0" y="602.5" font-size="11.5" fill="#555555" text-anchor="middle">xRegistry touchpoint</text>
+<rect x="520" y="535" width="320" height="90" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="680.0" y="563.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">OpenMetadata</text>
+<text x="680.0" y="580.0" font-size="11.5" fill="#555555" text-anchor="middle">data catalog</text>
+<text x="680.0" y="595.0" font-size="11.5" fill="#555555" text-anchor="middle">tracks schema/version history over time</text>
+<text x="680.0" y="610.0" font-size="11.5" fill="#555555" text-anchor="middle">(not an xRegistry impl)</text>
+<path d="M190,205 L230,205" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M325,230 L325,260" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M470,100 L325,180" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M470,100 L605,260" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M420,285 L510,285" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="471.0" y="279.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">emits</text>
+<text x="471.0" y="279.0" font-size="11" fill="#b8650a" text-anchor="middle">emits</text>
+<path d="M700,285 L730,285" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M815,260 L815,230" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M300,420 L350,420" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M590,420 L640,420" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M325,465 L260,535" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M815,465 L680,535" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="470.0" y="748" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">The schema is the single source of truth for both the sync (OpenAPI) and async (AsyncAPI) contracts. The governance tier runs locally only; it is deliberately excluded from the CI gate.</text>
+</svg>
