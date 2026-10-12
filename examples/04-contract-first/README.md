@@ -56,19 +56,21 @@ their responses are byte-for-byte comparable, not just independently valid:
 
 ```
 quote.currency = "USD"
-quote.amount   = format(sum(cargo[].dimensions.weightKg) * 2.50, ".2f")
+quote.amount   = round_half_up(sum(cargo[].dimensions.weightKg) * 2.50, 2)
 ```
 
 `amount` is always a **decimal string** (e.g. `"3001.25"`), per the schema —
 never a JSON number (see the drift probe below for why that distinction is
-load-bearing). Both implementations compute the sum/format independently
-(`QuoteCalculator.java` / `app/quote.py`); the example payloads in
-`verify.sh` use weights chosen to avoid binary-floating-point rounding edge
-cases (e.g. `1200.5 * 2.50 = 3001.25` is exact in IEEE 754 double
-precision), so this reference build sidesteps the question of whether
-`String.format("%.2f", ...)` (Java, HALF_UP) and Python's `f"{x:.2f}"`
-(round-half-to-even) agree on every input — they don't have to, for inputs
-that land exactly on two decimal places.
+load-bearing). Both implementations compute the sum/round independently
+(`QuoteCalculator.java` / `app/quote.py`), and both round the same way:
+Java via `BigDecimal.valueOf(amount).setScale(2, RoundingMode.HALF_UP)`,
+Python via `Decimal(str(amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)`.
+Rounding explicitly to HALF_UP on both sides (rather than Java's
+`String.format("%.2f", ...)`, which is also HALF_UP, paired with Python's
+`f"{x:.2f}"`, which is round-half-to-even) means the two stacks agree on
+every input, not just ones — like the example payload's
+`1200.5 * 2.50 = 3001.25` — that land exactly on two decimal places and
+sidestep the question entirely.
 
 ## IDs
 
@@ -108,7 +110,7 @@ either stack and re-run `./verify.sh`:
 In `python/app/quote.py`, change:
 
 ```python
-amount = f"{total_weight_kg * _RATE_PER_KG:.2f}"
+amount = str(Decimal(str(total_weight_kg * _RATE_PER_KG)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 ```
 
 to:

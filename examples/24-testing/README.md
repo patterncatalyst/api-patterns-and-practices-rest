@@ -148,7 +148,9 @@ that's wrong in some other way — introduce this edit and re-run
 In `python/app/quote.py`, change:
 
 ```python
-amount = f"{total_weight_kg * _RATE_PER_KG:.2f}"
+amount = str(
+    Decimal(str(total_weight_kg * _RATE_PER_KG)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+)
 ```
 
 to:

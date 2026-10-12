@@ -15,6 +15,7 @@ import com.patterncatalyst.shipping.model.PageMeta;
 import com.patterncatalyst.shipping.model.Problem;
 
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
@@ -23,11 +24,12 @@ import jakarta.ws.rs.PATCH;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.RestPath;
+import org.jboss.resteasy.reactive.RestQuery;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -57,12 +59,7 @@ public class BookingResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createBooking(BookingRequest request) {
-        Response invalid = validateBookingRequest(request);
-        if (invalid != null) {
-            return invalid;
-        }
-
+    public Response createBooking(@Valid BookingRequest request) {
         List<Cargo> cargoItems = toCargoItems(request.cargo());
         String now = nowUtc();
         Booking booking = new Booking(
@@ -92,7 +89,7 @@ public class BookingResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response listBookings(@QueryParam("limit") @DefaultValue("20") int limit) {
+    public Response listBookings(@RestQuery @DefaultValue("20") int limit) {
         List<Booking> visible = store.listVisible().stream().map(this::withLinks).toList();
         PageMeta page = new PageMeta(limit, visible.size(), null);
         return Response.ok(new BookingCollection(visible, page)).build();
@@ -101,7 +98,7 @@ public class BookingResource {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getBooking(@PathParam("id") String id) {
+    public Response getBooking(@RestPath String id) {
         Booking booking = store.get(id);
         if (booking == null) {
             return notFound(id);
@@ -113,14 +110,10 @@ public class BookingResource {
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response replaceBooking(@PathParam("id") String id, BookingRequest request) {
+    public Response replaceBooking(@RestPath String id, @Valid BookingRequest request) {
         Booking existing = store.get(id);
         if (existing == null) {
             return notFound(id);
-        }
-        Response invalid = validateBookingRequest(request);
-        if (invalid != null) {
-            return invalid;
         }
 
         // Deterministic (not random) cargo ids: PUT must be idempotent, so
@@ -148,7 +141,7 @@ public class BookingResource {
     @Path("/{id}")
     @Consumes("application/merge-patch+json")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response patchBooking(@PathParam("id") String id, JsonNode mergePatchDoc) {
+    public Response patchBooking(@RestPath String id, JsonNode mergePatchDoc) {
         Booking existing = store.get(id);
         if (existing == null) {
             return notFound(id);
@@ -180,7 +173,7 @@ public class BookingResource {
 
     @DELETE
     @Path("/{id}")
-    public Response deleteBooking(@PathParam("id") String id) {
+    public Response deleteBooking(@RestPath String id) {
         Booking existing = store.get(id);
         if (existing == null) {
             return notFound(id);
@@ -195,7 +188,7 @@ public class BookingResource {
     @GET
     @Path("/{id}/cargo")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response listCargo(@PathParam("id") String id) {
+    public Response listCargo(@RestPath String id) {
         Booking booking = store.get(id);
         if (booking == null) {
             return notFound(id);
@@ -207,14 +200,10 @@ public class BookingResource {
     @Path("/{id}/cargo")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response addCargo(@PathParam("id") String id, CargoRequest request) {
+    public Response addCargo(@RestPath String id, @Valid CargoRequest request) {
         Booking booking = store.get(id);
         if (booking == null) {
             return notFound(id);
-        }
-        if (request == null || isBlank(request.description()) || request.type() == null
-                || request.dimensions() == null || request.dimensions().weightKg() <= 0) {
-            return problem(400, "Invalid cargo request", "description, type and dimensions.weightKg > 0 are required");
         }
 
         Cargo cargo = new Cargo("crg_" + Ulid.generate(), request.description(), request.type(),
@@ -247,21 +236,21 @@ public class BookingResource {
     @POST
     @Path("/{id}/confirmation")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response confirmBooking(@PathParam("id") String id) {
+    public Response confirmBooking(@RestPath String id) {
         return transition(id, BookingStatus.PENDING, BookingStatus.CONFIRMED, "confirmed");
     }
 
     @POST
     @Path("/{id}/transit")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response startTransit(@PathParam("id") String id) {
+    public Response startTransit(@RestPath String id) {
         return transition(id, BookingStatus.CONFIRMED, BookingStatus.IN_TRANSIT, "moved to IN_TRANSIT");
     }
 
     @POST
     @Path("/{id}/delivery")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response deliverBooking(@PathParam("id") String id) {
+    public Response deliverBooking(@RestPath String id) {
         return transition(id, BookingStatus.IN_TRANSIT, BookingStatus.DELIVERED, "delivered");
     }
 
@@ -297,23 +286,6 @@ public class BookingResource {
         return new Booking(
                 booking.id(), booking.status(), booking.origin(), booking.destination(), booking.cargo(),
                 booking.quote(), booking.requestedPickup(), booking.createdAt(), booking.updatedAt(), links);
-    }
-
-    private Response validateBookingRequest(BookingRequest request) {
-        if (request == null || request.origin() == null || isBlank(request.origin().unLocode())
-                || request.destination() == null || isBlank(request.destination().unLocode())
-                || request.cargo() == null || request.cargo().isEmpty()) {
-            return problem(400, "Invalid booking request",
-                    "origin.unLocode, destination.unLocode and at least one cargo item are required");
-        }
-        for (CargoRequest c : request.cargo()) {
-            if (isBlank(c.description()) || c.type() == null || c.dimensions() == null
-                    || c.dimensions().weightKg() <= 0) {
-                return problem(400, "Invalid cargo item",
-                        "each cargo item needs description, type and dimensions.weightKg > 0");
-            }
-        }
-        return null;
     }
 
     private List<Cargo> toCargoItems(List<CargoRequest> requests) {
@@ -355,10 +327,6 @@ public class BookingResource {
             }
         }
         return result;
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
     }
 
     private static String nowUtc() {

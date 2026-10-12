@@ -8,10 +8,11 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.RestPath;
 
 /**
  * The poll/cancel half of Ch10's long-running operation protocol
@@ -33,7 +34,7 @@ public class OperationResource {
     @GET
     @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response get(@PathParam("id") String id) {
+    public Response get(@RestPath String id) {
         Operation operation = store.get(id);
         if (operation == null) {
             return notFound(id);
@@ -48,7 +49,7 @@ public class OperationResource {
 
     @DELETE
     @Path("/{id}")
-    public Response cancel(@PathParam("id") String id) {
+    public Response cancel(@RestPath String id) {
         if (store.get(id) == null) {
             return notFound(id);
         }

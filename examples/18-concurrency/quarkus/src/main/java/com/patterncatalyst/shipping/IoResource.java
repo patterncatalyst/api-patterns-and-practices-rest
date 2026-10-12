@@ -8,8 +8,9 @@ import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
+
+import org.jboss.resteasy.reactive.RestQuery;
 
 import java.time.Duration;
 
@@ -52,7 +53,7 @@ public class IoResource {
     @GET
     @Path("/slow")
     @Produces(MediaType.APPLICATION_JSON)
-    public Uni<SlowResponse> slow(@QueryParam("ms") @DefaultValue("200") long ms) {
+    public Uni<SlowResponse> slow(@RestQuery("ms") @DefaultValue("200") long ms) {
         return Uni.createFrom()
                 .item(() -> new SlowResponse(ms, Thread.currentThread().getName()))
                 .onItem().delayIt().by(Duration.ofMillis(ms));
@@ -61,7 +62,7 @@ public class IoResource {
     @GET
     @Path("/slow-blocking")
     @Produces(MediaType.APPLICATION_JSON)
-    public SlowResponse slowBlocking(@QueryParam("ms") @DefaultValue("200") long ms) throws InterruptedException {
+    public SlowResponse slowBlocking(@RestQuery("ms") @DefaultValue("200") long ms) throws InterruptedException {
         Thread.sleep(ms);
         return new SlowResponse(ms, Thread.currentThread().getName());
     }

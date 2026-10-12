@@ -1,6 +1,7 @@
 package com.patterncatalyst.shipping;
 
 import com.patterncatalyst.shipping.model.Problem;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotSupportedException;
 import jakarta.ws.rs.core.MediaType;
@@ -8,6 +9,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import org.jboss.logging.Logger;
+
+import java.util.stream.Collectors;
 
 /**
  * Makes sure errors the JAX-RS runtime raises itself (not just the ones
@@ -29,6 +32,20 @@ public final class ProblemMappers {
                     "Unsupported Media Type", 415,
                     "PATCH requires Content-Type: application/merge-patch+json");
             return Response.status(415).type("application/problem+json").entity(problem).build();
+        }
+    }
+
+    @Provider
+    public static class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
+        @Override
+        public Response toResponse(ConstraintViolationException e) {
+            String detail = e.getConstraintViolations().stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .sorted()
+                    .collect(Collectors.joining("; "));
+            Problem problem = new Problem("Validation failed", 400,
+                    detail.isEmpty() ? "The request failed validation" : detail);
+            return Response.status(400).type("application/problem+json").entity(problem).build();
         }
     }
 

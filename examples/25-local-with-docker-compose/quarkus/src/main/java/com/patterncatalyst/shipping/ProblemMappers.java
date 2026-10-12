@@ -1,11 +1,14 @@
 package com.patterncatalyst.shipping;
 
 import com.patterncatalyst.shipping.model.Problem;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import org.jboss.logging.Logger;
+
+import java.util.stream.Collectors;
 
 /**
  * Makes sure errors the JAX-RS runtime raises itself (not just the ones
@@ -26,6 +29,29 @@ public final class ProblemMappers {
         public Response toResponse(NotAcceptableException exception) {
             Problem problem = new Problem("Not Acceptable", 406, exception.getMessage());
             return Response.status(406).type("application/problem+json").entity(problem).build();
+        }
+    }
+
+    /**
+     * Quarkus Bean Validation: {@code @Valid} on a resource method's
+     * request-body parameter (see BookingResource) throws this when a
+     * constraint fails — e.g. a missing {@code origin.unLocode} or a
+     * {@code dimensions.weightKg <= 0}. Reproduces the same 400
+     * {@code application/problem+json} shape the hand-rolled checks it
+     * replaced used to return.
+     */
+    @Provider
+    public static class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
+        @Override
+        public Response toResponse(ConstraintViolationException exception) {
+            String detail = exception.getConstraintViolations().stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .sorted()
+                    .collect(Collectors.joining("; "));
+            Problem problem = new Problem(
+                    "Validation failed", 400,
+                    detail.isEmpty() ? "The request failed validation" : detail);
+            return Response.status(400).type("application/problem+json").entity(problem).build();
         }
     }
 

@@ -14,18 +14,20 @@ import com.patterncatalyst.shipping.model.PageMeta;
 import com.patterncatalyst.shipping.model.Problem;
 
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.RestHeader;
+import org.jboss.resteasy.reactive.RestPath;
+import org.jboss.resteasy.reactive.RestQuery;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -61,12 +63,7 @@ public class BookingResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response createBooking(BookingRequest request) {
-        Response invalid = validateBookingRequest(request);
-        if (invalid != null) {
-            return invalid;
-        }
-
+    public Response createBooking(@Valid BookingRequest request) {
         List<Cargo> cargoItems = toCargoItems(request.cargo());
         String now = nowUtc();
         Booking booking = new Booking(
@@ -95,8 +92,8 @@ public class BookingResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response listBookings(
-            @QueryParam("limit") Integer limit,
-            @QueryParam("cursor") String cursor) {
+            @RestQuery Integer limit,
+            @RestQuery String cursor) {
         List<Booking> visible = store.listVisible();
         int effectiveLimit = clampLimit(limit);
 
@@ -122,9 +119,9 @@ public class BookingResource {
     @Path("/{id}")
     @Produces({MediaType.APPLICATION_JSON, VersionMapper.MEDIA_TYPE_V1, VersionMapper.MEDIA_TYPE_V2})
     public Response getBooking(
-            @PathParam("id") String id,
-            @HeaderParam("Accept") String accept,
-            @QueryParam("includeDeleted") @DefaultValue("false") boolean includeDeleted) {
+            @RestPath String id,
+            @RestHeader("Accept") String accept,
+            @RestQuery @DefaultValue("false") boolean includeDeleted) {
         Booking booking = includeDeleted ? store.get(id) : store.getVisible(id);
         if (booking == null) {
             return notFound(id);
@@ -152,7 +149,7 @@ public class BookingResource {
     @POST
     @Path("/{id}/confirmation")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response requestConfirmation(@PathParam("id") String id) {
+    public Response requestConfirmation(@RestPath String id) {
         Booking booking = store.get(id);
         if (booking == null) {
             return notFound(id);
@@ -174,8 +171,8 @@ public class BookingResource {
     @DELETE
     @Path("/{id}")
     public Response deleteBooking(
-            @PathParam("id") String id,
-            @QueryParam("reason") @DefaultValue("user-requested cancellation") String reason) {
+            @RestPath String id,
+            @RestQuery @DefaultValue("user-requested cancellation") String reason) {
         Booking existing = store.get(id);
         if (existing == null) {
             return notFound(id);
@@ -187,7 +184,7 @@ public class BookingResource {
     /** Ch13: GDPR "right to erasure" — hard-deletes the booking AND its audit trail. */
     @DELETE
     @Path("/{id}/purge")
-    public Response purgeBooking(@PathParam("id") String id) {
+    public Response purgeBooking(@RestPath String id) {
         boolean existed = store.purge(id);
         if (!existed) {
             return notFound(id);
@@ -229,33 +226,12 @@ public class BookingResource {
         }
     }
 
-    private Response validateBookingRequest(BookingRequest request) {
-        if (request == null || request.origin() == null || isBlank(request.origin().unLocode())
-                || request.destination() == null || isBlank(request.destination().unLocode())
-                || request.cargo() == null || request.cargo().isEmpty()) {
-            return problem(400, "Invalid booking request",
-                    "origin.unLocode, destination.unLocode and at least one cargo item are required");
-        }
-        for (CargoRequest c : request.cargo()) {
-            if (isBlank(c.description()) || c.type() == null || c.dimensions() == null
-                    || c.dimensions().weightKg() <= 0) {
-                return problem(400, "Invalid cargo item",
-                        "each cargo item needs description, type and dimensions.weightKg > 0");
-            }
-        }
-        return null;
-    }
-
     private List<Cargo> toCargoItems(List<CargoRequest> requests) {
         List<Cargo> items = new ArrayList<>(requests.size());
         for (CargoRequest cr : requests) {
             items.add(new Cargo("crg_" + Ulid.generate(), cr.description(), cr.type(), cr.dimensions(), cr.hazardousOrDefault()));
         }
         return items;
-    }
-
-    private static boolean isBlank(String s) {
-        return s == null || s.isBlank();
     }
 
     private static String nowUtc() {

@@ -5,10 +5,11 @@ import com.patterncatalyst.shipping.model.Problem;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HEAD;
-import jakarta.ws.rs.HeaderParam;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.RestHeader;
+import org.jboss.resteasy.reactive.RestPath;
 
 import java.util.Arrays;
 import java.util.regex.Matcher;
@@ -32,7 +33,7 @@ public class ManifestResource {
     BookingStore store;
 
     @HEAD
-    public Response head(@PathParam("bookingId") String bookingId) {
+    public Response head(@RestPath String bookingId) {
         if (store.get(bookingId) == null) {
             return notFound(bookingId);
         }
@@ -44,7 +45,7 @@ public class ManifestResource {
     }
 
     @GET
-    public Response get(@PathParam("bookingId") String bookingId, @HeaderParam("Range") String rangeHeader) {
+    public Response get(@RestPath String bookingId, @RestHeader("Range") String rangeHeader) {
         if (store.get(bookingId) == null) {
             return notFound(bookingId);
         }
