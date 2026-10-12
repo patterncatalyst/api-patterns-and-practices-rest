@@ -46,7 +46,7 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | A6 | HTTP/2 & HTTP/3 | Ch19 | `_docs/19-http2-http3.md` | verified |
 | A7 | Multi-protocol contracts (OpenAPI/AsyncAPI/CloudEvents/Arazzo + xRegistry) | Ch21 | `_docs/21-multi-protocol-contracts.md` | draft |
 | A8 | Quarkus REST in depth | Ch22 | `_docs/22-quarkus-rest-in-depth.md` | draft |
-| A9 | FastAPI in depth | Ch23 | `_docs/23-fastapi-in-depth.md` | planned |
+| A9 | FastAPI in depth | Ch23 | `_docs/23-fastapi-in-depth.md` | draft |
 | A10 | Full testing (contract + integration + Newman + load) | Ch24 | `_docs/24-testing-rest-apis.md` | planned |
 
 ## Runtime-tier additions → chapters (3)
@@ -84,7 +84,7 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | 20 | `_docs/20-openapi-in-depth.md` | Part 9 | draft |
 | 21 | `_docs/21-multi-protocol-contracts.md` | Part 9 | draft |
 | 22 | `_docs/22-quarkus-rest-in-depth.md` | Part 9 | draft |
-| 23 | `_docs/23-fastapi-in-depth.md` | Part 9 | planned |
+| 23 | `_docs/23-fastapi-in-depth.md` | Part 9 | draft |
 | 24 | `_docs/24-testing-rest-apis.md` | Part 10 | planned |
 | 25 | `_docs/25-local-with-docker-compose.md` | Part 11 | planned |
 | 26 | `_docs/26-kubernetes-on-minikube.md` | Part 11 | planned |
