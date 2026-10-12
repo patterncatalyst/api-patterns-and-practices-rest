@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # examples/27-complete-project/verify.sh
 #
-# Ch27 complete-project anchor — the integrative capstone. For BOTH stacks,
+# Ch27 complete-project anchor — the book's integrative, end-to-end check. For BOTH stacks,
 # this script drives ONE booking service through the whole book's flow end
 # to end:
 #   1. validate_response.py --selftest (the gate has teeth)

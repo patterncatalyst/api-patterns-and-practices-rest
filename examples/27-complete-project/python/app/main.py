@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import binascii
 import json
 from collections.abc import AsyncIterator
 
@@ -134,7 +135,7 @@ def _decode_cursor(cursor: str) -> str | None:
     try:
         padded = cursor + "=" * (-len(cursor) % 4)
         return base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8")
-    except Exception:
+    except (ValueError, UnicodeDecodeError, binascii.Error):
         return None
 
 

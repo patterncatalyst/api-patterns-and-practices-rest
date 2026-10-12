@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import datetime, timezone
 
 from confluent_kafka import Producer
@@ -22,8 +23,8 @@ from app.ulid import generate_ulid
 
 logger = logging.getLogger("ch27.events")
 
-TOPIC = "shipping.bookings.lifecycle"
-BOOTSTRAP_SERVERS = "kafka:9092"
+TOPIC = os.environ.get("BOOKING_EVENTS_TOPIC", "shipping.bookings.lifecycle")
+BOOTSTRAP_SERVERS = os.environ.get("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 
 _producer: Producer | None = None
 

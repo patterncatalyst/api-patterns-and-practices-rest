@@ -1,4 +1,4 @@
-# Ch27 complete-project anchor — the integrative capstone: ONE booking
+# Ch27 complete-project anchor — the integrative complete project: ONE booking
 # service, on BOTH stacks, that exercises the whole book's flow end to end
 # (contract-first create/read, keyset pagination, async confirmation,
 # HATEOAS, soft delete + GDPR purge, media-type versioning, an
@@ -14,7 +14,7 @@
 # Tracing (the Grafana LGTM stack — Ch25 already proves trace export in
 # CI) and load testing (Newman — documented, local-only) are kept OUT of
 # this chapter's default `up` and OUT of verify.sh entirely, so this
-# capstone's CI gate stays focused and fast. The `lgtm` service below is
+# project's CI gate stays focused and fast. The `lgtm` service below is
 # opt-in, behind `--profile observability`.
 #
 # Ports are UNIQUE across the repo's examples: Quarkus 8106, FastAPI 8025,
@@ -90,7 +90,7 @@ services:
 
   # ─── Observability (opt-in, local-only, OUT of CI) ─────────────────────
   # Ch25 already proves end-to-end trace export in CI; wiring OTel into
-  # THIS capstone too would duplicate that gate without adding coverage.
+  # THIS chapter's project too would duplicate that gate without adding coverage.
   # `docker compose --profile observability up` brings up Grafana LGTM for
   # local poking around — see README.md.
   lgtm:

@@ -141,7 +141,7 @@ PID-suffixed consumer group).
 
 **Tracing.** Ch25 (`examples/25-local-with-docker-compose`) already proves
 end-to-end OTLP trace export into a Grafana LGTM stack in CI. Wiring OTel
-into this capstone too would duplicate that gate without adding coverage,
+into this chapter's project too would duplicate that gate without adding coverage,
 and would balloon this already-broad verify.sh. The `lgtm` service here is
 real and runnable, just behind an opt-in profile:
 
