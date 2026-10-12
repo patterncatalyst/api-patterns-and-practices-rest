@@ -7,7 +7,16 @@ render_with_liquid: false
 # r07 Execution Plan — Phase 8 (polish + deck + launch)
 
 Relay on branch `docs/r07-polish`, mirroring `_plans/r06-execution-plan.md`.
-Standing approval: run batches without gating once the plan is approved. The site
+Standing approval: run batches without gating once the plan is approved.
+
+**USER-CONFIRMED DECISIONS (gate):** (A) Deck = **separate follow-up iteration**, not
+r07. (B) Bean-Validation = **harmonize ALL ~18 request-accepting Quarkus examples**, in
+waves, each Docker-re-verified. (C-raw-JAX-RS) = **HARMONIZE** `@PathParam`/`@QueryParam`/
+`@HeaderParam` → `@RestPath`/`@RestQuery`/`@RestHeader` across all Quarkus examples (user
+overrode the "leave it" default). (E) rounding = **HALF_UP** both stacks.
+**Execution split into two parallel branches (disjoint files):** `docs/r07-polish` =
+PR1 site-polish + PR2 voice sweep (_docs prose + chrome); `docs/r07-examples` = PR3
+idiom + Bean-Validation + raw-JAX-RS + rounding (examples/ code). Hub + deck separate. The site
 is **content-complete** — all 27 chapters + the CRC appendix + 24 examples are
 merged to main, CI is green (22 example matrix jobs + the `k8s-manifests` static
 job + site + contracts), Pages is live. Phase 8 is **polish, the deck, and
