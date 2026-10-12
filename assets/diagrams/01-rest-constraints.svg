@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 420" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="60" y="40" width="360" height="100" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="240.0" y="73.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">RPC / verb-oriented</text>
+<text x="240.0" y="90.0" font-size="11.5" fill="#555555" text-anchor="middle">POST /getBooking</text>
+<text x="240.0" y="105.0" font-size="11.5" fill="#555555" text-anchor="middle">POST /cancelBooking</text>
+<text x="240.0" y="120.0" font-size="11.5" fill="#555555" text-anchor="middle">verbs in the URL</text>
+<rect x="500" y="40" width="360" height="100" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="680.0" y="73.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Web API / resource-oriented</text>
+<text x="680.0" y="90.0" font-size="11.5" fill="#555555" text-anchor="middle">GET /bookings/{id}</text>
+<text x="680.0" y="105.0" font-size="11.5" fill="#555555" text-anchor="middle">DELETE /bookings/{id}</text>
+<text x="680.0" y="120.0" font-size="11.5" fill="#555555" text-anchor="middle">nouns + HTTP methods</text>
+<rect x="35" y="230" width="150" height="120" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="110.0" y="280.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client–server</text>
+<text x="110.0" y="297.5" font-size="11.5" fill="#555555" text-anchor="middle">UI decoupled from</text>
+<text x="110.0" y="312.5" font-size="11.5" fill="#555555" text-anchor="middle">data storage</text>
+<rect x="210" y="230" width="150" height="120" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="285.0" y="280.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Stateless</text>
+<text x="285.0" y="297.5" font-size="11.5" fill="#555555" text-anchor="middle">no client session</text>
+<text x="285.0" y="312.5" font-size="11.5" fill="#555555" text-anchor="middle">kept on the server</text>
+<rect x="385" y="230" width="150" height="120" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="460.0" y="280.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Cacheable</text>
+<text x="460.0" y="297.5" font-size="11.5" fill="#555555" text-anchor="middle">responses declare</text>
+<text x="460.0" y="312.5" font-size="11.5" fill="#555555" text-anchor="middle">their own freshness</text>
+<rect x="560" y="230" width="150" height="120" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="635.0" y="280.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Uniform interface</text>
+<text x="635.0" y="297.5" font-size="11.5" fill="#555555" text-anchor="middle">resources named,</text>
+<text x="635.0" y="312.5" font-size="11.5" fill="#555555" text-anchor="middle">verbs standardized</text>
+<rect x="735" y="230" width="150" height="120" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="810.0" y="280.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Layered system</text>
+<text x="810.0" y="297.5" font-size="11.5" fill="#555555" text-anchor="middle">gateways &amp; caches</text>
+<text x="810.0" y="312.5" font-size="11.5" fill="#555555" text-anchor="middle">stay transparent</text>
+<path d="M680,140 L635,230" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="667.5" y="175.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">REST constraints (Fielding)</text>
+<text x="667.5" y="175.0" font-size="11" fill="#b8650a" text-anchor="middle">REST constraints (Fielding)</text>
+<text x="480" y="95" font-size="13" fill="#555555" text-anchor="middle" font-weight="700">vs</text>
+<text x="635" y="375" font-size="11" fill="#555555" text-anchor="middle">Most REST APIs are built on client-server + stateless,</text>
+<text x="635" y="390" font-size="11" fill="#b8650a" text-anchor="middle">but violate the uniform interface — the constraint that matters most.</text>
+</svg>
