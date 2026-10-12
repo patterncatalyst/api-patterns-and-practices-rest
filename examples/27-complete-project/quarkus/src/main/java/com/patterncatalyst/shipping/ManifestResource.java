@@ -10,10 +10,11 @@ import io.smallrye.mutiny.Multi;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.RestPath;
 
 import java.time.Duration;
 
@@ -39,7 +40,7 @@ public class ManifestResource {
     @GET
     @Path("/{id}/manifest/export")
     @Produces("application/x-ndjson")
-    public Multi<String> exportManifest(@PathParam("id") String id) {
+    public Multi<String> exportManifest(@RestPath String id) {
         if (store.get(id) == null) {
             throw notFoundException(id);
         }

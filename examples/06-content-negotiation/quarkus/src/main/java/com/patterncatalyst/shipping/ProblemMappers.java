@@ -1,6 +1,7 @@
 package com.patterncatalyst.shipping;
 
 import com.patterncatalyst.shipping.model.Problem;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.ws.rs.NotAcceptableException;
 import jakarta.ws.rs.NotSupportedException;
 import jakarta.ws.rs.core.MediaType;
@@ -8,6 +9,8 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
 import jakarta.ws.rs.ext.Provider;
 import org.jboss.logging.Logger;
+
+import java.util.stream.Collectors;
 
 /**
  * Makes sure content-negotiation errors the JAX-RS runtime raises ITSELF
@@ -31,6 +34,12 @@ import org.jboss.logging.Logger;
  *       {@code application/problem+json} — raising
  *       {@link NotAcceptableException} (406).</li>
  * </ul>
+ *
+ * <p>A third case DOES reach BookingResource, but still never reaches the
+ * hand-written code: Quarkus Bean Validation's {@code @Valid} on a
+ * request-body parameter throws {@link ConstraintViolationException} when
+ * a constraint fails (e.g. a malformed body on {@code POST /bookings}),
+ * mapped below to the same 400 {@code Problem} shape.
  */
 public final class ProblemMappers {
 
@@ -57,6 +66,21 @@ public final class ProblemMappers {
                     "The Accept header does not match a media type this endpoint can produce "
                             + "(application/json, application/problem+json).");
             return Response.status(406).type("application/problem+json").entity(problem).build();
+        }
+    }
+
+    @Provider
+    public static class ConstraintViolationExceptionMapper implements ExceptionMapper<ConstraintViolationException> {
+        @Override
+        public Response toResponse(ConstraintViolationException exception) {
+            String detail = exception.getConstraintViolations().stream()
+                    .map(v -> v.getPropertyPath() + ": " + v.getMessage())
+                    .sorted()
+                    .collect(Collectors.joining("; "));
+            Problem problem = new Problem(
+                    "Invalid request", 400,
+                    detail.isEmpty() ? "The request failed validation" : detail);
+            return Response.status(400).type("application/problem+json").entity(problem).build();
         }
     }
 

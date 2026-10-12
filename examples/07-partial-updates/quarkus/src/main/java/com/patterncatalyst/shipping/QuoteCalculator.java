@@ -3,18 +3,23 @@ package com.patterncatalyst.shipping;
 import com.patterncatalyst.shipping.model.Cargo;
 import com.patterncatalyst.shipping.model.Money;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Deterministic quote formula, identical on both stacks so the Quarkus and
  * Python responses are byte-for-byte comparable (see README.md):
  *
  *     quote.currency = "USD"
- *     quote.amount   = format(sum(cargo[].dimensions.weightKg) * 2.50, ".2f")
+ *     quote.amount   = round_half_up(sum(cargo[].dimensions.weightKg) * 2.50, 2)
  *
  * The amount is always rendered as a decimal STRING ("1250.00"), per
- * `#/$defs/Money` in the shared schema — never a JSON number.
+ * `#/$defs/Money` in the shared schema — never a JSON number. Both stacks
+ * round HALF_UP explicitly (BigDecimal.setScale here, Python's
+ * Decimal(...).quantize(..., ROUND_HALF_UP) in app/quote.py) so they agree
+ * on every input, not just ones that happen to land exactly on two decimal
+ * places.
  */
 public final class QuoteCalculator {
 
@@ -28,7 +33,9 @@ public final class QuoteCalculator {
         for (Cargo item : cargo) {
             totalWeightKg += item.dimensions().weightKg();
         }
-        String amount = String.format(Locale.ROOT, "%.2f", totalWeightKg * RATE_PER_KG);
+        String amount = BigDecimal.valueOf(totalWeightKg * RATE_PER_KG)
+                .setScale(2, RoundingMode.HALF_UP)
+                .toPlainString();
         return new Money("USD", amount);
     }
 }
