@@ -35,9 +35,11 @@ wires an example to them, it does NOT recreate them.
   compose — the broker our AsyncAPI contract already names (`servers.kafka`,
   `protocol: kafka`, "Local Kafka (KRaft)"); `verify.sh`
   drives REST → background CloudEvents emission → broker consume → envelope +
-  `$defs` validation. Apicurio Registry (xRegistry touchpoint) is documented
-  and runnable locally behind a profile but kept OUT of CI. Rejected both
-  pure-option-1 and pure-option-2 — see below.
+  `$defs` validation. A governance tier — Apicurio Registry (schema/artifact
+  registry + xRegistry touchpoint) AND OpenMetadata (data catalog that tracks
+  version/schema changes over time; NOT an xRegistry impl) — is SHOWN with a
+  reproducible local walkthrough behind compose profiles but kept OUT of CI.
+  Rejected both pure-option-1 and pure-option-2 — see below.
 
 ## Judgment call A — Ch22/Ch23 are single-stack (resolved)
 Ch22 "Quarkus REST in depth" and Ch23 "FastAPI in depth" are the per-framework
@@ -68,15 +70,32 @@ single CI-friendly container. `verify.sh`:
 against `$defs/BookingEvent`; (3) static schema-reuse assertion — the shared
 `contracts/schemas/shipping.schema.json` is `$ref`'d by BOTH
 `contracts/openapi/shipping-api.yaml` and `contracts/asyncapi/shipping-events.yaml`;
-(4) the Arazzo `booking-workflow.yaml` validates. **Apicurio Registry** (the
-xRegistry touchpoint) publish/resolve is documented + runnable locally behind a
-`registry` compose profile, **tier-gated out of CI** (like h3 in Ch19).
-**Rejected — pure option 1** (broker + Apicurio both in CI): registry startup +
-artifact publication is the heaviest/flakiest piece and not the load-bearing
-teaching point of the live check. **Rejected — pure option 2** (no broker, all
-static): it demotes "background event streaming in one microservice" to a doc
-check and under-teaches the integrative core. The hybrid keeps the REST+event
-path live and deterministic while removing the flaky part.
+(4) the Arazzo `booking-workflow.yaml` validates.
+
+**Governance tier (local-only, SHOWN not just mentioned, tier-gated out of CI like
+h3 in Ch19) — two complementary tools, kept conceptually distinct:**
+- **Apicurio Registry** behind a `registry` compose profile — the schema/artifact
+  **registry** and the **xRegistry** touchpoint. The chapter SHOWS publishing the
+  OpenAPI + AsyncAPI + shared schema artifacts and resolving them at runtime, and
+  surfaces the xRegistry model/API view.
+- **OpenMetadata** behind an `catalog` compose profile — a **data catalog**, NOT an
+  xRegistry impl (do not conflate the two; state the distinction explicitly in the
+  prose). The chapter SHOWS OpenMetadata ingesting the API/schema artifacts and
+  then **tracking version and schema changes over time** — a schema evolution /
+  version bump appears as a detected change with lineage, which is the governance
+  story a registry alone doesn't tell. Provide a concrete local walkthrough
+  (compose profile up → ingest → make a schema/version change → show it detected),
+  with figures/console captures, so the reader can reproduce it.
+
+Both governance tools are heavy (OpenMetadata needs its own datastore + search +
+ingestion) and are the flakiest pieces, so both stay OUT of the CI gate; CI proves
+only the live REST + Kafka + CloudEvents path. **Rejected — pure option 1** (broker
++ registry/catalog all in CI): registry/catalog startup + ingestion is the
+heaviest/flakiest piece and not the load-bearing teaching point of the live check.
+**Rejected — pure option 2** (no broker, all static): it demotes "background event
+streaming in one microservice" to a doc check and under-teaches the integrative
+core. The hybrid keeps the REST+event path live and deterministic in CI while the
+governance tier is fully runnable locally.
 
 ## Scope / Examples (UNIQUE host ports; Quarkus 8100+, Python 8020+)
 - `examples/20-openapi-depth` — **both** stacks, 8100 (Quarkus) / 8020 (Python),
@@ -88,7 +107,9 @@ path live and deterministic while removing the flaky part.
   a live response body validates against the shared `$defs`.
 - `examples/21-multi-protocol-contracts` — **both** stacks + broker, 8101 /
   8021, Kafka (KRaft) broker on 19092 (host), project `ch21-contracts`. verify as
-  in Decision B. Apicurio on 8104 behind the `registry` profile (local-only).
+  in Decision B. Governance tier local-only: Apicurio on 8104 behind the
+  `registry` profile; OpenMetadata on 8585 behind the `catalog` profile (plus its
+  own datastore/search containers in that profile). Neither in CI.
 - `examples/22-quarkus-rest-depth` — **Quarkus only**, 8102, project
   `ch22-quarkus`. Zero-reflection `@RestHeader`/`@RestQuery` endpoint +
   reactive NDJSON/large-JSON streaming. verify asserts: a `@RestHeader` is
