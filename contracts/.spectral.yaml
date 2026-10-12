@@ -1,0 +1,13 @@
+# Spectral ruleset for the contract spine. Extends the built-in OpenAPI and
+# AsyncAPI rulesets; format-tagged rules apply only to matching documents.
+extends:
+  - spectral:oas
+  - spectral:asyncapi
+rules:
+  # House contracts intentionally omit top-level security schemes (taught later);
+  # don't fail the spine build on it.
+  oas3-api-servers: off
+  info-contact: off
+  info-description: off
+  operation-description: off
+  operation-tag-defined: off

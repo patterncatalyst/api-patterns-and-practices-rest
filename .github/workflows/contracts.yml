@@ -1,0 +1,85 @@
+name: contracts
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    name: Lint & validate contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Lint OpenAPI + AsyncAPI (Spectral)
+        run: >-
+          npx --yes @stoplight/spectral-cli@6 lint
+          --ruleset contracts/.spectral.yaml
+          --fail-severity=error
+          contracts/openapi/*.yaml contracts/asyncapi/*.yaml
+
+      - name: Validate OpenAPI 3.1 structure + refs (Redocly)
+        run: >-
+          npx --yes @redocly/cli@1 lint
+          --config contracts/redocly.yaml
+          contracts/openapi/shipping-api.yaml contracts/openapi/shipping-api-v1.yaml
+
+      - name: Validate shared schema + CloudEvents data (jsonschema)
+        run: |
+          python -m pip install --quiet 'jsonschema>=4.18' referencing
+          python -I scripts/validate_schemas.py
+
+  site:
+    name: Validate site & build Jekyll
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+          bundler-cache: true
+
+      - name: Static validation (front matter, diagrams, coverage)
+        run: python -I scripts/validate.py
+
+      - name: Word-count gate (draft/verified chapters)
+        run: GATE=1 bash scripts/wordcount.sh
+
+      - name: Build Jekyll
+        run: bundle exec jekyll build --trace
+
+  examples:
+    name: Verify stacks against the contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run each example's verify.sh (payload semantics vs contract)
+        run: |
+          shopt -s nullglob
+          scripts=(examples/*/verify.sh)
+          if [ ${#scripts[@]} -eq 0 ]; then
+            echo "No examples/*/verify.sh yet — contract spine only (Phase 1)."
+            exit 0
+          fi
+          rc=0
+          for s in "${scripts[@]}"; do
+            echo "::group::$s"
+            bash "$s" || rc=1
+            echo "::endgroup::"
+          done
+          exit $rc

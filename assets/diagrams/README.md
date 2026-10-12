@@ -7,4 +7,4 @@ here as you add them:
 
 | Diagram | Chapter | What it shows |
 |---|---|---|
-| `example-flow` | 1 | (replace with your diagrams) |
+| _(none yet — added per chapter in Phase 2+)_ | — | — |

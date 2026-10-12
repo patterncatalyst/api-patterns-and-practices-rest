@@ -1,0 +1,8 @@
+# Redocly config for structural OpenAPI 3.1 validation of the spine.
+# `minimal` keeps most stylistic rules off; we keep ref resolution strict so a
+# broken $ref into contracts/schemas/ fails the build.
+extends:
+  - minimal
+rules:
+  no-unresolved-refs: error
+  spec: error
