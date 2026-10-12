@@ -5,15 +5,19 @@ import com.patterncatalyst.shipping.model.Operation;
 import com.patterncatalyst.shipping.model.Problem;
 
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.RestPath;
 
 /**
  * Ch11 rerunnable-jobs: a single, singleton job named {@code
@@ -44,18 +48,15 @@ public class JobResource {
     @Inject
     JobStore store;
 
-    public record JobDefinitionRequest(Boolean enabled, Integer intervalSeconds) {
+    public record JobDefinitionRequest(
+            @NotNull Boolean enabled,
+            @NotNull @Positive Integer intervalSeconds) {
     }
 
     @PUT
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response configure(JobDefinitionRequest request) {
-        if (request == null || request.enabled() == null
-                || request.intervalSeconds() == null || request.intervalSeconds() < 1) {
-            return problem(400, "Invalid job definition",
-                    "enabled (boolean) and intervalSeconds (integer >= 1) are required");
-        }
+    public Response configure(@Valid JobDefinitionRequest request) {
         JobStore.ConfigureResult result = store.configure(request.enabled(), request.intervalSeconds());
         Response.Status status = result.created() ? Response.Status.CREATED : Response.Status.OK;
         return Response.status(status).entity(result.definition()).build();
@@ -98,7 +99,7 @@ public class JobResource {
     @GET
     @Path("/runs/{runId}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getRun(@PathParam("runId") String runId) {
+    public Response getRun(@RestPath String runId) {
         Operation run = store.getRun(runId);
         if (run == null) {
             return problem(404, "Run not found", "No run with id " + runId);

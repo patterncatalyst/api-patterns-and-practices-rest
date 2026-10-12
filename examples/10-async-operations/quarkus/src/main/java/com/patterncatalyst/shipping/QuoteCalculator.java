@@ -3,8 +3,9 @@ package com.patterncatalyst.shipping;
 import com.patterncatalyst.shipping.model.Cargo;
 import com.patterncatalyst.shipping.model.Money;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Deterministic quote formula, identical on both stacks so the Quarkus and
@@ -28,7 +29,9 @@ public final class QuoteCalculator {
         for (Cargo item : cargo) {
             totalWeightKg += item.dimensions().weightKg();
         }
-        String amount = String.format(Locale.ROOT, "%.2f", totalWeightKg * RATE_PER_KG);
+        String amount = BigDecimal.valueOf(totalWeightKg * RATE_PER_KG)
+                .setScale(2, RoundingMode.HALF_UP)
+                .toPlainString();
         return new Money("USD", amount);
     }
 }

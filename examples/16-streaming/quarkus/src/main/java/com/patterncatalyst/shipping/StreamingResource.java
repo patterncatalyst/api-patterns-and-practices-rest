@@ -10,12 +10,12 @@ import io.smallrye.mutiny.Multi;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import org.jboss.resteasy.reactive.RestPath;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 
 import java.time.Duration;
@@ -62,7 +62,7 @@ public class StreamingResource {
     @Path("/{bookingId}/events")
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @RestStreamElementType(MediaType.APPLICATION_JSON)
-    public Multi<BookingEvent> bookingEvents(@PathParam("bookingId") String bookingId) {
+    public Multi<BookingEvent> bookingEvents(@RestPath String bookingId) {
         if (store.get(bookingId) == null) {
             throw notFoundException(bookingId);
         }

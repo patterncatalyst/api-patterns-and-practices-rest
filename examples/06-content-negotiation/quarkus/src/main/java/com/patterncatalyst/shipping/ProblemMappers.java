@@ -78,7 +78,7 @@ public final class ProblemMappers {
                     .sorted()
                     .collect(Collectors.joining("; "));
             Problem problem = new Problem(
-                    "Invalid request", 400,
+                    "Validation failed", 400,
                     detail.isEmpty() ? "The request failed validation" : detail);
             return Response.status(400).type("application/problem+json").entity(problem).build();
         }

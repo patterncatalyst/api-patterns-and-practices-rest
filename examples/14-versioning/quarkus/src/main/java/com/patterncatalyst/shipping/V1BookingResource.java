@@ -6,9 +6,10 @@ import com.patterncatalyst.shipping.model.Problem;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
-import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Response;
+
+import org.jboss.resteasy.reactive.RestPath;
 
 /**
  * URI versioning, v1 side: {@code GET /v1/bookings/{id}} always returns the
@@ -26,7 +27,7 @@ public class V1BookingResource {
     @GET
     @Path("/{id}")
     @Produces(VersionMapper.MEDIA_TYPE_V1)
-    public Response getBookingV1(@PathParam("id") String id) {
+    public Response getBookingV1(@RestPath String id) {
         Booking booking = store.get(id);
         if (booking == null) {
             return notFound(id);
