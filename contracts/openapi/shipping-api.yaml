@@ -1,0 +1,338 @@
+openapi: 3.1.0
+info:
+  title: Shipping & Cargo Booking API
+  version: 2.0.0
+  summary: Book cargo, confirm it, track it, and move large manifests over REST.
+  description: >-
+    The single source of truth for the shipping/cargo REST API taught across
+    this site. Payload types are defined once in
+    `../schemas/shipping.schema.json` and referenced here; the same components
+    back the AsyncAPI event channels (`../asyncapi/shipping-events.yaml`) so the
+    sync and async contracts never drift. CI validates both the Quarkus and the
+    FastAPI implementations against this document.
+  license:
+    name: MIT
+    identifier: MIT
+  contact:
+    name: Pattern Catalyst
+    url: https://github.com/patterncatalyst/api-patterns-and-practices-rest
+servers:
+  - url: http://localhost:8080
+    description: Quarkus / FastAPI local (Docker Compose)
+  - url: https://api.example.test
+    description: Illustrative production origin
+tags:
+  - name: bookings
+    description: Create, read, update and cancel cargo bookings.
+  - name: cargo
+    description: Cargo items nested under a booking.
+  - name: operations
+    description: Long-running operations (202 Accepted → poll → 303).
+  - name: manifests
+    description: Large binary manifest resources (Range requests).
+paths:
+  /bookings:
+    get:
+      operationId: listBookings
+      summary: List bookings (keyset pagination + filtering).
+      tags: [bookings]
+      parameters:
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/Origin'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Fields'
+      responses:
+        '200':
+          description: A page of bookings.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/BookingCollection'
+        '400':
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: createBooking
+      summary: Create a booking.
+      tags: [bookings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/shipping.schema.json#/$defs/BookingRequest'
+      responses:
+        '201':
+          description: Booking created.
+          headers:
+            Location:
+              description: URI of the created booking.
+              required: true
+              schema: { type: string, format: uri-reference }
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/Booking'
+        '400':
+          $ref: '#/components/responses/Problem'
+        '415':
+          $ref: '#/components/responses/Problem'
+  /bookings/{bookingId}:
+    parameters:
+      - $ref: '#/components/parameters/BookingId'
+    get:
+      operationId: getBooking
+      summary: Fetch a booking.
+      tags: [bookings]
+      responses:
+        '200':
+          description: The booking.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/Booking'
+        '404':
+          $ref: '#/components/responses/Problem'
+    put:
+      operationId: replaceBooking
+      summary: Replace a booking (idempotent full update).
+      tags: [bookings]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/shipping.schema.json#/$defs/BookingRequest'
+      responses:
+        '200':
+          description: Booking replaced.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/Booking'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+    patch:
+      operationId: patchBooking
+      summary: Partially update a booking (JSON Patch or JSON Merge Patch).
+      tags: [bookings]
+      requestBody:
+        required: true
+        content:
+          application/json-patch+json:
+            schema:
+              type: array
+              items: { type: object }
+              description: RFC 6902 JSON Patch document.
+          application/merge-patch+json:
+            schema:
+              type: object
+              description: RFC 7396 JSON Merge Patch document.
+      responses:
+        '200':
+          description: Booking updated.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/Booking'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '415':
+          $ref: '#/components/responses/Problem'
+    delete:
+      operationId: deleteBooking
+      summary: Soft-delete (cancel) a booking.
+      tags: [bookings]
+      responses:
+        '204':
+          description: Booking cancelled (soft-deleted); hidden from default queries.
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /bookings/{bookingId}/cargo:
+    parameters:
+      - $ref: '#/components/parameters/BookingId'
+    get:
+      operationId: listCargo
+      summary: List cargo items under a booking.
+      tags: [cargo]
+      responses:
+        '200':
+          description: The booking's cargo.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '../schemas/shipping.schema.json#/$defs/Cargo'
+        '404':
+          $ref: '#/components/responses/Problem'
+    post:
+      operationId: addCargo
+      summary: Add a cargo item to a booking.
+      tags: [cargo]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../schemas/shipping.schema.json#/$defs/CargoRequest'
+      responses:
+        '201':
+          description: Cargo added.
+          headers:
+            Location:
+              required: true
+              schema: { type: string, format: uri-reference }
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/Cargo'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /bookings/{bookingId}/confirmation:
+    parameters:
+      - $ref: '#/components/parameters/BookingId'
+    post:
+      operationId: requestConfirmation
+      summary: Start asynchronous confirmation of a booking.
+      description: >-
+        Confirmation runs routing + capacity checks that exceed one
+        request/response. Returns 202 with an Operation to poll (Ch10).
+      tags: [operations]
+      responses:
+        '202':
+          description: Confirmation accepted; poll the operation.
+          headers:
+            Location:
+              description: URI of the operation to poll.
+              required: true
+              schema: { type: string, format: uri-reference }
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/Operation'
+        '404':
+          $ref: '#/components/responses/Problem'
+        '409':
+          $ref: '#/components/responses/Problem'
+  /operations/{operationId}:
+    parameters:
+      - $ref: '#/components/parameters/OperationId'
+    get:
+      operationId: getOperation
+      summary: Poll a long-running operation.
+      tags: [operations]
+      responses:
+        '200':
+          description: Operation still running or failed.
+          content:
+            application/json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/Operation'
+        '303':
+          description: Operation succeeded; follow Location to the result resource.
+          headers:
+            Location:
+              required: true
+              schema: { type: string, format: uri-reference }
+        '404':
+          $ref: '#/components/responses/Problem'
+  /bookings/{bookingId}/manifest:
+    parameters:
+      - $ref: '#/components/parameters/BookingId'
+    head:
+      operationId: headManifest
+      summary: Manifest metadata (size, range support) without the body.
+      tags: [manifests]
+      responses:
+        '200':
+          description: Manifest exists.
+          headers:
+            Accept-Ranges:
+              schema: { type: string, examples: [bytes] }
+            Content-Length:
+              schema: { type: integer }
+        '404':
+          $ref: '#/components/responses/Problem'
+    get:
+      operationId: getManifest
+      summary: Download the manifest, optionally a byte range.
+      tags: [manifests]
+      parameters:
+        - name: Range
+          in: header
+          required: false
+          schema: { type: string, examples: ["bytes=0-1048575"] }
+      responses:
+        '200':
+          description: Full manifest.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+        '206':
+          description: Partial manifest (range).
+          headers:
+            Content-Range:
+              schema: { type: string, examples: ["bytes 0-1048575/5242880"] }
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+        '404':
+          $ref: '#/components/responses/Problem'
+        '416':
+          $ref: '#/components/responses/Problem'
+components:
+  parameters:
+    BookingId:
+      name: bookingId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^bkg_[0-9A-HJKMNP-TV-Z]{26}$' }
+    OperationId:
+      name: operationId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^op_[0-9A-HJKMNP-TV-Z]{26}$' }
+    Status:
+      name: status
+      in: query
+      required: false
+      schema:
+        $ref: '../schemas/shipping.schema.json#/$defs/BookingStatus'
+    Origin:
+      name: origin
+      in: query
+      required: false
+      description: Filter by origin UN/LOCODE.
+      schema: { type: string, pattern: '^[A-Z]{2}[A-Z0-9]{3}$' }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size; a DoS guard caps it.
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Keyset cursor from the previous page's nextCursor.
+      schema: { type: string }
+    Fields:
+      name: fields
+      in: query
+      required: false
+      description: Comma-separated field projection (sparse fieldsets).
+      schema: { type: string, examples: ["id,status,origin,destination"] }
+  responses:
+    Problem:
+      description: RFC 9457 problem details.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '../schemas/shipping.schema.json#/$defs/Problem'

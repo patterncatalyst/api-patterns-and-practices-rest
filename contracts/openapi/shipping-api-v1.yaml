@@ -1,0 +1,57 @@
+openapi: 3.1.0
+info:
+  title: Shipping & Cargo Booking API (v1 — frozen)
+  version: 1.3.0
+  summary: The previous major version, kept to teach versioning (Ch14).
+  description: >-
+    v1 is a deliberately older shape of the booking resource, frozen as a stub
+    so Ch14 can show a real breaking change against v2
+    (`shipping-api.yaml`). The two differences that make v1→v2 a *major* bump:
+    v1 names the price field `price` (v2: `quote`) and carries a single
+    `cargoDescription` string instead of a `cargo[]` array. Clients pin v1 via
+    URI (`/v1/bookings`), `Accept: application/vnd.shipping.v1+json`, or a
+    version header — the strategies compared in Ch14.
+  license: { name: MIT, identifier: MIT }
+servers:
+  - url: http://localhost:8080/v1
+paths:
+  /bookings/{bookingId}:
+    parameters:
+      - name: bookingId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getBookingV1
+      summary: Fetch a v1 booking.
+      responses:
+        '200':
+          description: The v1 booking (older shape).
+          content:
+            application/vnd.shipping.v1+json:
+              schema: { $ref: '#/components/schemas/BookingV1' }
+        '404':
+          description: Not found.
+          content:
+            application/problem+json:
+              schema:
+                $ref: '../schemas/shipping.schema.json#/$defs/Problem'
+components:
+  schemas:
+    BookingV1:
+      type: object
+      description: v1 booking — single cargo description, `price` not `quote`.
+      properties:
+        id: { type: string }
+        status:
+          $ref: '../schemas/shipping.schema.json#/$defs/BookingStatus'
+        origin:
+          $ref: '../schemas/shipping.schema.json#/$defs/Location'
+        destination:
+          $ref: '../schemas/shipping.schema.json#/$defs/Location'
+        cargoDescription: { type: string }
+        price:
+          $ref: '../schemas/shipping.schema.json#/$defs/Money'
+        createdAt: { type: string, format: date-time }
+      required: [id, status, origin, destination, cargoDescription, createdAt]
+      additionalProperties: false
