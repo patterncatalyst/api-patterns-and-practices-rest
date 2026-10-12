@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 620" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="20" y="30" width="430" height="360" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="50" font-size="12" font-weight="700" fill="#1d1d1d">Quarkus (JVM)</text>
+<rect x="490" y="30" width="430" height="360" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="502" y="50" font-size="12" font-weight="700" fill="#1d1d1d">Python</text>
+<rect x="50" y="70" width="370" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="235.0" y="100.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Requests</text>
+<rect x="50" y="150" width="370" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="235.0" y="185.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Blocking — worker pool</text>
+<text x="235.0" y="202.5" font-size="11.5" fill="#555555" text-anchor="middle">thread-per-request, N worker threads</text>
+<text x="235.0" y="217.5" font-size="11.5" fill="#555555" text-anchor="middle">risk: slow DB/file I/O exhausts the pool</text>
+<rect x="50" y="270" width="370" height="90" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="235.0" y="305.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Reactive / virtual threads</text>
+<text x="235.0" y="322.5" font-size="11.5" fill="#555555" text-anchor="middle">event loop dispatches to cheap virtual threads</text>
+<text x="235.0" y="337.5" font-size="11.5" fill="#555555" text-anchor="middle">blocking-looking code, non-blocking under the hood</text>
+<rect x="520" y="70" width="370" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="705.0" y="100.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Requests</text>
+<rect x="520" y="150" width="370" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="705.0" y="185.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Threadpool executor</text>
+<text x="705.0" y="202.5" font-size="11.5" fill="#555555" text-anchor="middle">GIL serializes CPU-bound work</text>
+<text x="705.0" y="217.5" font-size="11.5" fill="#555555" text-anchor="middle">blocking I/O offloaded to worker threads</text>
+<rect x="520" y="270" width="370" height="90" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="705.0" y="305.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">asyncio event loop</text>
+<text x="705.0" y="322.5" font-size="11.5" fill="#555555" text-anchor="middle">single thread, cooperative scheduling</text>
+<text x="705.0" y="337.5" font-size="11.5" fill="#555555" text-anchor="middle">non-blocking I/O via async/await</text>
+<rect x="200" y="450" width="230" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="315.0" y="483.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Database</text>
+<text x="315.0" y="500.0" font-size="11.5" fill="#555555" text-anchor="middle">connection pool</text>
+<rect x="500" y="450" width="230" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="615.0" y="483.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">File I/O</text>
+<text x="615.0" y="500.0" font-size="11.5" fill="#555555" text-anchor="middle">object storage / disk</text>
+<path d="M235,120 L235,150" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M235,240 L235,270" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M705,120 L705,150" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M705,240 L705,270" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M180,240 L290,450" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="241.0" y="339.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">blocks a thread</text>
+<text x="241.0" y="339.0" font-size="11" fill="#555" text-anchor="middle">blocks a thread</text>
+<path d="M300,360 L300,450" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="306.0" y="399.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">non-blocking</text>
+<text x="306.0" y="399.0" font-size="11" fill="#b8650a" text-anchor="middle">non-blocking</text>
+<path d="M650,240 L580,450" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="575.0" y="339.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">blocks a thread</text>
+<text x="575.0" y="339.0" font-size="11" fill="#555" text-anchor="middle">blocks a thread</text>
+<path d="M650,360 L650,450" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="690.0" y="399.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">non-blocking</text>
+<text x="690.0" y="399.0" font-size="11" fill="#b8650a" text-anchor="middle">non-blocking</text>
+<path d="M430,485 L500,485" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="465.0" y="477.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">same back end</text>
+<text x="465.0" y="477.0" font-size="11" fill="#555" text-anchor="middle">same back end</text>
+<text x="470.0" y="575" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">Reactive/virtual threads and the asyncio event loop scale by never parking a real OS thread on I/O — blocking models scale only as far as the thread pool, then requests queue or fail.</text>
+</svg>
