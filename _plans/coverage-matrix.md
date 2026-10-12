@@ -32,7 +32,7 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | D11 | HATEOAS | Ch12 | `_docs/12-hateoas.md` | verified |
 | D12 | Soft deletion | Ch13 | `_docs/13-soft-deletion-gdpr-purge.md` | verified |
 | D13 | Versioning | Ch14 | `_docs/14-versioning.md` | verified |
-| D14 | Large binary resources | Ch15 | `_docs/15-large-binary-resources-range.md` | draft |
+| D14 | Large binary resources | Ch15 | `_docs/15-large-binary-resources-range.md` | verified |
 
 ## Additions → chapters (10)
 
@@ -40,10 +40,10 @@ unverified) · `verified` (both stacks run green, footer flipped).
 |---|---|---|---|---|
 | A1 | API decision framework | Ch2 | `_docs/02-api-decision-framework.md` | draft |
 | A2 | OpenAPI 3.1 (in depth) | Ch20 | `_docs/20-openapi-31-in-depth.md` | planned |
-| A3 | Streaming (SSE / NDJSON / chunked) | Ch16 | `_docs/16-streaming-deep-dive.md` | draft |
+| A3 | Streaming (SSE / NDJSON / chunked) | Ch16 | `_docs/16-streaming-deep-dive.md` | verified |
 | A4 | Cross-protocol choices | Ch17 | `_docs/17-cross-protocol-choices.md` | draft |
-| A5 | Back-end I/O concurrency | Ch18 | `_docs/18-backend-io-concurrency.md` | draft |
-| A6 | HTTP/2 & HTTP/3 | Ch19 | `_docs/19-http2-http3.md` | draft |
+| A5 | Back-end I/O concurrency | Ch18 | `_docs/18-backend-io-concurrency.md` | verified |
+| A6 | HTTP/2 & HTTP/3 | Ch19 | `_docs/19-http2-http3.md` | verified |
 | A7 | Multi-protocol contracts (OpenAPI/AsyncAPI/CloudEvents/Arazzo + xRegistry) | Ch21 | `_docs/21-multi-protocol-contracts.md` | planned |
 | A8 | Quarkus REST in depth | Ch22 | `_docs/22-quarkus-rest-in-depth.md` | planned |
 | A9 | FastAPI in depth | Ch23 | `_docs/23-fastapi-in-depth.md` | planned |
@@ -76,11 +76,11 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | 12 | `_docs/12-hateoas.md` | Part 6 | verified |
 | 13 | `_docs/13-soft-deletion-gdpr-purge.md` | Part 6 | verified |
 | 14 | `_docs/14-versioning.md` | Part 6 | verified |
-| 15 | `_docs/15-large-binary-resources-range.md` | Part 7 | draft |
-| 16 | `_docs/16-streaming-deep-dive.md` | Part 7 | draft |
+| 15 | `_docs/15-large-binary-resources-range.md` | Part 7 | verified |
+| 16 | `_docs/16-streaming-deep-dive.md` | Part 7 | verified |
 | 17 | `_docs/17-cross-protocol-choices.md` | Part 7 | draft |
-| 18 | `_docs/18-backend-io-concurrency.md` | Part 8 | draft |
-| 19 | `_docs/19-http2-http3.md` | Part 8 | draft |
+| 18 | `_docs/18-backend-io-concurrency.md` | Part 8 | verified |
+| 19 | `_docs/19-http2-http3.md` | Part 8 | verified |
 | 20 | `_docs/20-openapi-31-in-depth.md` | Part 9 | planned |
 | 21 | `_docs/21-multi-protocol-contracts.md` | Part 9 | planned |
 | 22 | `_docs/22-quarkus-rest-in-depth.md` | Part 9 | planned |
