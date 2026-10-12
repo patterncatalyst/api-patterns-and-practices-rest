@@ -1,0 +1,42 @@
+# Ch4 contract-first anchor — FastAPI, UBI 10, uv-managed.
+# Build: docker build -f Containerfile -t ch04-shipping-python .
+#
+# UBI 10 publishes only the -minimal Python image (no ubi10/python-312).
+# Pin: registry.access.redhat.com/ubi10/python-314-minimal:10.2-1791464217
+# Re-check with:
+#   skopeo list-tags docker://registry.access.redhat.com/ubi10/python-314-minimal
+# and confirm with `skopeo inspect`. Bump deliberately.
+
+# ── Stage 1: Build ──────────────────────────────────────────
+FROM registry.access.redhat.com/ubi10/python-314-minimal:10.2-1791464217 AS build
+
+# The image runs as UID 1001; the build stage needs root to write /app.
+# Build at the same path the runtime uses: a venv is not relocatable, its
+# console scripts carry the absolute interpreter path.
+USER 0
+WORKDIR /app
+
+RUN pip install --no-cache-dir uv==0.12.24
+
+COPY pyproject.toml ./
+COPY app ./app
+
+# No uv.lock committed yet (small, pure-Python dependency set); --locked is
+# adopted once a lockfile lands alongside a persistence layer.
+RUN uv sync --no-dev
+
+# ── Stage 2: Runtime ────────────────────────────────────────
+FROM registry.access.redhat.com/ubi10/python-314-minimal:10.2-1791464217
+
+WORKDIR /app
+
+COPY --from=build --chown=1001:0 /app/.venv /app/.venv
+COPY --from=build --chown=1001:0 /app/app /app/app
+
+ENV PATH="/app/.venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1
+
+EXPOSE 8000
+USER 1001
+
+ENTRYPOINT ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
