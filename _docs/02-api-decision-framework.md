@@ -38,7 +38,7 @@ The fix is not a better single style; it's naming the property of each interacti
 
 ## A worked decision: confirming a booking
 
-Apply the axes to a concrete question: when a customer submits a booking, should confirming it — running the routing engine and the capacity check that together decide whether the cargo can actually move — be a synchronous REST call, an asynchronous REST operation, or an event?
+Apply the axes to a concrete question: when a customer submits a booking, should confirming it — running the routing engine and the capacity check that together decide whether the cargo can move — be a synchronous REST call, an asynchronous REST operation, or an event?
 
 Start with interaction shape. Confirmation isn't instantaneous: routing a multi-leg voyage against live capacity can take anywhere from a second to half a minute, well past what a client should sit blocked on a single HTTP connection waiting for. That alone rules out a plain synchronous `POST /bookings/{id}/confirmation` that returns `200` with the confirmed booking — the shape of the work doesn't match the shape of a single request/response round trip.
 
