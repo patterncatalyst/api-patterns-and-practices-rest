@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 620" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="20" y="25" width="900" height="100" rx="12" fill="#fff8ef" stroke="#ddd"/>
+<text x="32" y="45" font-size="12" font-weight="700" fill="#1d1d1d">source of truth (committed to the repo)</text>
+<rect x="20" y="150" width="900" height="140" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="170" font-size="12" font-weight="700" fill="#1d1d1d">runtime generation — each stack derives its own OpenAPI document from code</text>
+<rect x="20" y="315" width="900" height="140" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="335" font-size="12" font-weight="700" fill="#1d1d1d">CI drift check</text>
+<rect x="20" y="480" width="900" height="120" rx="12" fill="#fff8ef" stroke="#ddd"/>
+<text x="32" y="500" font-size="12" font-weight="700" fill="#1d1d1d">CI gate</text>
+<rect x="60" y="60" width="160" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="140.0" y="90.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Developer</text>
+<rect x="390" y="60" width="220" height="50" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="500.0" y="83.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">contracts/openapi.yaml</text>
+<text x="500.0" y="100.0" font-size="11.5" fill="#555555" text-anchor="middle">edits the contract</text>
+<rect x="100" y="185" width="300" height="80" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="250.0" y="215.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Quarkus app</text>
+<text x="250.0" y="232.5" font-size="11.5" fill="#555555" text-anchor="middle">JAX-RS + SmallRye OpenAPI</text>
+<text x="250.0" y="247.5" font-size="11.5" fill="#555555" text-anchor="middle">serves /q/openapi</text>
+<rect x="540" y="185" width="300" height="80" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="690.0" y="215.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">FastAPI app</text>
+<text x="690.0" y="232.5" font-size="11.5" fill="#555555" text-anchor="middle">Pydantic models</text>
+<text x="690.0" y="247.5" font-size="11.5" fill="#555555" text-anchor="middle">serves /openapi.json</text>
+<rect x="100" y="360" width="300" height="60" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="250.0" y="388.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">live-generated spec</text>
+<text x="250.0" y="405.0" font-size="11.5" fill="#555555" text-anchor="middle">(from /q/openapi)</text>
+<rect x="540" y="360" width="300" height="60" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="690.0" y="388.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">live-generated spec</text>
+<text x="690.0" y="405.0" font-size="11.5" fill="#555555" text-anchor="middle">(from /openapi.json)</text>
+<rect x="320" y="320" width="300" height="30" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="470.0" y="340.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">diff against contracts/openapi.yaml</text>
+<rect x="160" y="515" width="280" height="60" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="300.0" y="543.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">specs agree</text>
+<text x="300.0" y="560.0" font-size="11.5" fill="#555555" text-anchor="middle">CI: GREEN — merge allowed</text>
+<rect x="500" y="515" width="280" height="60" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="640.0" y="543.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">specs diverge</text>
+<text x="640.0" y="560.0" font-size="11.5" fill="#555555" text-anchor="middle">CI: RED — build fails</text>
+<path d="M220,85 L390,85" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<path d="M500,110 L250,185" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M500,110 L690,185" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<path d="M250,265 L250,360" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M690,265 L690,360" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M250,360 L420,335" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M690,360 L620,335" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<path d="M470,350 L300,515" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="391.0" y="426.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">match</text>
+<text x="391.0" y="426.5" font-size="11" fill="#b8650a" text-anchor="middle">match</text>
+<path d="M470,350 L640,515" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="561.0" y="426.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">mismatch</text>
+<text x="561.0" y="426.5" font-size="11" fill="#555" text-anchor="middle">mismatch</text>
+<text x="470.0" y="608" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">The committed contract is the source of truth; code must match it exactly. A deliberate divergence test proves the drift check actually fails CI, not just that it runs.</text>
+</svg>
