@@ -1,0 +1,48 @@
+# booking-config — shared env contract for both Deployments, in place of
+# compose.yaml's plaintext `environment:` blocks. Mirrors the idiom in
+# ~/Dev/modernizing-enterprise-applications/deploy/k8s/base/app-config.yaml:
+# one ConfigMap, consumed via envFrom, where it is harmless for a service to
+# receive a key it has no code path for.
+#
+# Two kinds of keys below (same taxonomy the mea repo's app-config.yaml
+# documents):
+#
+#   (a) ORDINAL-OVERRIDE key — quarkus-deployment.yaml's
+#       application.properties hardcodes
+#       `quarkus.otel.exporter.otlp.endpoint=http://lgtm:4317` (no `${...}`
+#       placeholder; see examples/25-local-with-docker-compose/quarkus/src/
+#       main/resources/application.properties). MicroProfile Config's
+#       EnvConfigSource (ordinal 300) beats Quarkus's own
+#       PropertiesConfigSource (ordinal 250), so the mapped env var
+#       QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT always wins, no code change.
+#   (b) NATIVE PLACEHOLDER key — the Python side already reads
+#       OTEL_EXPORTER_OTLP_ENDPOINT from the environment with a default of
+#       `http://lgtm:4318` (app/telemetry.py) — the documented knob.
+#
+# Ch26 does not redeploy the Ch25 LGTM stack (that is this chapter's own
+# subject on compose, not something to duplicate here) — both endpoints are
+# repointed at an in-cluster DNS name that resolves to nothing, exactly as
+# the mea repo's app-config.yaml notes for its own OTel key: harmless when
+# the additive observability stack is not deployed (the BatchSpanProcessor
+# logs an export failure and drops it; the Health/HTTP answer path is
+# untouched). This demonstrates the override mechanism itself — ConfigMap
+# values beating a hardcoded property via the env-var ordinal trick, and a
+# real documented env placeholder — which is this chapter's point, not
+# wiring up tracing again.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: booking-config
+  namespace: ch26-booking
+  labels:
+    app.kubernetes.io/part-of: ch26-booking
+data:
+  QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.ch26-booking.svc.cluster.local:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.ch26-booking.svc.cluster.local:4318"
+  OTEL_SERVICE_NAME: "shipping-python"
+
+  # ordinal-override: QUARKUS_LOG_LEVEL -> quarkus.log.level. A real,
+  # observable config knob (kubectl logs shows DEBUG-level output once this
+  # is bumped in the minikube overlay) that compose's local dev loop
+  # normally leaves at Quarkus's INFO default.
+  QUARKUS_LOG_LEVEL: "INFO"

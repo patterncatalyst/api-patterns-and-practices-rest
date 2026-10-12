@@ -1,0 +1,104 @@
+# quarkus-booking — the SAME image as examples/25-local-with-docker-compose/
+# quarkus (built from its Containerfile, not a third copy of the app). In
+# compose, this service is reached at a fixed published host port
+# (localhost:8105) and depends on `lgtm` via compose's service-name
+# networking (`depends_on` + the Docker network's embedded DNS). On
+# minikube there is no published host port at all — only the Ingress
+# resource (ingress.yaml) and in-cluster Service DNS
+# (quarkus-service.ch26-booking.svc.cluster.local) reach this Pod.
+#
+# Health: quarkus-smallrye-health is on the classpath (see
+# examples/25-local-with-docker-compose/quarkus/pom.xml), so
+# /q/health/{started,ready,live} are real httpGet targets — compose's
+# healthcheck: only ever polled plain /q/health once.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: quarkus-booking
+  namespace: ch26-booking
+  labels:
+    app.kubernetes.io/name: quarkus-booking
+    app.kubernetes.io/part-of: ch26-booking
+    app.kubernetes.io/component: booking-api
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: quarkus-booking
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: quarkus-booking
+        app.kubernetes.io/part-of: ch26-booking
+        app.kubernetes.io/component: booking-api
+    spec:
+      containers:
+        - name: quarkus-booking
+          image: booking/quarkus:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: booking-config
+            - secretRef:
+                name: booking-secret
+          startupProbe:
+            httpGet:
+              path: /q/health/started
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 150m
+              memory: 320Mi
+            limits:
+              cpu: 750m
+              memory: 640Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 185
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: quarkus-service
+  namespace: ch26-booking
+  labels:
+    app.kubernetes.io/name: quarkus-booking
+    app.kubernetes.io/part-of: ch26-booking
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: quarkus-booking
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
