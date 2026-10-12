@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 580" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="40" y="20" width="290" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="185.0" y="50.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<rect x="570" y="20" width="290" height="50" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="715.0" y="43.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Server</text>
+<text x="715.0" y="60.0" font-size="11.5" fill="#555555" text-anchor="middle">GET /manifests/{id}</text>
+<rect x="40" y="110" width="290" height="60" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="185.0" y="145.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">HEAD /manifests/{id}</text>
+<rect x="570" y="110" width="290" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="715.0" y="145.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">200 OK</text>
+<text x="715.0" y="162.5" font-size="11.5" fill="#555555" text-anchor="middle">Accept-Ranges: bytes</text>
+<text x="715.0" y="177.5" font-size="11.5" fill="#555555" text-anchor="middle">Content-Length: 5242880</text>
+<rect x="40" y="260" width="290" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="185.0" y="293.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /manifests/{id}</text>
+<text x="185.0" y="310.0" font-size="11.5" fill="#555555" text-anchor="middle">Range: bytes=0-1048575</text>
+<rect x="570" y="260" width="290" height="100" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="715.0" y="300.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">206 Partial Content</text>
+<text x="715.0" y="317.5" font-size="11.5" fill="#555555" text-anchor="middle">Content-Range:</text>
+<text x="715.0" y="332.5" font-size="11.5" fill="#555555" text-anchor="middle">bytes 0-1048575/5242880</text>
+<rect x="40" y="420" width="290" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="185.0" y="453.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /manifests/{id}</text>
+<text x="185.0" y="470.0" font-size="11.5" fill="#555555" text-anchor="middle">Range: bytes=9000000-9999999</text>
+<rect x="570" y="420" width="290" height="100" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="715.0" y="460.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">416 Range Not Satisfiable</text>
+<text x="715.0" y="477.5" font-size="11.5" fill="#555555" text-anchor="middle">Content-Range:</text>
+<text x="715.0" y="492.5" font-size="11.5" fill="#555555" text-anchor="middle">bytes */5242880</text>
+<path d="M330,128 L570,128" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="456.0" y="122.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">probe size &amp; range support</text>
+<text x="456.0" y="122.0" font-size="11" fill="#555" text-anchor="middle">probe size &amp; range support</text>
+<path d="M570,155 L330,155" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="450.0" y="169.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">Accept-Ranges: bytes</text>
+<text x="450.0" y="169.0" font-size="11" fill="#b8650a" text-anchor="middle">Accept-Ranges: bytes</text>
+<path d="M330,278 L570,278" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="456.0" y="272.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">first 1 MiB chunk</text>
+<text x="456.0" y="272.0" font-size="11" fill="#555" text-anchor="middle">first 1 MiB chunk</text>
+<path d="M570,305 L330,305" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
+<text x="450.0" y="319.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">206 + Content-Range</text>
+<text x="450.0" y="319.0" font-size="11" fill="#b8650a" text-anchor="middle">206 + Content-Range</text>
+<path d="M330,438 L570,438" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="456.0" y="432.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">range past end of file</text>
+<text x="456.0" y="432.0" font-size="11" fill="#555" text-anchor="middle">range past end of file</text>
+<path d="M570,460 L330,460" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="450.0" y="474.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">416 unsatisfiable</text>
+<text x="450.0" y="474.0" font-size="11" fill="#555" text-anchor="middle">416 unsatisfiable</text>
+<text x="450" y="555" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">Accept-Ranges from the HEAD tells the client resuming/partial fetches are safe; the server must still validate every Range against the current Content-Length before honoring it.</text>
+</svg>

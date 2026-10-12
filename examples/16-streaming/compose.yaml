@@ -1,0 +1,70 @@
+# Ch16 streaming deep-dive — compose topology.
+#
+# Default `docker compose up` brings up: quarkus, python. Both extend the
+# Ch4 contract-first Booking resource model (contracts/openapi/shipping-api.yaml,
+# contracts/schemas/shipping.schema.json) with a thin Booking (POST + GET by
+# id, just enough to mint an id) plus three streaming endpoints — Server-Sent
+# Events, NDJSON export, and a dedicated chunked-transfer demo — all serving
+# the shared #/$defs/BookingEvent shape. Ports are deliberately UNIQUE across
+# the repo's examples (8096/8016) so this stack can run alongside any other
+# chapter's without a port clash. The LGTM observability stack is opt-in
+# (`--profile observability`) so CI and a first boot stay fast; neither app
+# ships telemetry yet.
+#
+# Usage:
+#   docker compose up --build                          # app stack only
+#   docker compose --profile observability up --build  # + Grafana LGTM
+
+services:
+  quarkus:
+    build:
+      context: ./quarkus
+      dockerfile: Containerfile
+    container_name: ch16-stream-quarkus
+    ports:
+      - "8096:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/q/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  python:
+    build:
+      context: ./python
+      dockerfile: Containerfile
+    container_name: ch16-stream-python
+    ports:
+      - "8016:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  # ─── Observability (opt-in) ────────────────────────────────────────────
+  # `docker compose --profile observability up` to include. Off by default
+  # so CI's examples job (and a first boot) stay fast.
+  lgtm:
+    image: docker.io/grafana/otel-lgtm:0.36.0
+    container_name: ch16-stream-lgtm
+    profiles: ["observability"]
+    ports:
+      - "3000:3000" # Grafana UI
+      - "4317:4317" # OTLP gRPC
+      - "4318:4318" # OTLP HTTP
+      - "9090:9090" # Prometheus / Mimir query
+      - "3100:3100" # Loki
+      - "3200:3200" # Tempo
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s

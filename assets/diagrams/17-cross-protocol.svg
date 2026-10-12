@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 480" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="30" y="30" width="170" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="115.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Protocol</text>
+<rect x="210" y="30" width="200" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="310.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Direction</text>
+<rect x="420" y="30" width="260" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="550.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Connection model</text>
+<rect x="690" y="30" width="260" height="50" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="820.0" y="60.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Best-fit use case</text>
+<rect x="30" y="100" width="170" height="70" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="115.0" y="140.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">REST / SSE</text>
+<rect x="210" y="100" width="200" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="310.0" y="133.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">client-pull (REST)</text>
+<text x="310.0" y="150.0" font-size="11.5" fill="#555555" text-anchor="middle">server-push (SSE)</text>
+<rect x="420" y="100" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="550.0" y="140.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">request/response, or one long-lived HTTP connection for SSE</text>
+<rect x="690" y="100" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="820.0" y="140.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">CRUD over resources; SSE for one-way live updates to a browser</text>
+<rect x="30" y="178" width="170" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="115.0" y="218.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">WebSockets</text>
+<rect x="210" y="178" width="200" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="310.0" y="218.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">bidirectional</text>
+<rect x="420" y="178" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="550.0" y="218.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">one persistent socket, full-duplex after the handshake</text>
+<rect x="690" y="178" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="820.0" y="218.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">chat, collaborative editing, low-latency two-way streams</text>
+<rect x="30" y="256" width="170" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="115.0" y="296.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Webhooks</text>
+<rect x="210" y="256" width="200" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="310.0" y="296.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">server-push (inverted)</text>
+<rect x="420" y="256" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="550.0" y="296.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">no open connection — provider POSTs to a client-registered URL</text>
+<rect x="690" y="256" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="820.0" y="296.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">async event notification when the receiver can&#x27;t poll or stay connected</text>
+<rect x="30" y="334" width="170" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="115.0" y="374.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">gRPC</text>
+<rect x="210" y="334" width="200" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="310.0" y="374.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">client-pull, server-push, or bidirectional streaming</text>
+<rect x="420" y="334" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="550.0" y="374.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">one HTTP/2 connection, multiplexed streams, binary Protobuf framing</text>
+<rect x="690" y="334" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="820.0" y="374.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">internal service-to-service calls and high-throughput streaming RPCs</text>
+<text x="490.0" y="442" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">REST/SSE stays the default: simplest connection model, works through ordinary HTTP infrastructure. Reach for WebSockets, webhooks, or gRPC only when the direction or throughput REST can&#x27;t express is the actual requirement.</text>
+</svg>
