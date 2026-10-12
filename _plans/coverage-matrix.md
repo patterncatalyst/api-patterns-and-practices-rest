@@ -55,7 +55,7 @@ unverified) · `verified` (both stacks run green, footer flipped).
 |---|---|---|---|---|
 | T1 | Docker/Podman Compose tier | Ch0 / Ch25 | `_docs/25-local-with-docker-compose.md` | draft |
 | T2 | minikube tier | Ch26 | `_docs/26-kubernetes-on-minikube.md` | draft |
-| T3 | CRC / OpenShift Local tier | Appendix A | `_docs/99-appendix-a-openshift-crc.md` | planned |
+| T3 | CRC / OpenShift Local tier | Appendix A | `_docs/99-appendix-a-openshift-crc.md` | draft |
 
 ## Full chapter inventory (27 + appendix)
 
@@ -88,5 +88,5 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | 24 | `_docs/24-testing-rest-apis.md` | Part 10 | verified |
 | 25 | `_docs/25-local-with-docker-compose.md` | Part 11 | draft |
 | 26 | `_docs/26-kubernetes-on-minikube.md` | Part 11 | draft |
-| A | `_docs/99-appendix-a-openshift-crc.md` | Part 11 | planned |
+| A | `_docs/99-appendix-a-openshift-crc.md` | Part 11 | draft |
 | 27 | `_docs/27-complete-project.md` | Part 12 | planned |
