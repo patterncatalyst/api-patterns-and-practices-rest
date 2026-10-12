@@ -310,7 +310,7 @@ contiguous order sequence, so `99` is safe.
 - **Ch26 and Appendix A are NOT in the examples matrix** (no `verify.sh` in
   either dir; validate.py guard passes); the non-matrix `k8s-manifests` job is
   green (kustomize/helm + kubeconform + dry-run). Ch26 has captured
-  real-cluster proof (minikube/podman); Appendix A has static-green + a
+  real-cluster proof (minikube/docker); Appendix A has static-green + a
   documented bring-up (real CRC best-effort).
 - Coverage rows truthful: T1/Ch25, T2/Ch26, T3/Appendix A and Ch27 flip
   planned -> draft -> verified only as each bar is met.
