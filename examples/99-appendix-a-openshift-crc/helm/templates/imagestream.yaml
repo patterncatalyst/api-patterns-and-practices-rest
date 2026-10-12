@@ -1,0 +1,19 @@
+{{- $root := . -}}
+{{- range $name, $svc := .Values.services }}
+---
+# {{ $name }} ImageStream — the internal registry's tracking object. Every
+# push the BuildConfig below makes (or a manual `oc tag`/`podman push`)
+# lands as a new ImageStreamTag here; lookupPolicy.local lets any in-project
+# consumer reference the short name "{{ $name }}:{{ $root.Values.image.tag }}"
+# and have it resolve to the internal registry automatically.
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "appendix-a.labels" $root | nindent 4 }}
+spec:
+  lookupPolicy:
+    local: true
+{{- end }}

@@ -1,0 +1,85 @@
+# values.yaml — the two booking workloads described as data, same idiom as
+# ~/Dev/modernizing-enterprise-applications/openshift/helm/mea/values.yaml:
+# one Deployment/Service/Route template ranges over `services` below instead
+# of carrying two near-identical copies of each manifest.
+
+# Images live in the OpenShift-integrated registry, addressed in-cluster by
+# its Service DNS — no external registry, no push credentials. The
+# BuildConfig in templates/buildconfig.yaml pushes each service's build
+# output to "<name>:<tag>" in the *release namespace's* ImageStream, which
+# is exactly the ref the Deployment composes from registry/namespace/name:tag
+# below (see _helpers.tpl's "appendix-a.image").
+#
+# pullPolicy is Always (not mea's IfNotPresent): this appendix's whole point
+# is rebuilding the image in-cluster via run-crc.sh, re-using the same tag
+# ("v1") on every rebuild, so the kubelet must re-pull rather than trust a
+# cached layer for that tag.
+image:
+  registry: "image-registry.openshift-image-registry.svc:5000"
+  tag: "v1"
+  pullPolicy: Always
+
+# The in-cluster build. Docker strategy + binary input, not the
+# quarkus-openshift extension's binary S2I path (documented as the
+# "real project" alternative in README.md) — S2I via that extension needs an
+# `openshift` Maven profile added to examples/25-local-with-docker-compose/
+# quarkus/pom.xml, and this appendix must not edit anything outside its own
+# directory (the Ch25 apps are reused completely unmodified, Containerfile
+# included). A Docker-strategy BuildConfig with a binary source gets the
+# same headline property — the cluster builds the image and pushes to its
+# own registry, no external registry, no host container engine — from the
+# exact Containerfile already proven by compose (Ch25) and minikube (Ch26).
+build:
+  dockerfilePath: "Containerfile"
+
+# Two resource tiers; both booking services are small, stateless workloads.
+resources:
+  small:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits: { cpu: 500m, memory: 384Mi }
+
+# Both services get a Route (route: true) — the headline per-app contrast
+# with Ch26's single Ingress, which fronts both apps behind one host and
+# tells them apart by path prefix. Here each app gets its own
+# apps-crc.testing hostname and its own edge-TLS Route.
+#
+# probes.* mirrors examples/26-minikube/k8s/base/*-deployment.yaml exactly:
+# Quarkus ships quarkus-smallrye-health (three distinct endpoints); the
+# FastAPI app exposes one /health for all three probes.
+services:
+  quarkus-booking:
+    port: 8080
+    size: small
+    route: true
+    probes:
+      startup: /q/health/started
+      readiness: /q/health/ready
+      liveness: /q/health/live
+  python-booking:
+    port: 8000
+    size: small
+    route: true
+    probes:
+      startup: /health
+      readiness: /health
+      liveness: /health
+
+# Shared env contract for both Deployments, via envFrom — same mechanism
+# Ch26's booking-config ConfigMap uses, repointed at this chart's own
+# namespace-relative DNS. Neither booking service has a code path that
+# reads most of these today (no DB, no real OTel collector deployed in this
+# appendix); that's deliberate and harmless, same discipline documented in
+# examples/26-minikube/k8s/base/configmap.yaml — the point here is Routes +
+# edge TLS + the in-cluster build, not re-proving ConfigMap wiring Ch26
+# already covers end to end.
+configMap:
+  QUARKUS_OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.appendix-a-booking.svc.cluster.local:4317"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector.appendix-a-booking.svc.cluster.local:4318"
+  OTEL_SERVICE_NAME: "shipping-python"
+  QUARKUS_LOG_LEVEL: "INFO"
+
+# Dev-only, plaintext-in-git demo secret — same scope and rationale as
+# examples/26-minikube/k8s/base/secret.yaml. PRODUCTION: a SealedSecret or
+# an ExternalSecret, never a plaintext Secret manifest.
+secret:
+  PRICING_PROVIDER_API_KEY: "demo-pricing-key-appendix-a-dev-only"

@@ -1,0 +1,49 @@
+{{- $root := . -}}
+{{- range $name, $svc := .Values.services }}
+---
+# {{ $name }} BuildConfig — the OpenShift-native "no external registry"
+# story. Docker strategy, binary source: run-crc.sh feeds the SAME Ch25
+# source tree (examples/25-local-with-docker-compose/<app>, same
+# Containerfile compose and the minikube tier already build) straight to
+# the cluster with `oc start-build {{ $name }} --from-dir=<path> --follow`.
+# OpenShift builds the image inside the cluster, using the project's own
+# Containerfile unmodified, and pushes the result to the ImageStreamTag
+# below in the internal registry — no `podman`/`docker push`, no registry
+# credentials, no host container engine involved in getting the image onto
+# the cluster.
+#
+# A real binary-S2I build (the `quarkus-openshift` extension's path,
+# documented in the lgtm-crc skill's references/image-builds.md) is the
+# alternative this appendix's README points to for a production project —
+# it needs an `openshift` Maven profile added to the service's own pom.xml,
+# which would mean editing examples/25-local-with-docker-compose/quarkus
+# (out of scope for this appendix: the Ch25 apps are reused completely
+# unmodified). Docker strategy earns the same "in-cluster build, no
+# external registry" property from the Containerfile that already exists.
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "appendix-a.labels" $root | nindent 4 }}
+spec:
+  runPolicy: Serial
+  source:
+    type: Binary
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: {{ $root.Values.build.dockerfilePath }}
+  output:
+    to:
+      kind: ImageStreamTag
+      name: "{{ $name }}:{{ $root.Values.image.tag }}"
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+{{- end }}
