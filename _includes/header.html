@@ -6,8 +6,9 @@
     </a>
     <nav class="site-nav" aria-label="Primary">
       <a href="{{ '/docs/00-outline/' | relative_url }}"
-         {% if page.url contains '/docs/' %}aria-current="page"{% endif %}>Tutorial</a>
-      <a href="{{ '/docs/01-prerequisites/' | relative_url }}">Prerequisites</a>
+         {% if page.url contains '/docs/' %}aria-current="page"{% endif %}>Chapters</a>
+      <a href="{{ '/plans/iteration-plan/' | relative_url }}"
+         {% if page.url contains '/plans/' %}aria-current="page"{% endif %}>Plan</a>
       <a href="https://github.com/{{ site.github_username }}/{{ site.github_repo }}"
          rel="noopener">GitHub ↗</a>
     </nav>

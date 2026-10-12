@@ -1,0 +1,72 @@
+arazzo: 1.0.1
+info:
+  title: Booking → confirmation → tracking workflow
+  version: 1.0.0
+  summary: The multi-step API sequence that ties the REST calls together (Ch21, Ch27).
+  description: >-
+    Arazzo describes the *order* in which the Shipping API's operations are
+    called to accomplish a business goal: create a booking, start its async
+    confirmation, poll the operation until it succeeds, then fetch the confirmed
+    booking. It references operations by `operationId` from the OpenAPI source,
+    so the workflow stays bound to the single source of truth.
+sourceDescriptions:
+  - name: shippingApi
+    url: ../openapi/shipping-api.yaml
+    type: openapi
+workflows:
+  - workflowId: bookAndConfirm
+    summary: Book cargo and drive it to CONFIRMED.
+    inputs:
+      type: object
+      properties:
+        booking:
+          $ref: '../schemas/shipping.schema.json#/$defs/BookingRequest'
+      required: [booking]
+    steps:
+      - stepId: createBooking
+        operationId: shippingApi.createBooking
+        requestBody:
+          contentType: application/json
+          payload: $inputs.booking
+        successCriteria:
+          - condition: $statusCode == 201
+        outputs:
+          bookingId: $response.body#/id
+      - stepId: requestConfirmation
+        operationId: shippingApi.requestConfirmation
+        parameters:
+          - name: bookingId
+            in: path
+            value: $steps.createBooking.outputs.bookingId
+        successCriteria:
+          - condition: $statusCode == 202
+        outputs:
+          operationId: $response.body#/id
+      - stepId: pollOperation
+        operationId: shippingApi.getOperation
+        parameters:
+          - name: operationId
+            in: path
+            value: $steps.requestConfirmation.outputs.operationId
+        successCriteria:
+          - condition: $statusCode == 303
+        onFailure:
+          - name: retryPoll
+            type: retry
+            retryAfter: 2
+            retryLimit: 10
+            criteria:
+              - condition: $statusCode == 200
+      - stepId: getConfirmedBooking
+        operationId: shippingApi.getBooking
+        parameters:
+          - name: bookingId
+            in: path
+            value: $steps.createBooking.outputs.bookingId
+        successCriteria:
+          - condition: $statusCode == 200
+          - context: $response.body
+            condition: $.status == "CONFIRMED"
+            type: jsonpath
+    outputs:
+      bookingId: $steps.createBooking.outputs.bookingId

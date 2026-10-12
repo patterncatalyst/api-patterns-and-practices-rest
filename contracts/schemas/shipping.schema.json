@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://patterncatalyst.dev/contracts/schemas/shipping.schema.json",
+  "title": "Shipping & Cargo shared components",
+  "description": "Canonical payload types for the shipping/cargo domain. Defined ONCE here and referenced by both the OpenAPI (sync) and AsyncAPI (events) documents, and by the CloudEvents data payloads. See _plans/domain-glossary.md.",
+  "$defs": {
+    "Money": {
+      "type": "object",
+      "description": "A monetary amount. The amount is a decimal string to avoid binary-float drift.",
+      "properties": {
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$", "examples": ["USD", "EUR"] },
+        "amount": { "type": "string", "pattern": "^-?[0-9]+\\.[0-9]{2}$", "examples": ["1250.00"] }
+      },
+      "required": ["currency", "amount"],
+      "additionalProperties": false
+    },
+    "Location": {
+      "type": "object",
+      "description": "A port or terminal identified by UN/LOCODE.",
+      "properties": {
+        "unLocode": { "type": "string", "pattern": "^[A-Z]{2}[A-Z0-9]{3}$", "examples": ["USNYC", "NLRTM", "SGSIN"] },
+        "name": { "type": "string", "examples": ["New York", "Rotterdam"] },
+        "country": { "type": "string", "pattern": "^[A-Z]{2}$", "examples": ["US", "NL"] }
+      },
+      "required": ["unLocode"],
+      "additionalProperties": false
+    },
+    "Dimensions": {
+      "type": "object",
+      "description": "Physical measure of a cargo item.",
+      "properties": {
+        "weightKg": { "type": "number", "exclusiveMinimum": 0, "examples": [1200.5] },
+        "volumeM3": { "type": "number", "exclusiveMinimum": 0, "examples": [4.2] }
+      },
+      "required": ["weightKg"],
+      "additionalProperties": false
+    },
+    "CargoType": {
+      "type": "string",
+      "description": "Handling class of a cargo item.",
+      "enum": ["GENERAL", "REFRIGERATED", "HAZARDOUS", "OVERSIZED", "LIQUID_BULK"]
+    },
+    "BookingStatus": {
+      "type": "string",
+      "description": "State in the booking lifecycle FSM. See domain glossary.",
+      "enum": ["PENDING", "CONFIRMED", "IN_TRANSIT", "DELIVERED", "CANCELLED"]
+    },
+    "OperationStatus": {
+      "type": "string",
+      "description": "State of a long-running server operation (202 + poll).",
+      "enum": ["PENDING", "RUNNING", "SUCCEEDED", "FAILED"]
+    },
+    "Link": {
+      "type": "object",
+      "description": "A single HATEOAS link (RFC 8288-style relation).",
+      "properties": {
+        "href": { "type": "string", "format": "uri-reference" },
+        "method": { "type": "string", "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"], "default": "GET" },
+        "title": { "type": "string" }
+      },
+      "required": ["href"],
+      "additionalProperties": false
+    },
+    "Links": {
+      "type": "object",
+      "description": "Map of relation name to Link. Which relations appear depends on the resource's current state (HATEOAS, Ch12).",
+      "additionalProperties": { "$ref": "#/$defs/Link" },
+      "examples": [{ "self": { "href": "/bookings/bkg_01H" }, "confirm": { "href": "/bookings/bkg_01H/confirmation", "method": "POST" } }]
+    },
+    "Cargo": {
+      "type": "object",
+      "description": "One cargo item carried under a booking.",
+      "properties": {
+        "id": { "type": "string", "pattern": "^crg_[0-9A-HJKMNP-TV-Z]{26}$", "readOnly": true, "examples": ["crg_01H9XZ8K3QJ7M2N4P6R8T0V2W4"] },
+        "description": { "type": "string", "maxLength": 280 },
+        "type": { "$ref": "#/$defs/CargoType" },
+        "dimensions": { "$ref": "#/$defs/Dimensions" },
+        "hazardous": { "type": "boolean", "default": false }
+      },
+      "required": ["description", "type", "dimensions"],
+      "additionalProperties": false
+    },
+    "CargoRequest": {
+      "type": "object",
+      "description": "Client payload to add cargo (no server-assigned id).",
+      "properties": {
+        "description": { "type": "string", "maxLength": 280 },
+        "type": { "$ref": "#/$defs/CargoType" },
+        "dimensions": { "$ref": "#/$defs/Dimensions" },
+        "hazardous": { "type": "boolean", "default": false }
+      },
+      "required": ["description", "type", "dimensions"],
+      "additionalProperties": false
+    },
+    "Booking": {
+      "type": "object",
+      "description": "The aggregate root: a request to ship cargo from origin to destination.",
+      "properties": {
+        "id": { "type": "string", "pattern": "^bkg_[0-9A-HJKMNP-TV-Z]{26}$", "readOnly": true, "examples": ["bkg_01H9XZ8K3QJ7M2N4P6R8T0V2W4"] },
+        "status": { "$ref": "#/$defs/BookingStatus" },
+        "origin": { "$ref": "#/$defs/Location" },
+        "destination": { "$ref": "#/$defs/Location" },
+        "cargo": { "type": "array", "items": { "$ref": "#/$defs/Cargo" }, "minItems": 1 },
+        "quote": { "$ref": "#/$defs/Money" },
+        "requestedPickup": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time", "readOnly": true },
+        "updatedAt": { "type": "string", "format": "date-time", "readOnly": true },
+        "_links": { "$ref": "#/$defs/Links" }
+      },
+      "required": ["id", "status", "origin", "destination", "cargo", "createdAt"],
+      "additionalProperties": false
+    },
+    "BookingRequest": {
+      "type": "object",
+      "description": "Client payload to create a booking. Server assigns id, status, timestamps, quote and links.",
+      "properties": {
+        "origin": { "$ref": "#/$defs/Location" },
+        "destination": { "$ref": "#/$defs/Location" },
+        "cargo": { "type": "array", "items": { "$ref": "#/$defs/CargoRequest" }, "minItems": 1 },
+        "requestedPickup": { "type": "string", "format": "date" }
+      },
+      "required": ["origin", "destination", "cargo"],
+      "additionalProperties": false
+    },
+    "PageMeta": {
+      "type": "object",
+      "description": "Keyset-pagination metadata (Ch8). nextCursor is null on the last page.",
+      "properties": {
+        "limit": { "type": "integer", "minimum": 1, "maximum": 100, "default": 20 },
+        "count": { "type": "integer", "minimum": 0 },
+        "nextCursor": { "type": ["string", "null"] }
+      },
+      "required": ["limit", "count"],
+      "additionalProperties": false
+    },
+    "BookingCollection": {
+      "type": "object",
+      "description": "A page of bookings with keyset pagination and collection links.",
+      "properties": {
+        "items": { "type": "array", "items": { "$ref": "#/$defs/Booking" } },
+        "page": { "$ref": "#/$defs/PageMeta" },
+        "_links": { "$ref": "#/$defs/Links" }
+      },
+      "required": ["items", "page"],
+      "additionalProperties": false
+    },
+    "Operation": {
+      "type": "object",
+      "description": "A long-running server operation record (202 Accepted → poll → 303, Ch10).",
+      "properties": {
+        "id": { "type": "string", "pattern": "^op_[0-9A-HJKMNP-TV-Z]{26}$", "readOnly": true },
+        "status": { "$ref": "#/$defs/OperationStatus" },
+        "createdAt": { "type": "string", "format": "date-time", "readOnly": true },
+        "completedAt": { "type": ["string", "null"], "format": "date-time" },
+        "resource": { "type": ["string", "null"], "format": "uri-reference", "description": "On SUCCEEDED, the created/affected resource." },
+        "error": { "anyOf": [{ "$ref": "#/$defs/Problem" }, { "type": "null" }] },
+        "_links": { "$ref": "#/$defs/Links" }
+      },
+      "required": ["id", "status", "createdAt"],
+      "additionalProperties": false
+    },
+    "Problem": {
+      "type": "object",
+      "description": "RFC 9457 Problem Details for HTTP APIs (application/problem+json).",
+      "properties": {
+        "type": { "type": "string", "format": "uri-reference", "default": "about:blank" },
+        "title": { "type": "string" },
+        "status": { "type": "integer", "minimum": 100, "maximum": 599 },
+        "detail": { "type": "string" },
+        "instance": { "type": "string", "format": "uri-reference" }
+      },
+      "required": ["title", "status"],
+      "additionalProperties": true
+    },
+    "BookingEvent": {
+      "type": "object",
+      "description": "Domain-event payload emitted on booking state change (the CloudEvents `data`; AsyncAPI channel message). Reuses the same component types as the sync API.",
+      "properties": {
+        "bookingId": { "type": "string", "pattern": "^bkg_[0-9A-HJKMNP-TV-Z]{26}$" },
+        "status": { "$ref": "#/$defs/BookingStatus" },
+        "previousStatus": { "anyOf": [{ "$ref": "#/$defs/BookingStatus" }, { "type": "null" }] },
+        "origin": { "$ref": "#/$defs/Location" },
+        "destination": { "$ref": "#/$defs/Location" },
+        "occurredAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["bookingId", "status", "occurredAt"],
+      "additionalProperties": false
+    }
+  }
+}

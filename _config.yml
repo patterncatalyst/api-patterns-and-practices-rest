@@ -83,6 +83,7 @@ exclude:
   - vendor/
   - node_modules/
   - examples/   # ← important: trailing slash; runnable code lives here, not site content
+  - contracts/  # ← single source of truth; validated in CI, not rendered
   - scripts/
   - README.md
   - LICENSE

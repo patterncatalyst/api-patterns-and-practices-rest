@@ -1,6 +1,6 @@
 /* =============================================================
    Tutorial site styles
-   Aesthetic: Red Hat brand fonts, light surface, amber (eBPF) accent,
+   Aesthetic: Red Hat brand fonts, light surface, amber accent,
    card grid landing, numbered detail pages.
    Red Hat Display / Text / Mono are loaded from Google Fonts in
    _layouts/default.html — see that file if you want to swap them
@@ -24,7 +24,7 @@
   --ink-faint:        #8a8d91;
   --ink-on-dark:      #f4f4f4;
 
-  --accent:           #e8870c;   /* eBPF amber */
+  --accent:           #e8870c;   /* house amber */
   --accent-hover:     #b8650a;   /* darker amber */
   --accent-soft:      #fff3e0;   /* honey wash */
 
@@ -772,7 +772,7 @@ table :is(th, td) code {
   a { color: #000; text-decoration: underline; }
 }
 
-/* ---- 15. Tutorial-specific helpers (eBPF) ------------------ */
+/* ---- 15. Tutorial-specific helpers ------------------ */
 
 /* Callout boxes for notes / warnings / lab tips. Use in markdown as:
      > **Note** — text...            (default warm callout via blockquote)

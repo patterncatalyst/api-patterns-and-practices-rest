@@ -1,0 +1,65 @@
+asyncapi: 3.0.0
+info:
+  title: Shipping & Cargo Events
+  version: 1.0.0
+  description: >-
+    The event side of the shipping domain. Every booking state change is
+    published as a CloudEvent whose `data` payload is the **same**
+    `BookingEvent` component the REST API uses — defined once in
+    `../schemas/shipping.schema.json` and referenced here. This is the schema
+    reuse the multi-protocol-contracts chapter (Ch21) demonstrates: one set of
+    payload types across the sync (OpenAPI) and async (AsyncAPI) contracts, with
+    CloudEvents as the envelope.
+  license: { name: MIT, url: https://opensource.org/license/mit }
+defaultContentType: application/cloudevents+json
+servers:
+  kafka:
+    host: localhost:9092
+    protocol: kafka
+    description: Local Kafka (KRaft) from the Docker Compose stack.
+channels:
+  bookingLifecycle:
+    address: shipping.bookings.lifecycle
+    description: Booking state-change events (confirmed, in-transit, delivered, cancelled).
+    messages:
+      bookingStateChanged:
+        $ref: '#/components/messages/BookingStateChanged'
+operations:
+  onBookingStateChanged:
+    action: receive
+    channel:
+      $ref: '#/channels/bookingLifecycle'
+    summary: Consume booking state-change events.
+    messages:
+      - $ref: '#/channels/bookingLifecycle/messages/bookingStateChanged'
+components:
+  messages:
+    BookingStateChanged:
+      name: BookingStateChanged
+      title: Booking state changed
+      summary: Emitted whenever a booking transitions in its lifecycle FSM.
+      contentType: application/cloudevents+json
+      headers:
+        $ref: '#/components/schemas/CloudEventAttributes'
+      payload:
+        $ref: '../schemas/shipping.schema.json#/$defs/BookingEvent'
+  schemas:
+    CloudEventAttributes:
+      type: object
+      description: CloudEvents 1.0 context attributes carried alongside the data payload.
+      properties:
+        specversion: { type: string, const: '1.0' }
+        id: { type: string }
+        source: { type: string, format: uri-reference, examples: ['/shipping/bookings'] }
+        type:
+          type: string
+          enum:
+            - dev.patterncatalyst.shipping.booking.confirmed
+            - dev.patterncatalyst.shipping.booking.in_transit
+            - dev.patterncatalyst.shipping.booking.delivered
+            - dev.patterncatalyst.shipping.booking.cancelled
+        subject: { type: string, examples: ['bkg_01H9XZ8K3QJ7M2N4P6R8T0V2W4'] }
+        time: { type: string, format: date-time }
+        datacontenttype: { type: string, const: application/json }
+      required: [specversion, id, source, type]
+      additionalProperties: false
