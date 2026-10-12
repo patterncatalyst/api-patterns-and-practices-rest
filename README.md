@@ -8,7 +8,7 @@ First of four standalone per-style sites split out of the *Cloud Native APIs* pr
 
 - **Domain:** the canonical shipping / cargo domain used across patterncatalyst material.
 - **Runtime tiers:** Docker Compose → minikube (Kubernetes) → CRC (OpenShift Local).
-- **Contract-first:** OpenAPI 3.1 is the source of truth; implementations are validated against it.
+- **Contract-first:** the OpenAPI contract is the source of truth; implementations are validated against it.
 - **Licence:** MIT (prose and code).
 
 > Status: scaffolding. Chapters and examples are added per the iteration plan in `_plans/`.

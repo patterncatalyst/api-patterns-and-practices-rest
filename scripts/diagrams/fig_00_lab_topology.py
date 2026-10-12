@@ -16,7 +16,7 @@ nodes = [
     {"x": 690, "y": 140, "w": 220, "h": 70,
      "lines": ["FastAPI service", "/bookings API"], "style": "box"},
     {"x": 370, "y": 250, "w": 220, "h": 70,
-     "lines": ["OpenAPI 3.1 contract", "shipping/cargo booking"], "style": "accent"},
+     "lines": ["OpenAPI contract", "shipping/cargo booking"], "style": "accent"},
     {"x": 370, "y": 370, "w": 220, "h": 60,
      "lines": ["PostgreSQL", "bookings · cargo · locations"], "style": "box"},
     {"x": 40, "y": 470, "w": 880, "h": 90,

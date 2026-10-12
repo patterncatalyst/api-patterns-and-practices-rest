@@ -29,7 +29,7 @@ jobs:
           --fail-severity=error
           contracts/openapi/*.yaml contracts/asyncapi/*.yaml
 
-      - name: Validate OpenAPI 3.1 structure + refs (Redocly)
+      - name: Validate OpenAPI structure + refs (Redocly)
         run: >-
           npx --yes @redocly/cli@1 lint
           --config contracts/redocly.yaml
