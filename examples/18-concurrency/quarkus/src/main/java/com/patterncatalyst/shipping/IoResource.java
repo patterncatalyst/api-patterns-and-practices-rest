@@ -35,8 +35,8 @@ import java.time.Duration;
  *       {@code Uni}, so Quarkus REST dispatches it to the Vert.x WORKER
  *       thread pool and calls {@code Thread.sleep()} there — one worker
  *       thread tied up for the full simulated I/O duration, per in-flight
- *       request. That pool is finite ({@code quarkus.vertx.worker-pool-size},
- *       default 20); once every worker is asleep, the next request queues
+ *       request. That pool is finite ({@code quarkus.thread-pool.max-threads});
+ *       once every worker is asleep, the next request queues
  *       behind them instead of running concurrently. A virtual-threads
  *       {@code @RunOnVirtualThread} method would dodge this specific
  *       problem (the JVM parks the virtual thread instead of a carrier
