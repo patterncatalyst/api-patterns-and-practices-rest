@@ -1,0 +1,235 @@
+# Ch21 multi-protocol-contracts anchor — compose topology.
+#
+# ONE service shape, implemented on both stacks, that pairs a synchronous
+# REST path (contracts/openapi/shipping-api.yaml) with a background
+# event-streaming path (contracts/asyncapi/shipping-events.yaml +
+# contracts/cloudevents/*, over Kafka). Default `docker compose up` brings
+# up ONLY: kafka, quarkus, python — the live path verify.sh exercises in CI.
+#
+# Kafka is a single-node broker in KRaft mode (no ZooKeeper) — the exact
+# broker contracts/asyncapi/shipping-events.yaml already names
+# (`servers.kafka`, `protocol: kafka`, "Local Kafka (KRaft)"). Two listeners:
+# PLAINTEXT for the compose-network apps (advertised as kafka:9092) and
+# EXTERNAL for host tooling (advertised as localhost:19092, published as
+# 19092->9094).
+#
+# The governance tier — Apicurio Registry (the xRegistry/schema-registry
+# touchpoint) and OpenMetadata (a data catalog that tracks schema/version
+# change over time; NOT an xRegistry impl) — is real, runnable, and
+# documented in README.md, but is kept OUT of the default `up` and OUT of
+# CI behind two opt-in profiles: `registry` and `catalog`.
+#
+# Usage:
+#   docker compose up --build                      # kafka + quarkus + python (CI path)
+#   docker compose --profile registry up --build    # + Apicurio Registry (8104)
+#   docker compose --profile catalog up --build      # + OpenMetadata (8585) — HEAVY, local-only
+#
+# Ports are UNIQUE across the repo's examples: Quarkus 8101, FastAPI 8021,
+# Kafka (external listener) 19092, Apicurio 8104, OpenMetadata 8585.
+
+services:
+  # ─── Broker (default, in CI) ───────────────────────────────────────────
+  kafka:
+    image: docker.io/apache/kafka:3.9.1
+    container_name: ch21-contracts-kafka
+    ports:
+      - "19092:9094"
+    environment:
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: CONTROLLER://:9093,PLAINTEXT://:9092,EXTERNAL://:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:19092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    healthcheck:
+      # Only reports healthy once the broker actually accepts client
+      # connections on the internal listener — not just "process started".
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  quarkus:
+    build:
+      context: ./quarkus
+      dockerfile: Containerfile
+    container_name: ch21-contracts-quarkus
+    ports:
+      - "8101:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/q/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+
+  python:
+    build:
+      context: ./python
+      dockerfile: Containerfile
+    container_name: ch21-contracts-python
+    ports:
+      - "8021:8000"
+    depends_on:
+      kafka:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  # ─── Governance tier: registry (opt-in, local-only) ────────────────────
+  # `docker compose --profile registry up` — Apicurio Registry, the
+  # schema/artifact REGISTRY and xRegistry touchpoint. Ships its own
+  # embedded H2 storage, so no extra datastore container is needed. See
+  # README.md "Governance tier" for the publish/resolve walkthrough.
+  apicurio-registry:
+    image: docker.io/apicurio/apicurio-registry:3.0.9
+    container_name: ch21-contracts-apicurio
+    profiles: ["registry"]
+    ports:
+      - "8104:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+
+  # ─── Governance tier: catalog (opt-in, local-only, HEAVY) ──────────────
+  # `docker compose --profile catalog up` — OpenMetadata, a DATA CATALOG
+  # that tracks version/schema changes over time with lineage. This is NOT
+  # an xRegistry implementation — see README.md's explicit distinction from
+  # Apicurio above. Mirrors OpenMetadata's own vetted quickstart compose
+  # (mysql + elasticsearch + a one-shot migration job + the server +
+  # ingestion/Airflow), trimmed to the env vars this walkthrough needs;
+  # see https://github.com/open-metadata/OpenMetadata/blob/main/docker/docker-compose-quickstart/docker-compose.yml
+  # for the full upstream option surface (SSO/SAML/LDAP/secrets-manager
+  # knobs omitted here as out of scope for a local walkthrough).
+  om-mysql:
+    image: docker.getcollate.io/openmetadata/db:2.0.5
+    container_name: ch21-contracts-om-mysql
+    profiles: ["catalog"]
+    command: "--sort_buffer_size=10M"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - om-db-data:/var/lib/mysql
+    healthcheck:
+      test: mysql --user=root --password=$$MYSQL_ROOT_PASSWORD --silent --execute "use openmetadata_db"
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  om-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:9.3.0
+    container_name: ch21-contracts-om-elasticsearch
+    profiles: ["catalog"]
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1024m -Xmx1024m
+      - xpack.security.enabled=false
+    volumes:
+      - om-es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: "curl -s http://localhost:9200/_cluster/health?pretty | grep status | grep -qE 'green|yellow' || exit 1"
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  om-migrate:
+    image: docker.getcollate.io/openmetadata/server:2.0.5
+    container_name: ch21-contracts-om-migrate
+    profiles: ["catalog"]
+    command: "./bootstrap/openmetadata-ops.sh migrate"
+    environment: &om-server-env
+      DB_DRIVER_CLASS: com.mysql.cj.jdbc.Driver
+      DB_SCHEME: mysql
+      DB_PARAMS: allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC
+      DB_USER: openmetadata_user
+      DB_USER_PASSWORD: openmetadata_password
+      DB_HOST: om-mysql
+      DB_PORT: "3306"
+      OM_DATABASE: openmetadata_db
+      ELASTICSEARCH_HOST: om-elasticsearch
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_SCHEME: http
+      SEARCH_TYPE: elasticsearch
+      AUTHORIZER_CLASS_NAME: org.openmetadata.service.security.DefaultAuthorizer
+      AUTHORIZER_REQUEST_FILTER: org.openmetadata.service.security.JwtFilter
+      AUTHORIZER_ADMIN_PRINCIPALS: "[admin]"
+      AUTHENTICATION_PROVIDER: basic
+      PIPELINE_SERVICE_CLIENT_ENDPOINT: http://om-ingestion:8080
+      SERVER_HOST_API_URL: http://om-server:8585/api
+    depends_on:
+      om-mysql:
+        condition: service_healthy
+      om-elasticsearch:
+        condition: service_healthy
+
+  om-server:
+    image: docker.getcollate.io/openmetadata/server:2.0.5
+    container_name: ch21-contracts-om-server
+    profiles: ["catalog"]
+    environment: *om-server-env
+    ports:
+      - "8585:8585"
+    depends_on:
+      om-mysql:
+        condition: service_healthy
+      om-elasticsearch:
+        condition: service_healthy
+      om-migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8586/healthcheck"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 60s
+
+  om-ingestion:
+    image: docker.getcollate.io/openmetadata/ingestion:2.0.5
+    container_name: ch21-contracts-om-ingestion
+    profiles: ["catalog"]
+    entrypoint: /bin/bash
+    command: ["/opt/airflow/ingestion_dependency.sh"]
+    environment:
+      AIRFLOW__API__AUTH_BACKENDS: "airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session"
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__OPENMETADATA_AIRFLOW_APIS__DAG_GENERATED_CONFIGS: "/opt/airflow/dag_generated_configs"
+      DB_HOST: om-mysql
+      DB_PORT: "3306"
+      AIRFLOW_DB: airflow_db
+      DB_SCHEME: mysql+mysqldb
+      DB_USER: airflow_user
+      DB_PASSWORD: airflow_pass
+    depends_on:
+      om-mysql:
+        condition: service_healthy
+      om-server:
+        condition: service_started
+    volumes:
+      - om-ingestion-dag-airflow:/opt/airflow/dag_generated_configs
+      - om-ingestion-dags:/opt/airflow/dags
+      - om-ingestion-tmp:/tmp
+
+volumes:
+  om-db-data:
+  om-es-data:
+  om-ingestion-dag-airflow:
+  om-ingestion-dags:
+  om-ingestion-tmp:
