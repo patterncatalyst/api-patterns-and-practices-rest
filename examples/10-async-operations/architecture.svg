@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 780" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="350" y="20" width="260" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="480.0" y="53.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<text x="480.0" y="70.0" font-size="11.5" fill="#555555" text-anchor="middle">POST /bookings/{id}/confirmation</text>
+<rect x="350" y="130" width="260" height="90" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="480.0" y="165.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Server</text>
+<text x="480.0" y="182.5" font-size="11.5" fill="#555555" text-anchor="middle">202 Accepted</text>
+<text x="480.0" y="197.5" font-size="11.5" fill="#555555" text-anchor="middle">Location: /operations/{opId}</text>
+<rect x="350" y="270" width="260" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="480.0" y="303.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<text x="480.0" y="320.0" font-size="11.5" fill="#555555" text-anchor="middle">GET /operations/{opId}</text>
+<rect x="350" y="380" width="260" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="480.0" y="413.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">200 OK</text>
+<text x="480.0" y="430.0" font-size="11.5" fill="#555555" text-anchor="middle">status: RUNNING</text>
+<rect x="350" y="490" width="260" height="90" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="480.0" y="525.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">303 See Other</text>
+<text x="480.0" y="542.5" font-size="11.5" fill="#555555" text-anchor="middle">Location: /bookings/{id}</text>
+<text x="480.0" y="557.5" font-size="11.5" fill="#555555" text-anchor="middle">operation status: SUCCEEDED</text>
+<rect x="350" y="630" width="260" height="70" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="480.0" y="663.0" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Confirmed booking</text>
+<text x="480.0" y="680.0" font-size="11.5" fill="#dddddd" text-anchor="middle">GET /bookings/{id} → 200 CONFIRMED</text>
+<rect x="40" y="270" width="260" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="170.0" y="303.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<text x="170.0" y="320.0" font-size="11.5" fill="#555555" text-anchor="middle">DELETE /operations/{opId}</text>
+<rect x="40" y="380" width="260" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="170.0" y="413.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">204 No Content</text>
+<text x="170.0" y="430.0" font-size="11.5" fill="#555555" text-anchor="middle">operation status: CANCELLED</text>
+<path d="M480,90 L480,130" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="486.0" y="104.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">start async op</text>
+<text x="486.0" y="104.0" font-size="11" fill="#555" text-anchor="middle">start async op</text>
+<path d="M480,220 L480,270" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="486.0" y="239.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">poll</text>
+<text x="486.0" y="239.0" font-size="11" fill="#555" text-anchor="middle">poll</text>
+<path d="M480,340 L480,380" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="486.0" y="354.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">GET</text>
+<text x="486.0" y="354.0" font-size="11" fill="#555" text-anchor="middle">GET</text>
+<path d="M615,405 L615,300" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
+<text x="615.0" y="352.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">poll again (Retry-After)</text>
+<text x="615.0" y="352.5" font-size="11" fill="#555" text-anchor="middle">poll again (Retry-After)</text>
+<path d="M480,450 L480,490" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="486.0" y="464.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">terminal state</text>
+<text x="486.0" y="464.0" font-size="11" fill="#555" text-anchor="middle">terminal state</text>
+<path d="M480,580 L480,630" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="486.0" y="599.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">303 + Location</text>
+<text x="486.0" y="599.0" font-size="11" fill="#555" text-anchor="middle">303 + Location</text>
+<path d="M350,190 L300,275" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<text x="331.0" y="226.5" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">cancel instead</text>
+<text x="331.0" y="226.5" font-size="11" fill="#b8650a" text-anchor="middle">cancel instead</text>
+<path d="M170,340 L170,380" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="176.0" y="354.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">DELETE</text>
+<text x="176.0" y="354.0" font-size="11" fill="#555" text-anchor="middle">DELETE</text>
+<text x="480" y="745" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">The operation resource is a progress marker, not the booking itself — the final 303 redirects the client to the real resource.</text>
+</svg>

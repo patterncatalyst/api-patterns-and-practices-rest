@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 760" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="20" y="255" width="940" height="110" rx="12" fill="#fafafa" stroke="#ddd"/>
+<text x="32" y="275" font-size="12" font-weight="700" fill="#1d1d1d">Soft delete — hidden by default, still addressable</text>
+<rect x="290" y="385" width="440" height="335" rx="12" fill="#fff3e0" stroke="#ddd"/>
+<text x="302" y="405" font-size="12" font-weight="700" fill="#1d1d1d">Purge — hard delete under retention rule</text>
+<rect x="360" y="20" width="260" height="70" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>
+<text x="490.0" y="53.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client</text>
+<text x="490.0" y="70.0" font-size="11.5" fill="#555555" text-anchor="middle">DELETE /bookings/{id}</text>
+<rect x="330" y="130" width="320" height="100" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="490.0" y="163.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Soft delete (DELETE handler)</text>
+<text x="490.0" y="180.0" font-size="11.5" fill="#555555" text-anchor="middle">status → CANCELLED</text>
+<text x="490.0" y="195.0" font-size="11.5" fill="#555555" text-anchor="middle">write audit record</text>
+<text x="490.0" y="210.0" font-size="11.5" fill="#555555" text-anchor="middle">excluded from default list queries</text>
+<rect x="60" y="270" width="280" height="80" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="200.0" y="308.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings (default)</text>
+<text x="200.0" y="325.0" font-size="11.5" fill="#555555" text-anchor="middle">200 OK, not in results</text>
+<rect x="400" y="270" width="280" height="80" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="540.0" y="300.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings/{id}</text>
+<text x="540.0" y="317.5" font-size="11.5" fill="#555555" text-anchor="middle">200 OK, status: CANCELLED</text>
+<text x="540.0" y="332.5" font-size="11.5" fill="#555555" text-anchor="middle">still addressable for audit</text>
+<rect x="700" y="270" width="260" height="80" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="830.0" y="308.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings?includeCancelled=true</text>
+<text x="830.0" y="325.0" font-size="11.5" fill="#555555" text-anchor="middle">200 OK, appears in results</text>
+<rect x="330" y="410" width="320" height="90" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="490.0" y="445.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">Purge job (scheduled)</text>
+<text x="490.0" y="462.5" font-size="11.5" fill="#dddddd" text-anchor="middle">runs under retention/compliance rule</text>
+<text x="490.0" y="477.5" font-size="11.5" fill="#dddddd" text-anchor="middle">e.g. CANCELLED &gt; 90 days</text>
+<rect x="360" y="540" width="260" height="80" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="490.0" y="578.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Hard delete</text>
+<text x="490.0" y="595.0" font-size="11.5" fill="#555555" text-anchor="middle">row removed from storage</text>
+<rect x="360" y="660" width="260" height="70" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="490.0" y="693.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">GET /bookings/{id}</text>
+<text x="490.0" y="710.0" font-size="11.5" fill="#555555" text-anchor="middle">404 Not Found</text>
+<path d="M490,90 L490,130" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="496.0" y="104.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">DELETE</text>
+<text x="496.0" y="104.0" font-size="11" fill="#555" text-anchor="middle">DELETE</text>
+<path d="M400,230 L200,270" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="306.0" y="244.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">excluded from results</text>
+<text x="306.0" y="244.0" font-size="11" fill="#555" text-anchor="middle">excluded from results</text>
+<path d="M490,230 L540,270" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="521.0" y="244.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">still 200 (audit)</text>
+<text x="521.0" y="244.0" font-size="11" fill="#555" text-anchor="middle">still 200 (audit)</text>
+<path d="M580,230 L830,270" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="711.0" y="244.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">visible if asked</text>
+<text x="711.0" y="244.0" font-size="11" fill="#555" text-anchor="middle">visible if asked</text>
+<path d="M540,350 L490,410" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<text x="521.0" y="374.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">retention window elapses</text>
+<text x="521.0" y="374.0" font-size="11" fill="#b8650a" text-anchor="middle">retention window elapses</text>
+<path d="M490,500 L490,540" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="496.0" y="514.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">executes</text>
+<text x="496.0" y="514.0" font-size="11" fill="#555" text-anchor="middle">executes</text>
+<path d="M490,620 L490,660" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="496.0" y="634.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">row gone</text>
+<text x="496.0" y="634.0" font-size="11" fill="#555" text-anchor="middle">row gone</text>
+<text x="490" y="745" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">Soft delete preserves the audit trail and default-query hygiene; purge is the only step that actually removes data, and only under a retention rule.</text>
+</svg>

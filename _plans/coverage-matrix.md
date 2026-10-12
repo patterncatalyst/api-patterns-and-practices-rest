@@ -27,11 +27,11 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | D6 | JSON Patch vs Merge Patch | Ch7 | `_docs/07-partial-updates.md` | verified |
 | D7 | Filtering & pagination | Ch8 | `_docs/08-filtering-projection-pagination.md` | verified |
 | D8 | Sub-resources | Ch9 | `_docs/09-sub-resources.md` | draft |
-| D9 | Async / long-running operations | Ch10 | `_docs/10-async-long-running-operations.md` | planned |
-| D10 | Rerunnable jobs | Ch11 | `_docs/11-rerunnable-jobs.md` | planned |
-| D11 | HATEOAS | Ch12 | `_docs/12-hateoas.md` | planned |
-| D12 | Soft deletion | Ch13 | `_docs/13-soft-deletion-gdpr-purge.md` | planned |
-| D13 | Versioning | Ch14 | `_docs/14-versioning.md` | planned |
+| D9 | Async / long-running operations | Ch10 | `_docs/10-async-long-running-operations.md` | verified |
+| D10 | Rerunnable jobs | Ch11 | `_docs/11-rerunnable-jobs.md` | verified |
+| D11 | HATEOAS | Ch12 | `_docs/12-hateoas.md` | verified |
+| D12 | Soft deletion | Ch13 | `_docs/13-soft-deletion-gdpr-purge.md` | verified |
+| D13 | Versioning | Ch14 | `_docs/14-versioning.md` | verified |
 | D14 | Large binary resources | Ch15 | `_docs/15-large-binary-resources-range.md` | planned |
 
 ## Additions → chapters (10)
@@ -71,11 +71,11 @@ unverified) · `verified` (both stacks run green, footer flipped).
 | 7 | `_docs/07-partial-updates.md` | Part 3 | verified |
 | 8 | `_docs/08-filtering-projection-pagination.md` | Part 4 | verified |
 | 9 | `_docs/09-sub-resources.md` | Part 4 | draft |
-| 10 | `_docs/10-async-long-running-operations.md` | Part 5 | planned |
-| 11 | `_docs/11-rerunnable-jobs.md` | Part 5 | planned |
-| 12 | `_docs/12-hateoas.md` | Part 6 | planned |
-| 13 | `_docs/13-soft-deletion-gdpr-purge.md` | Part 6 | planned |
-| 14 | `_docs/14-versioning.md` | Part 6 | planned |
+| 10 | `_docs/10-async-long-running-operations.md` | Part 5 | verified |
+| 11 | `_docs/11-rerunnable-jobs.md` | Part 5 | verified |
+| 12 | `_docs/12-hateoas.md` | Part 6 | verified |
+| 13 | `_docs/13-soft-deletion-gdpr-purge.md` | Part 6 | verified |
+| 14 | `_docs/14-versioning.md` | Part 6 | verified |
 | 15 | `_docs/15-large-binary-resources-range.md` | Part 7 | planned |
 | 16 | `_docs/16-streaming-deep-dive.md` | Part 7 | planned |
 | 17 | `_docs/17-cross-protocol-choices.md` | Part 7 | planned |

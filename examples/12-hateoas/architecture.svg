@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 600" font-family="'Red Hat Text', system-ui, sans-serif" role="img">
+<defs><marker id="a" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#555"/></marker><marker id="am" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#e8870c"/></marker></defs>
+<rect x="40" y="120" width="180" height="90" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
+<text x="130.0" y="155.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">PENDING</text>
+<text x="130.0" y="172.5" font-size="11.5" fill="#555555" text-anchor="middle">_links: self, confirm,</text>
+<text x="130.0" y="187.5" font-size="11.5" fill="#555555" text-anchor="middle">cancel</text>
+<rect x="280" y="120" width="180" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="370.0" y="163.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">CONFIRMED</text>
+<text x="370.0" y="180.0" font-size="11.5" fill="#555555" text-anchor="middle">_links: self, cancel</text>
+<rect x="520" y="120" width="180" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
+<text x="610.0" y="163.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">IN_TRANSIT</text>
+<text x="610.0" y="180.0" font-size="11.5" fill="#555555" text-anchor="middle">_links: self</text>
+<rect x="760" y="120" width="180" height="90" rx="9" fill="#1a1a1a" stroke="#1a1a1a" stroke-width="2"/>
+<text x="850.0" y="155.5" font-size="13.5" font-weight="700" fill="#ffffff" text-anchor="middle">DELIVERED</text>
+<text x="850.0" y="172.5" font-size="11.5" fill="#dddddd" text-anchor="middle">_links: self only</text>
+<text x="850.0" y="187.5" font-size="11.5" fill="#dddddd" text-anchor="middle">(terminal)</text>
+<rect x="160" y="280" width="180" height="90" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5" stroke-dasharray="6 4"/>
+<text x="250.0" y="315.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">CANCELLED</text>
+<text x="250.0" y="332.5" font-size="11.5" fill="#555555" text-anchor="middle">_links: self only</text>
+<text x="250.0" y="347.5" font-size="11.5" fill="#555555" text-anchor="middle">(terminal)</text>
+<rect x="460" y="420" width="480" height="150" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
+<text x="700.0" y="463.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Sample response (PENDING)</text>
+<text x="700.0" y="480.0" font-size="11.5" fill="#555555" text-anchor="middle">{ &quot;status&quot;: &quot;PENDING&quot;,</text>
+<text x="700.0" y="495.0" font-size="11.5" fill="#555555" text-anchor="middle">  &quot;_links&quot;: {</text>
+<text x="700.0" y="510.0" font-size="11.5" fill="#555555" text-anchor="middle">    &quot;self&quot;:    { &quot;href&quot;: &quot;/bookings/42&quot; },</text>
+<text x="700.0" y="525.0" font-size="11.5" fill="#555555" text-anchor="middle">    &quot;confirm&quot;: { &quot;href&quot;: &quot;.../confirmation&quot;, &quot;method&quot;: &quot;POST&quot; },</text>
+<text x="700.0" y="540.0" font-size="11.5" fill="#555555" text-anchor="middle">    &quot;cancel&quot;:  { &quot;href&quot;: &quot;/bookings/42&quot;, &quot;method&quot;: &quot;DELETE&quot; } } }</text>
+<path d="M220,165 L280,165" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="256.0" y="159.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">confirm</text>
+<text x="256.0" y="159.0" font-size="11" fill="#555" text-anchor="middle">confirm</text>
+<path d="M460,165 L520,165" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="496.0" y="159.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">dispatch</text>
+<text x="496.0" y="159.0" font-size="11" fill="#555" text-anchor="middle">dispatch</text>
+<path d="M700,165 L760,165" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
+<text x="736.0" y="159.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">deliver</text>
+<text x="736.0" y="159.0" font-size="11" fill="#555" text-anchor="middle">deliver</text>
+<path d="M140,210 L200,280" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<text x="176.0" y="239.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">cancel</text>
+<text x="176.0" y="239.0" font-size="11" fill="#b8650a" text-anchor="middle">cancel</text>
+<path d="M360,210 L300,280" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
+<text x="336.0" y="239.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">cancel</text>
+<text x="336.0" y="239.0" font-size="11" fill="#b8650a" text-anchor="middle">cancel</text>
+<text x="490" y="60" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">HATEOAS: the response&#x27;s _links enumerate only the transitions valid from the current state — the state machine lives in the payload.</text>
+</svg>
