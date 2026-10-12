@@ -85,6 +85,7 @@ exclude:
   - examples/   # ← important: trailing slash; runnable code lives here, not site content
   - contracts/  # ← single source of truth; validated in CI, not rendered
   - scripts/
+  - presentation/  # ← .pptx deck builders + sources; repo artifacts, not site content
   - README.md
   - LICENSE
   - PRD.md

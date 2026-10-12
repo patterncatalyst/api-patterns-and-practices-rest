@@ -28,3 +28,8 @@ target/
 *.local.md
 *.local
 configs/*.local.json
+.deck-src/
+presentation/_shared/node_modules/
+presentation/**/__pycache__/
+**/.venv/
+presentation/**/qa/
