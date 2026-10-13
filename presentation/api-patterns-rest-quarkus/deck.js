@@ -743,6 +743,33 @@ divider("A", "Appendix — extra Quarkus code",
   addNotes(s, "The cargo sub-resource, as an appendix reference. This is the 'nest when it reads as ownership' guidance from the concept deck in code: cargo lives at /bookings/{id}/cargo because a cargo item genuinely belongs to a booking. addCargo validates the CargoRequest with @Valid, mints a crg_-prefixed id, appends it to the booking's cargo list, recomputes the quote because adding cargo changes the price, persists the updated booking, and returns 201 with a Location pointing at the nested cargo URI. It's one level of nesting, which is the sweet spot — deeper than that and the guidance was to use links instead. Nothing exotic, but it rounds out the resource surface and shows the sub-resource pattern concretely.");
 }
 
+
+/* --- Scan to explore (QR codes) --- */
+{
+  const s = S();
+  addContentTitle(s, "SCAN TO EXPLORE", "Take it with you");
+
+  // Left QR — the site
+  s.addImage({ path: `${ASSETS}/qr-rest-site.png`, x: 2.30, y: 1.78, w: 3.10, h: 3.10 });
+  s.addText("The site", { x: 1.55, y: 4.98, w: 4.60, h: 0.40,
+    fontFace: FONT.title, fontSize: 18, bold: true, color: COLOR.ink, align: "center", valign: "middle" });
+  s.addText("Chapters, the OpenAPI / AsyncAPI contracts, and both-stack runnable examples", { x: 1.45, y: 5.40, w: 4.80, h: 0.72,
+    fontFace: FONT.body, fontSize: 13, italic: true, color: COLOR.caption, align: "center", valign: "top" });
+  s.addText("patterncatalyst.github.io/api-patterns-and-practices-rest", { x: 1.45, y: 6.12, w: 4.80, h: 0.32,
+    fontFace: FONT.mono, fontSize: 10, color: COLOR.red, align: "center", valign: "middle" });
+
+  // Right QR — the hub
+  s.addImage({ path: `${ASSETS}/qr-hub.png`, x: 7.93, y: 1.78, w: 3.10, h: 3.10 });
+  s.addText("Workshops & Tutorials", { x: 7.18, y: 4.98, w: 4.60, h: 0.40,
+    fontFace: FONT.title, fontSize: 18, bold: true, color: COLOR.ink, align: "center", valign: "middle" });
+  s.addText("The whole series — every workshop, tutorial, and deck in one place", { x: 7.08, y: 5.40, w: 4.80, h: 0.72,
+    fontFace: FONT.body, fontSize: 13, italic: true, color: COLOR.caption, align: "center", valign: "top" });
+  s.addText("patterncatalyst.github.io/patterncatalyst-workshops-tutorials-list", { x: 7.08, y: 6.12, w: 4.80, h: 0.32,
+    fontFace: FONT.mono, fontSize: 9, color: COLOR.red, align: "center", valign: "middle" });
+
+  addNotes(s, "This is the Quarkus implementation deck, so the left code takes you to the runnable Quarkus example and contract, the right to the whole series. On the left, the site: the chapters, the OpenAPI and AsyncAPI contracts, and the runnable both-stack examples, all public. On the right, the Workshops and Tutorials hub: every workshop, tutorial, and deck in the series in one place, including the gRPC, GraphQL, and WebSockets siblings as they land. Scan whichever is useful; both are on the Pattern Catalyst GitHub organization.");
+}
+
 pres.writeFile({ fileName: OUT })
   .then((p) => console.log("WROTE", p, "slides:", pageNum))
   .catch((e) => { console.error(e); process.exit(1); });
