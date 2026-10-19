@@ -6,6 +6,18 @@ description: "Let the response carry the links: expose exactly the state transit
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Compute a `_links` map (`self`, `confirm`, `cancel`) fresh from a booking's current `status`, so a client discovers legal next actions from the representation instead of hard-coded rules.
+- Model a hypermedia link as `{href, method, title}` so a client never has to know a verb or a path out of band.
+- Route every response through one `withLinks`/`_with_links` helper so `_links` can never drift from the resource it describes.
+- Decide, per the Chapter 2 axes, when a resource's lifecycle justifies Richardson maturity level 3 and when level 2 is the better-costed default.
+- Treat `_links` as a derived view computed at read time, never a stored column, to close off the stale-link bug class.
+
+## Why this matters
+
 Chapter 1 named Richardson's maturity model and placed this book's contract at level 2 until the domain justified more: proper resources, proper methods, proper status codes, no hypermedia. The booking lifecycle is where that justification arrives. A booking moves through a real sequence of states — created, confirmed, loaded onto a carrier, delivered, or cancelled along the way — and which actions make sense next depends entirely on which state it's in right now. A client that wants to act correctly has to know that sequence somehow. Level 2 answers that by publishing it once, in documentation, and trusting every client to keep its own copy of the rules in sync with the server forever. Level 3 answers it by putting the rules in the response.
 
 That's the whole payoff of hypermedia as the engine of application state: the client discovers what it can do next by reading the representation it already has, not by consulting an out-of-band contract and hoping the server hasn't changed the rules since the client was written. The server owns the state machine. It also owns the URLs that drive it — a client that follows a link never has to know the path shape, the verb, or even that the path changed between one release and the next. It asks "what can I do with this booking right now?" and the answer comes back embedded in the booking.
@@ -131,3 +143,10 @@ The script brings up Quarkus on port `8092` and FastAPI on port `8012`, then dri
 The example's README documents a deliberate regression to make that distinction concrete: hard-code `HateoasLinks.forBooking` (or `links_for_booking`) to always emit `confirm`, regardless of status, and re-run `verify.sh`. Every response stays schema-valid (`confirm` still matches `#/$defs/Link`), but the moment a `CONFIRMED` booking's response claims a `confirm` relation it has no business offering, the state assertion fails: `expected _links keys [cancel,self], got [cancel,confirm,self]`. That failure is the whole point of building a dedicated assertion rather than trusting schema validation alone: schema validation checks that a link looks like a link, and only a check against the state machine itself can catch a link that looks right but is lying about what's legal.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the level-2-vs-level-3 choice. Add <code>_links</code> when a resource's evolution axis is rich — a multi-state lifecycle where the legal next actions depend on where the resource currently sits, and where client diversity means many independent clients would otherwise each re-implement (and each independently get wrong) the same transition rules. Skip it when a resource has no meaningful lifecycle, or when there's exactly one client and the team controls both ends of the contract — the payload and discipline cost buys nothing a shared library or a single documented rule wouldn't buy more cheaply. And wherever links do appear, compute them from current state on every response rather than storing them, so the server can never serve a response whose affordances have drifted from what the underlying resource actually allows.</p></div>
+
+## For deeper coverage
+
+- *Versioning & Evolution* (Appendix B, [Cloud Native Design Patterns](https://github.com/patterncatalyst/cloud-native-design-patterns)) — the evolve-without-breaking-clients stance this chapter's hypermedia links deliver for free.
+- [RFC 8288 — Web Linking](https://www.rfc-editor.org/rfc/rfc8288) — the standard notion of a typed link relation this chapter's `_links` map specializes.
+- Leonard Richardson & Mike Amundsen, *RESTful Web APIs* (O'Reilly, 2013) — the Richardson maturity model and hypermedia-as-the-engine-of-application-state, named in Chapter 1 and realized here.
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — resource relationship patterns adjacent to hypermedia-driven navigation.

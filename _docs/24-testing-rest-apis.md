@@ -6,6 +6,18 @@ description: "The test pyramid for a REST API — contract tests against the liv
 duration: "26 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Layer a REST API's tests into contract, integration, end-to-end, and bounded-load tiers, and explain what each tier proves that the others can't.
+- Validate a live response against a shared JSON Schema (`$defs`) as the test oracle, instead of hand-written assertions.
+- Write in-process integration tests with `@QuarkusTest`/RestAssured and FastAPI's `TestClient` that assert on real behavior a contract check can't reach.
+- Run a Postman collection with Newman against two independently deployed stacks to prove both honor one contract.
+- Distinguish a bounded correctness-under-repetition load check from a latency/throughput benchmark, and decide which CI tier each layer belongs in.
+
+## Why this matters
+
 Every chapter so far has assumed a response is correct without saying how anyone would know. `verify.sh` has been asserting status codes and schema shapes since Chapter 4, which already answers part of the question, but it has never named the layers underneath that one script, or said which of them a reader should write for their own API, in what order, and at what cost. This chapter names them. The example it documents (`examples/24-testing/`) trims Chapter 4's booking resource down to just `POST`/`GET /bookings` — the subject here is the testing layers wrapped around that surface, not another pass at the resource model — and builds a real instance of each layer in both stacks: a contract check against the shared schema, a `@QuarkusTest` class and a `pytest` suite, a Postman collection run with Newman against both live services, and a tiny bounded load run on top of the same collection. None of these layers is hypothetical. All four exist as runnable code in the example, and the chapter's job is to explain what each one buys, what it costs, and which of them a CI pipeline should actually run on every push.
 
 ## The test pyramid for a REST API
@@ -82,3 +94,10 @@ That's also exactly why this layer stays this small. Thirty iterations against o
 {% include excalidraw.html file="24-testing-rest-apis" alt="A test pyramid for a REST API with contract tests validating live responses against the shared JSON Schema at the base, in-process @QuarkusTest and pytest integration tests above that running locally and at build time, a Newman end-to-end layer running the same Postman collection against both live stacks in CI, and a thin bounded load layer on top running the same collection thirty times and asserting success and schema conformance rather than latency." caption="Figure 24.1 — The test pyramid for a REST API: contract, integration, end-to-end, and a thin bounded load layer, split by what runs in CI and what runs locally." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Build as much of the pyramid as the API's consequences of being wrong justify, not the whole thing reflexively for every service. A contract test is close to free once a shared schema already exists (Chapter 4 already assumed one), so there's rarely a reason to skip it; it's the cheapest layer in this chapter and the one every other layer in this chapter builds on. Integration tests are worth adding the moment business logic exists beyond passing a request straight through to a datastore (a quote formula, a state-transition rule, an error-shaping decision), and belong at build time and in a developer's own loop, not in the CI gate everyone else waits on, the same way `@QuarkusTest` and `pytest` stay out of `verify.sh` here while remaining real and runnable. End-to-end tests belong in CI specifically when more than one deployable artifact needs to agree on one contract (two independently implemented stacks sharing a schema, the way this chapter's Quarkus and FastAPI services do), because that's the condition an in-process integration test structurally cannot check; a single-implementation API can often get by on contract and integration tests alone, reaching for Newman-style E2E only once a second implementation, a second team, or a public-facing client enters the picture. A thin, bounded load layer belongs in CI as a correctness check under light repetition, never as a latency gate — the moment anyone needs an actual answer about sustained throughput, concurrency limits, or degradation under pressure, that's the signal to stand up a dedicated load tool on its own infrastructure and its own schedule, not to keep stretching a thirty-iteration Newman run past the question it was built to answer.</p></div>
+
+## For deeper coverage
+
+- Cloud Native Design Patterns, "Appendix O: Newman" — the Newman end-to-end harness this chapter's Postman collection is vendored and adapted from.
+- [Postman Learning Center — Newman command-line integration](https://learning.postman.com/docs/collections/using-newman-cli/command-line-integration-with-newman/) — the official Newman CLI reference.
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022) — contract-driven validation patterns underlying the schema-as-oracle approach.
+- Jakub Gough, Daniel Bryant & Matthew Auburn, *Mastering API Architecture* (O'Reilly, 2022) — where testing fits across an API's full delivery lifecycle.

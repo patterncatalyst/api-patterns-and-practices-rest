@@ -6,6 +6,18 @@ description: "When nesting a resource under a parent expresses real ownership �
 duration: "22 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Apply the ownership test — does the child have identity, lifecycle, or a cacheable audience apart from its parent? — to decide whether to nest a resource like `/bookings/{bookingId}/cargo` or give it a top-level address.
+- Explain how nesting folds a parent's identity into a cache key, and why that multiplies cache entries for shared reference data like `Location`.
+- Identify the redundant-endpoint anti-pattern — the same resource reachable at both a nested and a flat URL — and why the two addresses drift.
+- Trace `listCargo`/`addCargo` to see the ownership test enforced in code via a single parent lookup, not a parallel store.
+- Recognize three or more levels of path nesting as a signal to flatten the innermost resource back to its own top-level collection.
+
+## Why this matters
+
 Chapter 3 introduced `/bookings/{bookingId}/cargo` as the shipping contract's one example of nesting and named the test for whether one belongs there: a sub-resource nests under a parent when the child has no meaning, no identity, and no lifecycle outside that parent. It deferred the rest of the trade-off — what nesting costs once the API is serving real traffic, and the specific way teams get it wrong even when the ownership call was right. This chapter picks that up. Nesting is still the correct shape for cargo. It is also, structurally, a decision that trades away something: a URI that encodes a parent's identity inside a child's address couples the two forever, and that coupling has a price measured in caching behavior and in how many places a client can reach the same thing.
 
 The shape of this chapter follows the shape of the trade-off. First, the ownership test again, this time run against a case where it says no — reference data that looks nestable but isn't. Then the two costs nesting imposes even when the test says yes: cache locality and the temptation to expose the same resource at two addresses. Then a look at the real handlers behind `/bookings/{bookingId}/cargo` in the committed examples, because the contract's shape is easiest to evaluate against code that serves it. Last, a rule of thumb for how deep a nesting chain is allowed to get before it stops being a design and starts being a path copied from a database join.
@@ -133,3 +145,10 @@ The practical fix when a domain seems to demand three levels is almost always to
 <div class="callout callout--warn"><p class="callout__title">Anti-pattern</p><p>Exposing the same resource at two URL shapes — a nested nicety for one caller's convenience alongside a flat address for another's — looks harmless at launch because one handler currently backs both. It stops being harmless the first time either shape is edited without the other, and nothing in the system catches the drift because nothing declared the two addresses were ever supposed to agree. If two callers truly need different access patterns to the same data, give the data one canonical address and let both callers reach it through that address, rather than registering a second entry point into the same resource.</p></div>
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to nesting. Nest a collection under a parent only when the child fails the independence test — no identity, no lifecycle, no cacheable audience apart from that one parent — exactly as cargo fails it under booking. The moment a client would reasonably want to fetch, search, or cache the child without first knowing its parent, as with locations or any future reference data, give it its own top-level address instead, even if that means one more root-level collection in the contract. Keep every resource reachable at exactly one canonical URL: a nested shape and a flat shape for the same data are two independent surfaces to keep in sync, and the redundant one will eventually drift. And treat anything past one level of nesting as a design that needs its own justification — a chain of two or three owned-by relationships is a signal to flatten the innermost resource back to a top-level collection with a back-reference, not to extend the path another segment.</p></div>
+
+## For deeper coverage
+
+- *Composition* (Chapter 3, [Cloud Native Design Patterns](https://github.com/patterncatalyst/cloud-native-design-patterns)) — where aggregation belongs, and how resource boundaries are decided when one API fans out to several back-ends.
+- *Caching Patterns* (Appendix L, [Cloud Native Design Patterns](https://github.com/patterncatalyst/cloud-native-design-patterns)) — cache-aside and invalidation-scope trade-offs that extend this chapter's caching-cost argument against nesting shared reference data.
+- [RFC 9111 — HTTP Caching](https://www.rfc-editor.org/rfc/rfc9111) — the URL-keyed cache semantics behind why a nested address caches only as well as its parent.
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — resource relationship and association patterns.

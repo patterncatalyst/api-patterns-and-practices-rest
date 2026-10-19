@@ -6,6 +6,18 @@ description: "Push data as it is produced: chunked transfer encoding, Server-Sen
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Implement chunked transfer encoding (`Transfer-Encoding: chunked`, no `Content-Length`) for a response whose size isn't known up front.
+- Stream Server-Sent Events (`text/event-stream`, `data:` frames) for a live, one-directional feed.
+- Stream NDJSON (`application/x-ndjson`) for a bulk export a consumer processes line by line.
+- Fix the Quarkus double-encoding gotcha with a dedicated `MessageBodyWriter`.
+- Prove incremental delivery with a `curl -N` frame-timing check rather than status codes alone.
+
+## Why this matters
+
 Chapter 15 answered a question about *size*: a 2 MiB manifest sits still on disk, fully formed, and a client wants a slice of it without paying for the rest. This chapter answers a different question, about *time*: what happens when the data a client wants doesn't exist all at once in the first place? A cargo-status feed has no final byte until the next status change happens, possibly minutes from now. A bulk export of booking events can be handed to a client the instant each record is ready, rather than after every record has been generated and the whole array closed with a `]`. "Wait for the entire response body before sending any of it" is not merely wasteful here the way it was for the manifest — it is actively wrong, since there may be no "entire body" to wait for. Streaming is what HTTP calls the alternative: start writing the response before you know how it ends.
 
 The example for this chapter (`examples/16-streaming/`) extends the same Ch4-style `Booking` resource with three endpoints, each streaming the identical `BookingEvent` shape from `contracts/schemas/shipping.schema.json` (reused unchanged, not invented locally) over three wire formats. `GET /bookings/{id}/events` streams Server-Sent Events: a live, ordered feed of cargo-status transitions over one long-lived connection. `GET /bookings/events/export` streams NDJSON: a bulk export a batch consumer processes line by line as it arrives. `GET /bookings/events/export/chunked` isolates plain HTTP chunked transfer from either framing, so the underlying mechanism can be checked on its own. All three sit on the same deterministic five-step status progression (`CONFIRMED → IN_TRANSIT → IN_TRANSIT → IN_TRANSIT → DELIVERED`) that `EventGenerator.java` and `app/events.py` both produce; only the wall-clock `occurredAt` on each event varies between runs, because what this chapter teaches is event shape and delivery timing, not a frozen clock.
@@ -185,3 +197,10 @@ cd examples/16-streaming
 Quarkus comes up on port 8096, FastAPI on port 8016. The script creates a booking on each stack to mint an id, then drives all three endpoints: SSE (status, `Content-Type`, exactly five schema-valid frames, and the frame-to-frame timing spread), SSE against an unknown booking id (404 with a `Problem` body), the NDJSON export (status, `Content-Type`, exactly ten lines, each independently schema-valid against `BookingEvent`), and the dedicated chunked endpoint (status, `Transfer-Encoding: chunked` present, `Content-Length` absent, and at least the expected line count). It prints `PASS` only once every assertion holds for both stacks — including the timing floor, which is the one check in this chapter that distinguishes a response that merely claims to stream from one that actually does.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to which streaming mode fits a given need. Reach for <strong>SSE</strong> when the interaction axis is strictly one-directional, server-to-client, and lives over a connection a browser or long-running client is willing to hold open — a tracking dashboard, a notification feed, a progress indicator for work already covered by Chapter 10's async pattern but wanted live rather than polled. Reach for <strong>NDJSON</strong> when the shape is a bulk or batch sequence of independent records a consumer wants to start processing before the last one exists — exports, log tails, large result sets a client pipes into its own processing loop one line at a time — where there is no "live" element at all, just a wish to avoid materializing one huge array on either end. Reach for plain <strong>chunked transfer</strong> directly (no SSE or NDJSON framing on top) when the payload is a single large body whose size truly isn't known until generation finishes — a generated report, a computed file — and no record-level structure is needed. Skip all three for a client that needs to send data back over the same channel while the stream is open, or that needs multiplexed concurrent streams on one connection: that's a different interaction shape, and Chapter 17 is where WebSockets, webhooks, and gRPC streaming earn their place against this chapter's HTTP-native options.</p></div>
+
+## For deeper coverage
+
+- [RFC 9112 §7.1 — HTTP/1.1: Chunked Transfer Coding](https://www.rfc-editor.org/rfc/rfc9112#name-chunked-transfer-coding) — the mechanism every endpoint in this chapter rides on.
+- *Cloud Native Design Patterns*, stream-processing (same series, streaming and incremental delivery).
+- *Cloud Native Design Patterns*, event-driven (same series, push-style delivery patterns).
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022).

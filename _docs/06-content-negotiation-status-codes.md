@@ -6,6 +6,18 @@ description: "Serve the right representation for the client's Accept, reject the
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Distinguish `Accept` (what the client will take back) from `Content-Type` (what the client is sending), and map each failure to its status code (`406` vs. `415`).
+- Enforce content negotiation declaratively with `@Produces`/`@Consumes` on Quarkus, versus by hand with `_check_accept()`/`_check_content_type()` on FastAPI.
+- Place `200`, `201` (with `Location`), `204`, `400`, `404`, and `409` precisely against the booking domain's state machine.
+- Explain why `POST /bookings/{id}/confirm` against an already-`CONFIRMED` booking returns `409`, not `400` or `404`.
+- Return every error as a schema-conforming `application/problem+json` `Problem` body with `title`, `status`, and a `detail` that names the blocking state.
+
+## Why this matters
+
 Chapter 4 built the `bookings` and `cargo` surface against the contract and got the happy path right: a `POST` creates, a `GET` reads, a `PUT` replaces. What it left loose is the part of HTTP that decides what happens when a request asks for something the server was never going to give it — a representation it can't produce, a body format it won't parse, an operation that's well-formed but arrives at the wrong moment in a booking's life. Those are not edge cases to bolt on later; RFC 9110 defines them as the server's half of a negotiation, with precise status codes for each way the negotiation can fail. This chapter builds that half out: `Accept` and `Content-Type` as two different questions, `406` and `415` as the two different ways to answer "no," and the rest of the status-code set (`200`, `201` with `Location`, `204`, `400`, `404`, `409`) placed exactly where the booking domain's state machine says each one belongs.
 
 ## Two headers, two different questions
@@ -203,3 +215,11 @@ The README's drift probe makes the point concrete: disable `_check_accept()` in 
 {% include excalidraw.html file="06-content-negotiation" alt="A request's Accept and Content-Type headers are checked against what the matched endpoint can produce and consume, branching to a 200/201/204 success response when both are satisfied or to a 406/415 Problem response when either is not, alongside a separate status-code map showing 400 for a malformed request, 404 for a missing resource, and 409 for a well-formed request against a resource in the wrong state." caption="Figure 6.1 — Negotiation outcomes and the status-code map." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to representation and status-code choices. When a resource can truly be served in more than one shape, declare every shape explicitly in <code>Accept</code>/<code>Content-Type</code> handling rather than defaulting to a wildcard that silently accepts anything — a narrow declaration is what makes <code>406</code> and <code>415</code> meaningful signals instead of dead code nobody can trigger. When a write succeeds and creates a new resource, return <code>201</code> with <code>Location</code>, never a bare <code>200</code> — a client that has to re-derive the new resource's URI from convention is a client the contract failed to serve. When an operation fails because of the resource's current state rather than a bad request or a missing target, reach for <code>409</code> specifically, and put the current and required states in the <code>Problem</code> body's <code>detail</code> — a conflict a caller can't diagnose from the response alone is barely better than a bare <code>500</code>. And treat a framework's automatic negotiation (Quarkus's <code>@Produces</code>/<code>@Consumes</code>) and a hand-rolled equivalent (FastAPI's explicit guards) as carrying the same obligation despite the cost difference: the status code a client receives has to be identical either way, and only a behavioral <code>verify.sh</code> — not a glance at the annotations — proves that it is.</p></div>
+
+## For deeper coverage
+
+- [RFC 9110 §12, HTTP Semantics — Content Negotiation](https://www.rfc-editor.org/rfc/rfc9110.html#section-12) — `Accept`, `Content-Type`, and the `406`/`415` status codes this chapter builds on.
+- [RFC 9457, Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc9457.html) — the `application/problem+json` shape every error response in this chapter returns.
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022) — status-code selection patterns, including the `409`-versus-`400`-versus-`404` distinction this chapter works through.
+- Cloud Native Design Patterns, [Appendix E: Errors](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/18-appendix-e-errors.md) — the companion book's dedicated treatment of error representation across API styles.
+- Cloud Native Design Patterns, [Appendix A: Protocols](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/14-appendix-a-protocols.md) — HTTP status-code semantics as a protocol-level reference.

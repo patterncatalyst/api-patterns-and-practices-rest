@@ -6,6 +6,18 @@ description: "Model recurring, server-owned work: separate the schedule (configu
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Split a recurring job into a server-owned job definition (`PUT /jobs/manifest-reconcile`) and independent run records, so the schedule and each execution have different owners.
+- Reuse the `Operation` type from Chapter 10 for a job run instead of inventing a parallel `JobRun` shape.
+- Re-arm a periodic timer (`scheduleAtFixedRate` / `_tick_loop`) so a reconfigured `intervalSeconds` takes effect immediately rather than on next restart.
+- Route both a scheduled tick and an on-demand `POST .../runs` through the same `startRun()`/`_start_run()` method, so every run is created identically regardless of trigger.
+- Distinguish disabling a job (`enabled: false`) from cancelling a run that's already `RUNNING`.
+
+## Why this matters
+
 Chapter 10 modeled work that outlasts one request but still belongs to one request — a client confirms a booking, the server hands back an `Operation` to poll, and once that operation reaches `SUCCEEDED` the whole episode is finished. Nothing about that `Operation` exists before the `POST` that created it, and nothing about it matters after the client stops polling. This chapter is about a different shape of problem: work that has no triggering request at all. Re-checking every manifest against the bookings it's supposed to cover isn't something a client asks for once and waits on — it's something that needs to happen every few minutes, forever, whether or not anyone is watching, for as long as the system is running. That's a **job**, not an operation, and treating it like an operation with a longer poll timeout misses the part that matters: who decides when it runs.
 
 ## Why this isn't just Chapter 10 again
@@ -145,3 +157,10 @@ The example's README documents a drift probe worth running once: hardcode `inter
 <div class="callout callout--warn"><p class="callout__title">Gotcha</p><p>Disabling a job (<code>enabled: false</code>) stops new scheduled runs from being produced; it does not, and should not, cancel a run that's already <code>RUNNING</code>. The two are independent facts — whether the schedule is currently producing new work, and whether a specific run in flight should be allowed to finish — and conflating them means a client flipping a job off mid-run gets a truncated, inconsistent reconcile pass instead of either a clean completion or an explicit cancel. If a run truly needs to be interruptible, that's a cancel affordance on the run resource itself, the same shape Chapter 10 built for operations, not a side effect of disabling the schedule.</p></div>
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to recurring work. When the interaction shape is a single, bounded request/response — a client wants one thing to happen once, right now, and cares about the outcome of that specific call — model it as a direct synchronous call or, if it's long-running, Chapter 10's <code>202</code>/poll/<code>303</code> operation. Reach for a rerunnable job specifically when the work's correctness depends on it happening on a cadence no single client request initiates — reconciliation, cleanup, periodic sync against an external system — because client diversity and evolution pressure both argue against making any one caller responsible for triggering it. Split the schedule from the execution as two resources with two owners: the client configures <em>when</em> and <em>whether</em>, the server owns <em>that it actually happens</em>, and an on-demand run is an addition to the schedule for an impatient caller, never a substitute for the server owning the clock. Reuse the operation shape for a run record rather than inventing a parallel type — a run is a long-running operation that happens to also be startable by a timer, and a client that already knows how to poll one knows how to poll the other.</p></div>
+
+## For deeper coverage
+
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022) — resource-oriented patterns for background and recurring work.
+- Justin Higginbotham, *Principles of Web API Design* (Addison-Wesley, 2021) — resource-modeling principles applicable to a job definition and its run records.
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — standard-method and long-running-operation patterns this chapter's run/operation split builds on.
+- [RFC 9110 §15.3.3 — 202 Accepted](https://www.rfc-editor.org/rfc/rfc9110#section-15.3.3) — the status code a `POST .../runs` still returns, since starting a run is not the same moment as finishing one.

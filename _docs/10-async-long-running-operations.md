@@ -6,6 +6,18 @@ description: "Model work that outlasts one request: return 202 with a Location t
 duration: "30 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Model work that outlasts one request as `202 Accepted` plus a pollable `Operation` resource, instead of blocking the connection or returning a premature `200`.
+- Redirect a completed operation with `303 See Other` rather than folding the resource it produced into the operation's own body.
+- Implement a race-safe cancel (`DELETE /operations/{opId}`) where whichever of cancel or completion finalizes first wins, using a lock on Quarkus and cooperative single-threaded scheduling in `asyncio`.
+- Recognize why a FastAPI handler calling `asyncio.create_task()` must be declared `async def`, not plain `def`.
+- Decide, from the Chapter 2 axes, when synchronous handling is enough and when `202`/poll/`303` is warranted.
+
+## Why this matters
+
 Every chapter so far has assumed a request finishes inside the response that answers it: the server does the work, builds the representation, and the client has what it asked for before the connection closes. Confirming a booking breaks that assumption. A real confirmation runs a routing check against carrier schedules and a capacity check against the destination terminal — calls to systems this service doesn't own, with latency this service doesn't control. Modeling that as a single request/response forces a choice between two bad options, and this chapter exists because both of them are wrong in a specific, nameable way.
 
 ## Why one request can't hold this work
@@ -173,3 +185,10 @@ The script brings up Quarkus on port `8090` and FastAPI on port `8010` (a pair c
 <div class="callout callout--warn"><p class="callout__title">Gotcha</p><p>A FastAPI handler that needs <code>asyncio.create_task()</code> — to kick off background work, not just to <code>await</code> something — must itself be <code>async def</code>. A plain <code>def</code> endpoint runs on a thread-pool thread with no event loop attached, and scheduling a task from inside one raises at request time rather than producing a silently wrong result. This is easy to miss because most handlers in an API this size have no reason to be anything but synchronous, which makes the one that does stand out only if you're looking for it.</p></div>
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the sync-vs-async choice itself. Stay synchronous when the work's latency is bounded and small relative to a client's request timeout, and when there's nothing meaningful for the client to do between request and response except wait a few hundred milliseconds — forcing a poll loop onto work that's already fast adds a round trip for no benefit. Reach for <code>202</code> + poll + <code>303</code> specifically when the work's duration is variable, dependent on a system this service doesn't control, or long enough that holding a connection open risks a client-side timeout regardless of whether the work eventually succeeds. Model the in-progress work as its own resource — an <code>Operation</code> with an id, a status, and an address — rather than an ad hoc job token, so the same polling and schema-validation machinery serves every long-running action in the contract, not a bespoke shape per endpoint. And offer a cancel specifically when the work is meaningfully abortable before it commits any side effect; if cancelling can only race a side effect that's already irreversible by the time the client decides to stop, say so in the documentation rather than exposing a <code>DELETE</code> that sometimes quietly does nothing.</p></div>
+
+## For deeper coverage
+
+- [RFC 9110 §15.3.3 — 202 Accepted](https://www.rfc-editor.org/rfc/rfc9110#section-15.3.3) and [§15.4.4 — 303 See Other](https://www.rfc-editor.org/rfc/rfc9110#section-15.4.4) — the two status codes this chapter's lifecycle is built on.
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022) — async and long-running-operation patterns.
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — the long-running-operation pattern and its resource shape.
+- James Gough, Daniel Bryant & Matthew Auburn, *Mastering API Architecture* (O'Reilly, 2022) — operational patterns for work that outlasts a request.

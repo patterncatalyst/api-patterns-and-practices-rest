@@ -6,6 +6,18 @@ description: "Author the bookings and cargo contract as one OpenAPI document, sc
 duration: "30 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Explain why contract-first (one `shipping-api.yaml` plus one `shipping.schema.json`) prevents the drift that generating a document from code invites.
+- Reference a shared type from an OpenAPI operation with `$ref: '../schemas/shipping.schema.json#/$defs/Booking'` instead of redefining it inline.
+- Explain what `additionalProperties: false` enforces on a response that JSON Schema doesn't check by default.
+- Implement the identical `POST /bookings` contract on both stacks, matching status code, `Location` header, and body shape byte-for-byte.
+- Run `verify.sh`'s schema-validation step (`examples/_lib/validate_response.py`) to catch a response that returns the right status code with the wrong body shape.
+
+## Why this matters
+
 Chapter 3 named the resources: `Booking` as the aggregate root, `Cargo` nested beneath it, `Location` as reference data outside the boundary. None of that becomes an API until someone writes down the exact shape of a request and a response, and decides where that writing lives. This chapter puts it in one place — a single OpenAPI document — before either stack has a line of handler code, and wires a CI job that fails the build the moment an implementation stops matching it. That ordering is the pivot every later hands-on chapter turns on: each one starts from the contract, not from whichever stack happened to get written first.
 
 ## Contract-first versus code-first
@@ -171,3 +183,11 @@ The script prints `PASS` only after every assertion holds for both stacks, then 
 {% include excalidraw.html file="04-contract-first-flow" alt="The shared OpenAPI and JSON Schema contract scaffolds both the Quarkus and the FastAPI stack, each stack serves live HTTP responses, CI's verify.sh schema-validates every live response body against the same contract, and the pipeline either merges on a match or fails the build on drift." caption="Figure 4.1 — Contract-first: one schema, two stacks, CI as the drift gate." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to contract-first versus code-first: the payoff scales with client diversity and evolution pressure. A single internal consumer reading one team's source barely needs a contract independent of the code; every chapter from here on assumes the opposite — multiple stacks, clients that can't read either server's source, and a shape that has to keep working as fields and endpoints are added for years. Where those conditions hold, write the contract before the first handler, and treat a response that merely returns the right status code as unverified until a schema check — not a code review — confirms its body matches what was written down.</p></div>
+
+## For deeper coverage
+
+- Lukasz Dynowski & Marcin Dulak, *Learning API Styles* (O'Reilly, 2025) — contract-first workflows across multiple API styles.
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — schema design patterns for the shared types this chapter's contract defines once and references everywhere.
+- [OpenAPI Specification v3.1](https://spec.openapis.org/oas/latest.html) and [JSON Schema 2020-12](https://json-schema.org/specification) — the two specs `shipping-api.yaml` and `shipping.schema.json` are authored against.
+- Cloud Native Design Patterns, [API registry](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/09-api-registry.md) — the companion book's treatment of publishing and governing a contract as its own artifact.
+- Cloud Native Design Patterns, [API metadata](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/10-api-metadata.md) — describing a contract's shape and provenance beyond the schema itself.

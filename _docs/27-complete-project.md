@@ -6,6 +6,18 @@ description: "One booking service, on both stacks, assembling every pattern this
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Assemble every REST pattern this book taught (contract-first create/read, keyset pagination, HATEOAS, async operations, media-type versioning, soft delete/purge, NDJSON streaming, CloudEvents-over-Kafka) onto one `Booking` resource without the mechanics interfering with each other.
+- Keep a REST response and a Kafka event in sync against one shared JSON Schema spine (`#/$defs/Booking`, `#/$defs/BookingEvent`) instead of two independently maintained shapes.
+- Validate an Arazzo workflow document (`contracts/arazzo/booking-workflow.yaml`) against the OpenAPI operations it sequences.
+- Scale a `verify.sh` contract-test gate to ten composed assertions while keeping every asynchronous wait bounded.
+- Decide which patterns belong in nearly every REST API versus which are situational, by naming the specific failure each one prevents.
+
+## Why this matters
+
 Every chapter up to this one picked one axis of the shipping domain and built a narrow example around it: Chapter 8's booking existed to demonstrate a cursor, Chapter 12's to demonstrate `_links`, Chapter 21's to demonstrate a CloudEvents envelope. That narrowness was the right call for teaching one idea at a time, but it leaves an open question none of those chapters could answer on their own: do all these mechanics still work when they're not the only thing happening to a resource? A `_links` map that reflects a booking's lifecycle state has to keep reflecting it correctly once that same booking can also be paginated, versioned, soft-deleted, and streamed. A background worker that flips a booking to `CONFIRMED` has to coordinate with whatever else might be reading or writing that booking at the same moment. `examples/27-complete-project/` is where that question gets answered directly: one `Booking` resource, built on both Quarkus and FastAPI, carrying every capability the book taught instead of one apiece.
 
 Nothing in this chapter is a new idea. The contract is the same `contracts/schemas/shipping.schema.json` this book has extended since Chapter 4, not a new document started from scratch. The two stacks are the same Quarkus 3.40.1 LTS and FastAPI-on-Python-3.14 services every chapter has run since Chapter 0. What's new is the assembly: ten mechanics, each already proven correct in isolation by an earlier chapter's own `verify.sh`, now sharing one `BookingStore`, one HTTP surface, and one Kafka topic, with a single end-to-end script proving none of them interferes with another. That's a different, harder claim than "each pattern works" — it's "these patterns compose," and composing them is this chapter's entire job.
@@ -86,3 +98,10 @@ The operation (Chapter 10) and the CloudEvent (Chapter 21) complete in the same 
 ## Decision
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Looking back across the whole book, a handful of these patterns belong in nearly every API a team builds, and the rest are situational: the distinction a reader should walk away able to make for their own service. Contract-first request/response (Chapter 4), a `Problem` body for errors, and pagination for any collection that can grow without bound apply to almost any REST API regardless of domain; skipping them tends to cost a team a rewrite later rather than save it real effort now. HATEOAS, media-type versioning, soft delete with a GDPR purge path, and NDJSON streaming are correct answers to specific conditions — a state machine complex enough that a client benefits from being told its options, more than one representation of a resource that has to coexist, a legal retention requirement, a payload too large or too slow to buffer — and the right call for a given API is to adopt each one only once that condition is actually true for it, not because this book covered it. Async operations and a second, event-based contract apply once an operation takes long enough that a caller shouldn't hold a connection open for it, or once a system has a second audience for a state change beyond whoever asked for it directly. The test a reader can run against their own API: name the specific failure a pattern prevents, and check whether that failure is one their system can actually have. If it can't, the pattern is an API's future problem being solved for it today, at a cost (more surface, more to document, more for the next engineer to learn) this book pays once, in a single chapter, so a reader doesn't have to pay it by trial and error in a production incident.</p></div>
+
+## For deeper coverage
+
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — the pattern catalog (pagination, long-running operations, soft delete) this chapter assembles onto one resource.
+- Arnaud Lauret, *The Design of Web APIs, Second Edition* (Manning, 2024) — versioning and resource-design trade-offs at the scale of a complete API.
+- Martin Kleppmann & Chris Riccomini, *Designing Data-Intensive Applications, Second Edition* (O'Reilly, 2026) — keeping a synchronous response and an asynchronous event in sync against one schema.
+- [CloudEvents specification](https://cloudevents.io/) — the envelope this chapter's background Kafka publish conforms to.

@@ -6,6 +6,18 @@ description: "Two correct ways to change part of a resource — RFC 6902 JSON Pa
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Distinguish `application/merge-patch+json` (RFC 7396) from `application/json-patch+json` (RFC 6902) and choose the right one for a given change.
+- Apply RFC 7396's merge rules, including the rule that a `null` value in the patch deletes a field rather than setting it.
+- Apply RFC 6902 operations (`add`, `remove`, `replace`, `move`, `copy`, `test`) addressed by JSON Pointer paths.
+- Use a `test` operation for optimistic concurrency control, mapping a failed precondition to `409 Conflict` and a malformed patch to `422 Unprocessable Content`.
+- Dispatch `PATCH /bookings/{id}` on `Content-Type` and reject anything else with `415 Unsupported Media Type`.
+
+## Why this matters
+
 Chapter 5 established `PUT` as idempotent whole-resource replacement: send the full representation, the server stores exactly that, and sending it again changes nothing further. That guarantee is also `PUT`'s limitation. A client that wants to move a booking's `requestedPickup` date by one day has to re-send the entire `Booking` (origin, destination, every cargo item, the quote) just to change one field, and it has to read the current representation first or risk clobbering a concurrent change to a field it never meant to touch. `PATCH` exists for exactly this gap: a request that describes a *change*, not a replacement, against a body the client didn't have to reconstruct from scratch. The catch is that "describes a change" isn't one format: the IETF standardized two incompatible ways to do it, and a server has to pick, document, and dispatch on which one a given request is using.
 
 This chapter builds both against the Chapter 4 contract-first `Booking` and `Cargo` model, on the same `PATCH /bookings/{id}` endpoint, distinguished by `Content-Type`. `application/merge-patch+json` carries **RFC 7396 JSON Merge Patch** — a partial object. `application/json-patch+json` carries **RFC 6902 JSON Patch** — an ordered array of operations. Both are legitimate, standardized, and in production use; neither subsumes the other. Picking between them is itself a design decision, and by the end of the chapter it slots into the Chapter 2 decision framework like every other one.
@@ -238,3 +250,11 @@ The README's drift probe makes the stakes concrete: comment out the `replace` br
 {% include excalidraw.html file="07-patch-vs-merge" alt="The same Booking resource shown receiving two different partial-update requests side by side: a JSON Merge Patch sent as application/merge-patch+json, a sparse object with requestedPickup changed and a null field marked for deletion, merged recursively into the target; and a JSON Patch sent as application/json-patch+json, an ordered array of add/remove/replace/test operations addressed by JSON Pointer paths like /cargo/0/description, applied in sequence to the same target, with a failing test operation shown short-circuiting the whole array before any operation after it runs." caption="Figure 7.1 — JSON Patch vs JSON Merge Patch on the same booking." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the partial-update format choice. When the typical caller already has a sparse object to send — a form, a client diffing its own local state — and the domain has no field where <code>null</code> is a meaningful value distinct from "absent," <strong>JSON Merge Patch</strong> is the lower-cost correct answer: smaller bodies, no operation vocabulary to learn, a result a caller can reason about by eye. When an edit must land on one element inside an array without resending the whole array, or a caller needs to make its write conditional on the resource's current state via <code>test</code>, reach for <strong>JSON Patch</strong> — the verbosity buys precision and a concurrency guard merge patch cannot express at all. Don't guess at the client's capability from the media type alone: declare both, dispatch on <code>Content-Type</code> exactly as this chapter's two stacks do, and return <code>415</code> for anything else — a server that silently accepts a Content-Type it never validated is a server where "which format did that body actually follow" becomes a debugging question instead of a routing fact. And regardless of format, never let either patch style touch a server-assigned field: enforce <code>id</code>/<code>createdAt</code> immutability and the <code>updatedAt</code> restamp as an invariant of the resource, not an artifact of whichever patch happened to be sent.</p></div>
+
+## For deeper coverage
+
+- [RFC 6902 — JavaScript Object Notation (JSON) Patch](https://www.rfc-editor.org/rfc/rfc6902).
+- [RFC 7396 — JSON Merge Patch](https://www.rfc-editor.org/rfc/rfc7396).
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022) — partial-update patterns and the trade-offs between them.
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — standard update patterns, including partial updates.
+- *API Error Handling* (Appendix E, [Cloud Native Design Patterns](https://github.com/patterncatalyst/cloud-native-design-patterns)) — the `409`/`422` error-contract distinction this chapter applies to a failed `test` op versus a malformed patch.

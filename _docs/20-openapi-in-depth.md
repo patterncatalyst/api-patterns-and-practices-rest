@@ -6,6 +6,18 @@ description: "Full JSON Schema alignment in a served OpenAPI document — type-a
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Express nullable fields with JSON Schema's `type` array (`type: ["string","null"]`) instead of the legacy `nullable: true` flag.
+- Document an outbound call with a top-level `webhooks` section (`bookingStatusChanged`) using the same shape as a path operation.
+- Reconcile a hand-authored static document (`mp.openapi.scan.disable=true`) against a generated one (`custom_openapi()`) for the same construct.
+- Build a structural drift check (`check_openapi.py`) that compares required-field sets instead of diffing bytes.
+- Decide, from the Chapter 2 axes, when a living-contract drift gate is worth running on every push.
+
+## Why this matters
+
 Chapter 4 put the contract first: one schema file, two stacks, a CI gate that schema-validates every live response against it. That chapter stopped at the parts of OpenAPI every reader already half-knows — paths, methods, status codes, a `$ref` into a shared schema. This chapter goes into parts most REST work never touches: what it means for `components.schemas` to *be* JSON Schema rather than a lookalike of it, what a top-level `webhooks` section documents that a path never can, and what it takes to keep a generated document matching the document a team agreed to ship. None of this changes a response body. It changes what the document describing those responses can say, and how confidently a reader, a generator, or a CI job can trust what it says.
 
 ## What "the schema section is JSON Schema" unlocks
@@ -80,3 +92,10 @@ Quarkus comes up on port 8100, FastAPI on port 8020. For each stack, `verify.sh`
 {% include excalidraw.html file="20-openapi-in-depth" alt="A shared contract schema feeds a drift check; the Quarkus stack serves a hand-authored static OpenAPI document and the FastAPI stack serves a generated-and-patched OpenAPI document, each exposing a type-array nullable field and a webhooks section, and CI's drift check compares each served document's required-field set against the contract, passing on a match and failing the build on divergence." caption="Figure 20.1 — The living-contract loop: edit the contract, each stack serves its document, drift check compares, CI gates on the result." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether OpenAPI depth and drift detection are worth the investment. Client diversity is the strongest driver: a document consumed only by one team reading its own server's source barely needs type-array nullability or a drift gate, because any disagreement surfaces immediately as a code review comment; a document consumed by external partners, a generated SDK pipeline, or a documentation portal nobody on the API team controls needs every nullability and requiredness signal to be exact, because those consumers can't read the implementation to resolve an ambiguity the document left open. Evolution pressure matters just as much as diversity: a contract that changes rarely can get away with an occasional manual comparison between a served document and the schema it's supposed to match; a contract under active development, with fields added and renamed across several chapters' worth of change the way this book's shipping domain has been, needs the comparison running on every push, because that's exactly the cadence at which a hand-authored static document and a generated one drift apart unnoticed. Webhooks specifically are worth the top-level section only when the API calls outward to client-registered endpoints (a booking-confirmation push, a shipment-tracking update) and not worth inventing for an API that only ever answers inbound requests; documenting a webhook nobody will ever receive just adds a section a reader has to figure out is aspirational. Skip the structural drift check only when a single stack's document is itself the generated source of truth with no second artifact to compare against — the moment a second document enters the picture, whether hand-authored or independently generated, the gate is what keeps "the contract" meaning one thing instead of two.</p></div>
+
+## For deeper coverage
+
+- [OpenAPI Specification 3.1.0](https://spec.openapis.org/oas/v3.1.0) — the JSON Schema 2020-12 dialect alignment and the `webhooks` object this chapter is built around.
+- J.J. Geewax, *API Design Patterns* (Manning, 2021).
+- Gough, Bryant & Auburn, *Mastering API Architecture* (O'Reilly, 2022).
+- *Cloud Native Design Patterns*, api-management (same series, contract governance).

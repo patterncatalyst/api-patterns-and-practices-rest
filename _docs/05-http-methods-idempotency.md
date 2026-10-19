@@ -6,6 +6,18 @@ description: "Which methods are safe, which are idempotent, and why it matters �
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Define "safe" and "idempotent" precisely per RFC 9110 §9.2, and explain why they're independent axes rather than two names for the same idea.
+- Place every `/bookings` and `/bookings/{bookingId}` operation on the safe/idempotent matrix, including the two `405` "not applicable" cells.
+- Spot a `PUT` that looks idempotent but isn't — one that mints a fresh random `Cargo.id` on every call — and fix it with a deterministic id derived from a seed (`Ulid.deterministic(seed)` / `generate_deterministic_ulid(seed)`).
+- Return a correct `405` with an `Allow` header and a `Problem` body for an unsupported method/path combination.
+- Explain why `DELETE /bookings/{id}` is idempotent even though its response status code changes across repeated calls (`204`, then `404`, then `404`).
+
+## Why this matters
+
 Chapter 1 used the word "idempotent" once, in passing, about `PUT`, and promised the precise definition for later. Chapter 4 built the full `bookings` and `cargo` surface against the contract (every method the OpenAPI document declares, running in both stacks), but it built the surface with a bug in exactly that promise: a `PUT` that looked like an idempotent full replace was not, in fact, idempotent, because it reminted the ids of every `Cargo` item on every call. This chapter is where "later" arrives. It defines **safe** and **idempotent** precisely, places every method from the contract's `bookings` surface into the matrix those two properties form, and fixes the Chapter 4 bug as the chapter's centerpiece: not as a hypothetical, but as a real defect in a real example, caught by a real assertion in `verify.sh`.
 
 ## Two properties, not one
@@ -207,3 +219,10 @@ cd examples/05-http-methods-idempotency
 ```
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to method choice. When an interaction only reads, reach for a safe method — <code>GET</code> or <code>HEAD</code> — so caches, proxies, and crawlers can treat it as free to retry without asking. When an interaction writes and the client might ever retry it (a flaky connection, a timeout with an unknown outcome, a mobile client resending on reconnect), prefer an idempotent one — a full <code>PUT</code> over a creating <code>POST</code>, or a merge-patch written to set absolute values rather than apply a relative delta — because idempotency is what makes "just retry it" a safe default instead of a risk of duplicate state. Reserve <code>POST</code> and a relative <code>PATCH</code> for the cases where every call is meant to produce a new effect, and treat an implementation that merely looks idempotent — same status code, same top-level fields — as unverified until a test proves the full state, generated child ids included, actually converges across repeated calls.</p></div>
+
+## For deeper coverage
+
+- [RFC 9110 §9.2, HTTP Semantics — Common Method Properties](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2) — the authoritative definitions of safe and idempotent this chapter builds the matrix from.
+- Gough, Bryant & Auburn, *Mastering API Architecture* (O'Reilly, 2022) — method semantics and idempotency in the context of a full API architecture.
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022) — idempotent and safe method patterns, including the retry-safety argument this chapter's Decision callout makes.
+- Cloud Native Design Patterns, [Appendix A: Protocols](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/14-appendix-a-protocols.md) — the companion book's protocol-level reference for HTTP method semantics.

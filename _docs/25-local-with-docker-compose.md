@@ -6,6 +6,18 @@ description: "Bringing up both stacks, Postgres, and a single-container Grafana 
 duration: "24 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Wire `quarkus-opentelemetry` and a manual OpenTelemetry Python SDK pipeline to export spans over OTLP/gRPC and OTLP/HTTP to a shared collector.
+- Promote `grafana/otel-lgtm` from an opt-in `profiles: ["observability"]` service to a default Compose dependency once tracing is the subject under test.
+- Propagate a fixed W3C `traceparent` header across a request and assert the resulting trace lands in Tempo under that exact id.
+- Write a bounded sleep-poll against Tempo's trace API instead of a single-shot or open-ended wait.
+- Decide when a chapter's or project's subject justifies running the full LGTM stack locally by default versus keeping it behind an opt-in profile.
+
+## Why this matters
+
 Chapter 0 stood up a Compose lab with two application containers and a shared Postgres, and put a fourth service — `lgtm`, Grafana's all-in-one observability image — behind a `profiles: ["observability"]` flag that kept it out of every `docker compose up` since, because nothing in this book emitted telemetry worth watching yet. That changes here. `examples/25-local-with-docker-compose/` takes the booking create/read surface Chapter 24 already trimmed down and tested, wires `quarkus-opentelemetry` into the Quarkus side and a manual OpenTelemetry SDK into the Python side, and promotes `lgtm` from opt-in to default: `docker compose up` now brings up four containers, not three, because this chapter's entire subject is tracing and there is no version of that subject where the collector stays switched off. The claim this chapter makes isn't "both services now emit spans," which is the kind of thing a reader could take on faith and never check. It's narrower and more falsifiable: one specific request, carrying one specific trace id a reader chooses in advance, produces one specific trace that Tempo can be asked for by that exact id and will hand back. `verify.sh` makes that the gate, not a side note, and the same pipeline that proves the gate also opens up the first of three tiers this book will run the booking service on, with Kubernetes on minikube and OpenShift Local behind it.
 
 ## The Compose topology
@@ -73,3 +85,10 @@ That same `otel-lgtm` image is also where logs and metrics would correlate with 
 ## Decision
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Run the full LGTM stack locally, by default, the moment a chapter's or a project's actual subject is observability rather than a feature that happens to touch a service also emitting telemetry. Everywhere else, keep `lgtm` behind an opt-in profile the way Chapter 0 set it up: a four-container stack with no consumer watching it slows down every boot and buys nothing for a reader working on a resource model, a pagination scheme, or a schema evolution rule that has nothing to do with tracing. The deciding question isn't "does this service have OpenTelemetry wired in," it's "is the thing a reader needs to verify, right now, something only a trace, a log, or a metric can show." A booking's shape is provable with a contract check against `#/$defs/Booking`; a booking's journey through two instrumented stacks and a collector is provable only by querying the pipeline that carries it, which is why this chapter flips the default and Chapter 24 didn't need to. Compose is also the right place to start this verification habit at all — a single `docker compose up`, one collapsed `otel-lgtm` container, one bounded Tempo poll — because it keeps the whole loop (build, run, trace, assert, tear down) on one machine with no cluster to provision first. That's the first of three tiers this book runs the same booking service on, by design: Chapter 26 moves the same contract onto Kubernetes on minikube, where Tempo, Loki, and Mimir stop being one convenient container and start being separate workloads a cluster schedules, and the OpenShift Local appendix moves it again onto a platform with its own operators and security defaults layered on top. Each tier keeps the same deterministic trace-id assertion this chapter establishes; what changes underneath it is how much of the platform a reader is now responsible for standing up themselves.</p></div>
+
+## For deeper coverage
+
+- Charity Majors, Liz Fong-Jones & George Miranda, *Observability Engineering* (O'Reilly, 2022) — the reasoning behind tracing as a first-class verification tool, not just a debugging aid.
+- Cloud Native Design Patterns, "Observability" chapter — the broader pattern this chapter's single-trace proof is one instance of.
+- [Quarkus OpenTelemetry guide](https://quarkus.io/guides/opentelemetry) — the official reference for `quarkus-opentelemetry`'s configuration properties.
+- [W3C Trace Context specification](https://www.w3.org/TR/trace-context/) — the `traceparent` header format both stacks' default propagators read.
