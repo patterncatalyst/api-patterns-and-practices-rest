@@ -6,6 +6,18 @@ description: "Set up the contract-first lab: the Quarkus and FastAPI toolchains,
 duration: "25 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Bring up the lab with `docker compose up --build`, and opt into the LGTM observability stack with `docker compose --profile observability up --build`.
+- Explain why both stacks build inside a container from Red Hat UBI 10 base images instead of relying on a host-installed JDK or Python interpreter.
+- Avoid the `uv`-built virtual environment relocation gotcha by building and running at the same `WORKDIR`.
+- Trace the booking lifecycle state machine (`PENDING` → `CONFIRMED` → `IN_TRANSIT` → `DELIVERED`, with `CANCELLED` reachable from either of the first two).
+- Run `verify.sh` to confirm both services answer their health checks and the stack tears down cleanly.
+
+## Why this matters
+
 Every chapter after this one hands you a running example in two languages against one contract. This chapter is where that becomes true on your machine: the container toolchain the examples build with, the Compose stack that boots them side by side, and the shipping/cargo domain every resource, every status code, and every diagram in this site refers back to. Nothing here touches the OpenAPI contract itself — that's Chapter 4. This chapter proves the two stacks boot, answer a health check, and tear back down cleanly, so the plumbing is never the thing you're debugging once the real API design starts.
 
 ## What the lab needs, and why
@@ -174,3 +186,10 @@ uv run uvicorn app.main:app --reload --port 8000
 From here on, every hands-on chapter in this site follows the same shape this one established: a runnable example under `examples/NN-chapter-name/` with both a Quarkus and a Python implementation, a `verify.sh` that asserts response bodies and status codes rather than just "the container started," and a `compose.yaml` that boots cleanly with LGTM available but off by default. Once the contract lands in Chapter 4, a CI job adds one more guarantee on top of each chapter's own `verify.sh`: it validates both stacks' live responses against `contracts/openapi/shipping-api.yaml` directly, so a chapter's "verified" status means the two independent implementations didn't just agree with each other, they agree with the contract that's supposed to govern both. A chapter's footer only flips to `Verification status: verified` once that CI check and both stacks' scripts are green — a status this chapter's own example will carry the moment Chapter 4 extends it with the first real resource.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Run against Compose when you want the exact environment CI validates — both stacks, Postgres, the full network topology — which is the right default for anything you'll compare against a later chapter's expected output. Switch to local dev (<code>quarkus dev</code> / <code>uv run --reload</code>) once you're editing one service's code and want a sub-second feedback loop; rebuilding a container image on every save is the wrong tool for that step, even though the container is still what ships and what CI checks last.</p></div>
+
+## For deeper coverage
+
+- Sam Newman, *Building Microservices*, 2nd ed. (O'Reilly, 2021) — independent service boundaries and why two differently-implemented stacks need one shared contract to stay honest.
+- [Docker Compose specification](https://docs.docker.com/reference/compose-file/) — `profiles`, healthchecks, and the multi-service topology this lab's `compose.yaml` builds on.
+- [Open Container Initiative — Image Format Specification](https://github.com/opencontainers/image-spec) — the OCI convention behind naming a build file `Containerfile` rather than `Dockerfile`.
+- Cloud Native Design Patterns, [Communications](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/02-communications.md) — the companion book's treatment of inter-service communication styles this lab's two-stacks-one-contract setup exists to exercise.

@@ -6,6 +6,18 @@ description: "Serve a large manifest without forcing clients to download it whol
 duration: "26 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Implement `HEAD` to expose `Content-Length` and `Accept-Ranges: bytes` without paying for the body.
+- Parse bounded, open (`bytes=1024-`), and suffix (`bytes=-500`) `Range` grammars and compute the correct byte slice.
+- Answer a satisfiable range with `206 Partial Content` and an exact `Content-Range` header.
+- Answer an out-of-bounds range with `416 Range Not Satisfiable` and `Content-Range: bytes */total`.
+- Decide, from the Chapter 2 axes, when a resource is large enough to justify Range support at all.
+
+## Why this matters
+
 Every resource this site has built so far has been a JSON document small enough that "fetch it" and "fetch all of it" mean the same thing. A booking's manifest breaks that assumption: it is the consolidated listing of every cargo item on a shipment, and in this chapter's example it is a deterministic 2 MiB binary blob — comfortably past the point where "just `GET` the whole thing every time" is a reasonable default. A client checking whether a manifest has even been generated yet shouldn't have to pull 2 MiB to find out. A client resuming a download that died at byte 1,400,000 shouldn't have to restart from zero. A PDF viewer jumping to page 40 shouldn't have to materialize pages 1–39 first. All three needs point at the same HTTP mechanism: let a client ask for less than the whole resource, and tell it up front whether that's even on the table.
 
 This is a different shape of "too much data" than Chapter 8's pagination. Pagination slices a *collection* (a list of `Booking` resources) into pages a client walks one at a time, each page a complete, independently addressable JSON document. A manifest is a single resource, not a collection, and there's no natural item boundary to paginate by; "page 3 of the manifest" means nothing on its own. What a client wants instead is an arbitrary byte window into one opaque blob, which is exactly what `Range` is built for. The two mechanisms solve adjacent problems (too many items, and too many bytes) with different vocabulary for that reason, and a system that tried to paginate a binary document with `limit`/`cursor` parameters would be reinventing `Range` badly.
@@ -141,3 +153,10 @@ The script brings up Quarkus on port 8095 and FastAPI on port 8015, creates a bo
 The README documents two regressions worth triggering by hand to see that discipline pay off. The first swaps the `206` for a `200` in the bounded-range branch: the handler still slices the right bytes and still sets `Content-Range`, but reports the wrong status. Re-running `verify.sh` fails immediately: `expected HTTP 206, got 200`, because `assert_status` checks the exact code the spec requires for a partial response, not just "some 2xx came back". The second is subtler: drop the `-1` off the end offset in the `Content-Range` header, so a correct `206` response advertises `bytes 0-1024/2097152` for a request that actually returned bytes `0-1023`. The status code is right, the byte count in the body is even right, and a test that only checked those two things would pass. `verify.sh` catches it anyway, because it parses `Content-Range` and compares the literal string against what the request implies: `expected Content-Range 'bytes 0-1023/2097152', got 'bytes 0-1024/2097152'`. Revert either edit and the run goes back to `PASS` for both stacks. The lesson in both cases is the same one Chapter 13's purge example made about soft delete: a response that looks plausible from the outside (right status, right-ish headers) can still disagree with itself in a way only an assertion that checks the *relationship* between fields, not each field in isolation, will ever catch.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether a resource needs Range support at all. Reach for it when the payload is large enough that "download the whole thing" is itself a cost worth avoiding — media files, PDFs, disk images, any document measured in megabytes rather than kilobytes — and when the evolution axis includes resumability or seeking as a real client need, not a hypothetical one. Operational constraints tip the decision further: a manifest served to a mobile client on an unreliable connection, or to many clients fetching overlapping byte windows from a CDN edge, benefits from Range support in proportion to how often a full download would otherwise fail partway through. Skip it for small, uniformly-sized JSON resources — the same documents this site has served since Chapter 3 — where the entire body is cheaper to transfer than the extra round trip a <code>HEAD</code> probe would cost, and where there is no meaningful "partial" view of a 2&nbsp;KB payload worth constructing. Client diversity matters too: Range support is only worth building once a realistic client population includes something that will actually use it — a browser's native video element, a download manager, a PDF viewer with lazy page loading — rather than JSON API consumers that always want the whole representation anyway.</p></div>
+
+## For deeper coverage
+
+- [RFC 9110 §14 — HTTP Semantics: Range Requests](https://www.rfc-editor.org/rfc/rfc9110#name-range-requests) — the governing spec for `Range`, `Accept-Ranges`, `Content-Range`, and `416`.
+- *Cloud Native Design Patterns*, appendix-a-protocols (same series, protocol fundamentals appendix).
+- Gough, Bryant & Auburn, *Mastering API Architecture* (O'Reilly, 2022).
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022).

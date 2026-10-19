@@ -6,6 +6,18 @@ description: "Model the domain as resources — nouns not verbs, collections ver
 duration: "18 min read"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Turn a verb-shaped endpoint (`POST /confirmBooking`) into a noun-shaped resource (`POST /bookings/{bookingId}/confirmation`).
+- Explain why exposing database tables directly (`GET /cargo_items?booking_id=...`) leaks the storage schema into the API contract.
+- Distinguish a collection resource (`/bookings`) from an item resource (`/bookings/{bookingId}`), and what job each one does.
+- Decide whether to nest a sub-resource, such as `/bookings/{bookingId}/cargo`, by testing whether the parent owns the child.
+- Use the `Booking` aggregate's boundary to resolve the chatty-API versus extraneous-fetch trade-off instead of guessing field by field.
+
+## Why this matters
+
 A REST API is a set of nouns reachable by URI, manipulated by a small, fixed verb set. That sounds obvious until you watch a team design one under deadline pressure, where the first instinct is almost always to name an endpoint after the action a client wants to take: `/confirmBooking`, `/cancelBooking`, `/getActiveShipments`. Every one of those names is a verb wearing a URI as a costume — a sign the design process skipped the step this chapter is about: deciding what the things are before deciding what happens to them.
 
 Chapter 1 named resource orientation as one of REST's defining constraints. Chapter 2 gave you the axes to decide whether REST is the right pattern at all. This chapter is where resource orientation stops being a definition and becomes a design move you make against a real domain — the booking and cargo model this site builds on.
@@ -105,3 +117,10 @@ Treating the aggregate as the unit of resource design keeps the chatty-versus-co
 Get the boundary right and the granularity problem mostly resolves itself: everything inside it is safe to embed, because it's read and written as a unit anyway, and everything outside it is safe to leave as a reference, because a client that needs it independently has its own resource to ask for. Get the boundary wrong — split cargo out because it felt like its own table, or inline location data for one screen's convenience — and no amount of field projection or pagination fixes the mismatch between what the API exposes and what the domain actually owns.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to resource granularity, not just to pattern choice: model a resource around what clients act on and how they fetch it, not around your tables, and let the aggregate boundary — what has no identity or lifecycle outside its parent — settle the chatty-versus-coarse trade-off, with field projection and pagination (Chapter 8) handling the cases the boundary alone can't.</p></div>
+
+## For deeper coverage
+
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022) — resource modeling and collection/item design patterns applied throughout this chapter.
+- Arnaud Lauret, *The Design of Web APIs*, 2nd ed. (Manning, 2024) — naming resources around client needs rather than storage schemas.
+- Olaf Zimmermann, Mirko Stocker, Daniel Lübke, Uwe Zdun & Cesare Pautasso, *Patterns for API Design* (Addison-Wesley, 2022) — aggregate and granularity patterns for resource boundaries.
+- Cloud Native Design Patterns, [Composition](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/03-composition.md) — the companion book's treatment of composing resources across service boundaries.

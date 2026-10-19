@@ -6,6 +6,18 @@ description: "The criteria axes for choosing a pattern, style, and transport —
 duration: "15 min read"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Apply the seven decision axes (interaction shape, payload size & shape, latency & real-time need, cacheability, client diversity, evolution & versioning needs, operational constraints) to choose a pattern, style, and transport for a given interaction.
+- Explain why forcing every interaction through one style produces a wrong design for at least one of four example interactions (booking creation, routing-confirmation polling, a live cargo-event feed, a customs webhook).
+- Walk the booking-confirmation example through the axes to justify `202 Accepted` → poll → `303 See Other` over a blocking synchronous call.
+- Recognize when an interaction should leave request/response altogether for a fire-and-forget event, such as notifying an unbounded set of downstream consumers.
+- Write a Decision callout that places a chapter's own topic on these same seven axes.
+
+## Why this matters
+
 "Just use REST" and "just use gRPC" are both wrong for the same reason: neither names the property of the interaction that makes it true. REST is the right call for a browser fetching a booking by id because the interaction is a cacheable, resource-shaped request/response over a transport every corporate proxy already understands — not because REST is the default. gRPC is the right call for a routing engine calling a capacity-check service a thousand times a second because the interaction is latency-sensitive, strongly typed, and entirely server-to-server — not because gRPC is newer. Swap the two interactions and both answers invert. A framework that only ever produces one answer isn't a framework; it's a habit wearing a framework's clothes.
 
 This chapter builds the lens every later chapter uses instead of a habit: a fixed set of axes you read off an interaction before picking its pattern, style, and transport. Every chapter from here forward closes with a short **Decision** callout that places its topic on these same axes, so the vocabulary introduced here is worth learning once and reusing twenty-five more times.
@@ -57,3 +69,10 @@ One state transition, two correct answers, because two different interactions we
 Every remaining chapter in this book ends with a callout labeled **Decision**, and it is always the same move: take the chapter's topic, run it against these seven axes, and state in two or three sentences where it lands and why. It is not a summary of the chapter — it's the chapter's conclusion translated into the shared vocabulary established here, so that skimming every Decision callout in sequence reconstructs the book's argument without re-reading the prose that built it. When a later chapter's Decision callout says an interaction is "synchronous, resource-shaped, cache-friendly, and serves diverse clients," it is invoking interaction shape, cacheability, and client diversity by name, trusting that this chapter already did the work of defining what those words mean and why they matter. Read this chapter once, and the one-paragraph Decision box at the bottom of Chapter 5, Chapter 10, Chapter 17, and every chapter after them becomes a complete, checkable argument instead of a slogan.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the axes: when the interaction is synchronous in the caller's mind, resource-shaped, cache-friendly, and serves a diverse or external client population, REST wins outright. When the work behind that interaction can't finish inside one request/response cycle, REST still wins — as the asynchronous operation pattern (202 → poll → 303) rather than a blocking call. When the real requirement is notifying an unknown or unbounded set of downstream consumers rather than answering the one caller who triggered the change, the interaction shape axis says to leave request/response altogether for an event stream, which composes with the REST contract rather than replacing it.</p></div>
+
+## For deeper coverage
+
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — a broader catalog of the trade-offs this chapter's axes compress into seven questions.
+- Gough, Bryant & Auburn, *Mastering API Architecture* (O'Reilly, 2022) — choosing between REST, gRPC, and GraphQL at the architecture level, the same decision this chapter frames as axes.
+- Cloud Native Design Patterns, [Communications](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/02-communications.md) — the companion book's per-interaction style selection, covering the same ground from the cloud-native side.
+- Cloud Native Design Patterns, [Anti-patterns](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/13-anti-patterns.md) — cargo-culting a single communication style, the anti-pattern this chapter opens with.

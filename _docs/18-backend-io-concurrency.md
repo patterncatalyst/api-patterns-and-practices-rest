@@ -6,6 +6,18 @@ description: "Serve many concurrent requests that each wait on I/O without exhau
 duration: "28 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Explain the thread-per-request ceiling and why CPU utilization can stay near zero while requests queue.
+- Compare Quarkus's blocking worker pool, `Uni`/`Multi` reactive dispatch, and `@RunOnVirtualThread` for I/O-bound work.
+- Compare Python's `async def`/`await` event loop against an explicit `ThreadPoolExecutor`/`run_in_executor` offload.
+- Explain why the GIL doesn't constrain I/O-bound concurrency but does constrain CPU-bound work.
+- Measure concurrency with a wall-clock batch test rather than a single request's status code.
+
+## Why this matters
+
 Every chapter so far has asked what a response looks like on the wire — the status code, the headers, the framing. This one asks what happens behind the handler while the wire is quiet. A booking confirmation calls a payment service. A manifest export reads from Postgres. A routing lookup calls a carrier's rate API. Every one of those is a request that spends most of its time doing nothing but waiting on something else to finish, and the question this chapter answers is what a server thread does during that wait, because the answer determines how many of those requests can be in flight at once before the server stops accepting new ones.
 
 The example for this chapter (`examples/18-concurrency/`) strips away everything but that question. There's no `Booking` resource, no contract, no Postgres — just `GET /io/slow?ms=200`, which simulates a slow downstream call with a 200ms delay and returns a tiny JSON body naming the thread that handled it. Each stack implements that endpoint two ways: once idiomatically, once naively, so the contrast in behavior under load is visible without anything else in the example competing for attention.
@@ -131,3 +143,10 @@ Quarkus comes up on port 8097, FastAPI on port 8017. The script brings both serv
 {% include excalidraw.html file="18-concurrency-model" alt="Quarkus blocking worker pool exhausting under many concurrent slow calls next to Quarkus reactive Uni and virtual threads serving the same load on a small fixed pool, alongside Python's async event loop interleaving many coroutines on one thread versus a bounded threadpool queuing once its workers are all asleep, all labeled to show the same requests-waiting-on-I/O workload served without thread exhaustion versus with it." caption="Figure 18.1 — Blocking pools versus non-blocking/virtual threads and the async event loop." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether a reactive, virtual-thread, or async model shift is worth adopting. Reach for it when the <strong>interaction shape</strong> is many concurrent clients each waiting on a slow downstream dependency — a database, a third-party API, another service — where the slow part is I/O, not computation: that's exactly the shape a thread-per-request pool handles worst and an event loop or virtual threads handle best. Weigh it against <strong>team familiarity</strong> and the codebase's current shape: a service already written as straightforward blocking code gets the biggest win from virtual threads (near-zero rewrite, same mental model) or from an async-native driver swap on the Python side, while a greenfield service where the non-blocking contract should be visible in the type signature is the case for Mutiny's `Uni`/`Multi` or FastAPI's `async def`. Skip the model shift entirely for purely CPU-bound work — hashing, encoding, heavy computation — where no amount of non-blocking I/O helps and the real fix is multiprocessing, native code, or more cores, not a different concurrency primitive. And don't reach for it where the load never approaches the pool ceiling in the first place: a low-traffic internal tool with five callers and a worker pool of fifty has no exhaustion problem to solve, and the extra complexity of reactive types or async-only libraries buys nothing a straightforward blocking implementation wasn't already providing.</p></div>
+
+## For deeper coverage
+
+- Benjamin J. Evans & Jonathan Gough, *Optimizing Cloud Native Java* (O'Reilly, 2024) — virtual threads and JVM concurrency.
+- Kirill Bobrov, *Grokking Concurrency* (Manning, 2024) — event loops, thread pools, and concurrency fundamentals.
+- Pekka Enberg, *Latency: Reduce delay in software systems* (Manning, 2025) — the cost of blocking I/O.
+- *Cloud Native Design Patterns*, communications (same series, back-end call patterns under load).

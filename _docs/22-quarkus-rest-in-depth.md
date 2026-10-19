@@ -6,6 +6,18 @@ description: "Why Quarkus REST resolves parameter bindings at build time instead
 duration: "27 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Explain why Quarkus REST resolves `@RestHeader`/`@RestQuery` bindings via build-time bytecode generation instead of runtime reflection, and what that buys in startup time, allocation, and native-image compatibility.
+- Use `@RestQuery` together with a clamp like `EventGenerator.clampLimit` to bound an NDJSON export against unbounded resource consumption.
+- Implement a dedicated `MessageBodyWriter` (`NdjsonMessageBodyWriter`) to stop Jackson from double-encoding a pre-serialized `Multi<String>` stream.
+- Decide when `Multi`-based reactive streaming is the right fit for a REST response instead of a synchronous return.
+- Identify where LangChain4j, Camel Quarkus/CXF, and JobRunr extend a Quarkus REST service past plain request/response.
+
+## Why this matters
+
 Every REST chapter so far has treated "the framework" as a black box that turns an annotated method into a working endpoint, judged only by what crossed the wire — status codes, headers, bodies. This chapter opens the box for one stack. Quarkus REST, the framework this book's Quarkus examples have used since Chapter 1 under the name RESTEasy Reactive, makes a specific, consequential choice about *when* it figures out how a request maps onto a Java method: at build time, once, rather than at request time, repeatedly. That choice is invisible to `curl` (a `GET` with a header or a query parameter looks the same whether the framework resolved it by reflection or by code generated months earlier), but it's the reason Quarkus starts in milliseconds and runs lean in a container. This chapter grounds that claim in two real endpoints from `examples/22-quarkus-rest-depth/`, then widens out to three more pieces of the Quarkus REST ecosystem (SSE from an LLM client, integration routing, background jobs) that round out why a team reaches for this stack for REST work, not just because it happens to run Java.
 
 ## Build-time metadata instead of runtime reflection
@@ -113,3 +125,10 @@ None of these three needs a worked example here: they're why a team already buil
 {% include excalidraw.html file="22-quarkus-rest-in-depth" alt="Quarkus REST's build-time bytecode-generation path resolving @RestHeader and @RestQuery bindings ahead of request time, alongside the reactive NDJSON export's tick-driven Multi pipeline delivering one line at a time through a dedicated MessageBodyWriter to the client." caption="Figure 22.1 — Build-time parameter binding and tick-driven reactive streaming in Quarkus REST." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether Quarkus's build-time model and reactive streaming are worth reaching for over a simpler, more conventional framework. Evolution pressure and deployment footprint drive the build-time half: a service that restarts rarely, runs as one long-lived process on a fixed-size VM, and is never measured on cold-start time gets little practical benefit from eliminating reflective dispatch, since that cost is paid once at boot and amortized over a long uptime — a classic JAX-RS container is a reasonable choice there. The calculus flips once the deployment target is serverless, autoscaled, or a native-image binary: a function scaling from zero, pods scaling with traffic, or anything compiled with GraalVM pays startup cost on every cold instance, which is exactly what Quarkus's build-time metadata erases. Reactive streaming is worth reaching for when a response is large, slow to assemble, or open-ended (a bulk export, a file download, a token stream), because that's where thread-per-request's scaling ceiling and a buffered response's memory footprint bite; for endpoints returning one small, quickly-computed JSON object, `Multi` adds pipeline complexity with no corresponding win, and a synchronous method is the better fit. Skip the reactive model when the real constraint is familiarity with blocking code and load never nears the concurrency where thread-per-request runs out of threads — these strengths show up under specific pressures, not as a blanket argument for Quarkus over every alternative.</p></div>
+
+## For deeper coverage
+
+- [Quarkus REST guide](https://quarkus.io/guides/rest) — the official reference for build-time parameter binding, `@RestHeader`/`@RestQuery`, and reactive return types.
+- Jakub Gough, Daniel Bryant & Matthew Auburn, *Mastering API Architecture* (O'Reilly, 2022) — framework and runtime trade-offs behind a REST layer's design.
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022) — streaming and resource-shaping patterns at the HTTP layer.
+- Cloud Native Design Patterns, "Anti-patterns" chapter — the client-controlled-limit-without-a-clamp failure this chapter's `EventGenerator.clampLimit` guards against.

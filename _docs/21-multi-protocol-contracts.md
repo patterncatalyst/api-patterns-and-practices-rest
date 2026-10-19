@@ -6,6 +6,18 @@ description: "How OpenAPI, AsyncAPI, CloudEvents, and Arazzo compose around one 
 duration: "30 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Reuse one JSON Schema's `$defs` (`Booking`, `BookingEvent`) across OpenAPI, AsyncAPI, and CloudEvents contracts via `$ref`.
+- Build a CloudEvents envelope (`specversion`, `type`, `subject`, `data`) around a schema-validated payload.
+- Document a multi-step business outcome with an Arazzo workflow (`bookAndConfirm`) that chains `operationId`s across responses.
+- Distinguish an artifact registry (Apicurio/xRegistry) from a data catalog (OpenMetadata) by the question each answers.
+- Decide, from the Chapter 2 axes, when a service needs a second contract language beyond OpenAPI.
+
+## Why this matters
+
 Every chapter so far has treated "the contract" as one document: `contracts/openapi/shipping-api.yaml`, describing the synchronous request/response shape a client sends and the server answers. That was never the whole shape of a real booking service. The same service that answers `POST /bookings` synchronously also tells the rest of the system, asynchronously, that a booking changed state — a billing system, a notification service, an analytics pipeline, none of which call `GET /bookings/{id}` to find out. That second path needs its own contract, because "what gets published, to which channel, in what shape" is as much a promise to other teams as "what status code this endpoint returns," and an unwritten promise drifts the same way an undocumented REST response does. This chapter covers the vocabulary for writing that second promise down, plus the two more that show up once a system has more than one call in its story: CloudEvents for the envelope an event travels in, and Arazzo for the multi-step sequence that ties several calls into one business outcome. None of the four replaces OpenAPI — each describes a different axis of the same domain, and the chapter's actual argument is that they compose around one piece of shared schema rather than multiplying into four unrelated vocabularies a reader has to reconcile by hand.
 
 ## Four languages, four different questions
@@ -92,3 +104,11 @@ Both tools stay behind compose profiles and out of the CI gate for the same two 
 ## Decision
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Start with OpenAPI alone, the way this book did through Chapter 19, and add a second contract language only when a second kind of promise exists to document. Add AsyncAPI the moment a service publishes to a channel other teams subscribe to independently of any request they made: the signal isn't "we use Kafka internally," it's "someone outside this service's own call graph needs to know what arrives on this topic and when it might change." Add CloudEvents specifically when more than one event type, or more than one publisher, needs a consistent envelope a generic consumer can parse without special-casing each producer; a single service publishing one event type to one topic that only its own team consumes can get away with an ad hoc JSON shape for a while, but that stops scaling the moment a second producer or a generic event-router enters the picture. Add Arazzo when a business outcome requires calling more than one operation in a specific order with data flowing from one response into the next request; not for every two-call sequence a client happens to use, but for the sequences the system's design depends on happening in that order, the way `bookAndConfirm` depends on a booking existing before its confirmation can be requested. A registry becomes worth running once contracts need to be resolved by a consumer that isn't this repository (a generated-SDK pipeline, a documentation portal, a partner team without checkout access to this codebase); a catalog becomes worth running once a team needs to answer "what changed and when" across a schema's history, not just see its current shape; typically once more than one team owns pieces of a shared schema's evolution and a disagreement needs a timeline to resolve, not just a diff against yesterday's copy. Skip all four, and skip the governance tier entirely, for a system where OpenAPI already describes every promise anyone outside the team depends on: adding contract languages nobody downstream needs just adds vocabulary a reader has to learn for no corresponding clarity gained.</p></div>
+
+## For deeper coverage
+
+- [AsyncAPI Specification](https://www.asyncapi.com/docs/reference/specification/latest) — the channel/message contract behind `shipping-events.yaml`.
+- [CloudEvents Specification](https://cloudevents.io/) — the envelope attributes (`specversion`, `id`, `source`, `type`, `subject`) this chapter builds by hand.
+- *Cloud Native Design Patterns*, event-driven (same series, the broader event-driven treatment this chapter's CloudEvents envelope draws on).
+- *Cloud Native Design Patterns*, api-registry (same series, the Apicurio/xRegistry governance question).
+- *Cloud Native Design Patterns*, api-metadata (same series, the OpenMetadata catalog/lineage question).

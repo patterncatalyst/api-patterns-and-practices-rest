@@ -6,6 +6,18 @@ description: "RPC versus Web APIs, the REST constraints, and resource-oriented a
 duration: "15 min read"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Distinguish an RPC-shaped operation (`confirmBooking`) from a resource-oriented one (`POST /bookings/{id}/confirmation`), and say what each costs at the boundary's edges.
+- Name REST's five required constraints (client-server, stateless, cacheable, uniform interface, layered system) plus the optional code-on-demand, and what each one buys and costs.
+- Explain the four parts of the uniform interface constraint, and why it's the one that separates REST most sharply from RPC.
+- Distinguish a resource, a representation, and a state transfer using the `Booking` aggregate.
+- Place an API on Richardson's maturity model (levels 0-3) and say where the shipping contract starts (level 2) and where it ends up (level 3, Chapter 12).
+
+## Why this matters
+
 An API is the boundary a client is allowed to touch. Everything behind it — the database schema, the routing engine that plans a voyage, the queue that reconciles a manifest overnight — is free to change on any schedule the team likes, as long as the boundary holds still. API design is the discipline of deciding what that boundary looks like, because the shape chosen determines what "holds still" means and how expensive that promise is to keep for years.
 
 There are two fundamentally different ways to shape that boundary, and most of the friction teams feel when an API becomes hard to change traces back to picking one without noticing there was a choice at all.
@@ -99,3 +111,10 @@ Most APIs that call themselves REST today sit at level 2: proper resources, prop
 Knowing the two shapes and the five constraints answers "what are my options," not "which one fits this interaction." That's Chapter 2: a decision framework with explicit criteria — resource-shaped or action-shaped, cacheable or not, does a generic client need to work against it unmodified — that turns this chapter's vocabulary into a repeatable call, and recurs as a Decision callout closing every concept chapter from here on. Chapter 3 takes resource-oriented architecture further: naming collections versus items, not mirroring a database schema, and the chatty-API anti-pattern that shows up when a resource boundary is drawn in the wrong place. Chapter 4 turns the design into an OpenAPI contract that CI validates both stacks against, the artifact every hands-on chapter after it builds from.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Reach for REST when the interaction is <em>resource-shaped</em> — there's a durable noun with an identity, a lifecycle, and a representation a client might want to fetch, cache, or revisit, rather than a one-off calculation or command. Lean on the uniform interface specifically when you want generic HTTP infrastructure — caches, proxies, gateways, off-the-shelf client libraries — to work against your API without custom code per endpoint. If the operation has no durable state of its own, isn't meaningfully cacheable, and reads naturally as a verb rather than a noun, that's a signal to keep looking rather than force-fit it into a resource; Chapter 2 turns this instinct into a repeatable framework.</p></div>
+
+## For deeper coverage
+
+- Roy T. Fielding, [*Architectural Styles and the Design of Network-based Software Architectures*](https://www.ics.uci.edu/~fielding/pubs/dissertation/top.htm) (doctoral dissertation, UC Irvine, 2000) — the primary source for REST and its constraints.
+- Leonard Richardson & Mike Amundsen, *RESTful Web APIs* (O'Reilly, 2013) — the REST constraints and the maturity model this chapter applies, from the authors who named it.
+- J. J. Geewax, *API Design Patterns* (Manning, 2021) — resource naming and representation design for the patterns this chapter introduces.
+- Cloud Native Design Patterns, [Communications](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/02-communications.md) — the companion book's broader survey of API styles beyond REST.

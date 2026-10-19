@@ -6,6 +6,18 @@ description: "Why async def handlers run on FastAPI's event loop while plain def
 duration: "26 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Explain how ASGI's single event loop lets `async def` handlers multiplex many in-flight requests without a thread each.
+- Stream a response incrementally with `StreamingResponse` over an async generator instead of buffering the full body.
+- Use `BackgroundTasks.add_task` to return a prompt `202 Accepted` while deferring slow work to run after the response is sent.
+- Decide when a route should be `async def` versus plain `def`, and explain why Starlette offloads plain `def` handlers to `anyio.to_thread.run_sync`'s threadpool.
+- Reason about the GIL's effect on CPU-bound versus I/O-bound work when choosing between the event loop and the threadpool.
+
+## Why this matters
+
 Chapter 22 opened Quarkus REST's box and found a build-time compiler deciding, once and for all, how a request maps onto a Java method. This chapter opens FastAPI's box and finds the opposite kind of decision, made at request time, every time: which execution context should run *this* handler — the single event loop every other in-flight request shares, or a worker thread borrowed from a bounded pool. That decision is invisible to a client exactly the way Quarkus's was: a `GET /thread/async` and a `GET /thread/sync` can return the identical JSON shape, the identical `200`, and still have executed in two different places inside the same process. This chapter grounds that distinction, and two others built on top of it (streamed responses and backgrounded work), in the real endpoints of `examples/23-fastapi-depth/`, a single-stack, FastAPI-only example that is this chapter's corollary to Chapter 22's Quarkus-only one.
 
 ## ASGI: one event loop, many in-flight requests
@@ -117,3 +129,10 @@ None of this is specific to this example's two toy endpoints; it's the rule Fast
 {% include excalidraw.html file="23-fastapi-in-depth" alt="A single uvicorn process with one event loop on the main thread serving an async StreamingResponse that drips SSE frames over time, a BackgroundTasks call returning a 202 while its deferred work finishes later on the same loop, and a plain-def handler offloaded through AnyIO to a threadpool worker thread distinct from the main thread." caption="Figure 23.1 — One event loop, one threadpool: where StreamingResponse, BackgroundTasks, and plain def handlers each actually run inside a single FastAPI process." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to choosing async def versus plain def per endpoint, rather than picking one style for an entire service. The deciding question is almost always "what does this handler block on": if every I/O call inside it has a real async driver (asyncpg over psycopg2, httpx over requests, an async Kafka client), async def is close to free and keeps the handler cooperating with the event loop the way StreamingResponse and BackgroundTasks both depend on. The moment a handler's only dependency is a blocking library with no async equivalent (a synchronous ORM, a legacy SDK, a CPU-bound computation measured in tens of milliseconds or more), plain def is the better fit, because declaring async def around a blocking call doesn't make the call non-blocking, it just hides a stalled event loop behind a signature that looks safe. Reach past FastAPI's own model once the blocking work is CPU-bound and large enough that a threadpool's cooperative concurrency isn't the fix: true parallel computation needs multiple processes or a C extension that drops the GIL explicitly, not a borrowed thread. Skip worrying about the split for a low-traffic internal service where no slow handler ever competes with enough concurrent requests for a stall to be noticeable — the distinction matters in proportion to how many requests share that one event loop when a handler blocks it.</p></div>
+
+## For deeper coverage
+
+- [FastAPI docs — Concurrency and async / await](https://fastapi.tiangolo.com/async/) — the official explanation of when `async def` helps and when plain `def` is the right call.
+- [FastAPI docs — Background Tasks](https://fastapi.tiangolo.com/tutorial/background-tasks/) — the canonical reference for `BackgroundTasks.add_task`.
+- Lukasz Dynowski & Marcin Dulak, *Learning API Styles* (O'Reilly, 2025) — framework-level request-handling trade-offs across API styles.
+- Cloud Native Design Patterns, "Anti-patterns" chapter — the `async def`-hiding-a-blocking-call mistake this chapter names as FastAPI's own failure mode.

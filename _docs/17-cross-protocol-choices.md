@@ -6,6 +6,18 @@ description: "When to leave REST: how REST and SSE compare with WebSockets, webh
 duration: "22 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Compare REST+SSE, WebSockets, webhooks, and gRPC against the Chapter 2 interaction-shape axes.
+- Identify when a full-duplex `Upgrade: websocket` connection is justified over a one-directional SSE feed.
+- Design a signed webhook (`X-Signature`, HMAC) with at-least-once delivery and fan-out.
+- Recognize when gRPC's streaming RPC shapes (`stream CargoEvent`, `stream RouteProposal`) beat REST for service-to-service calls.
+- Map an interaction shape to the right protocol using this chapter's lookup table.
+
+## Why this matters
+
 Chapter 15 stretched REST to carry large binary resources with `Range` requests. Chapter 16 stretched it further, carrying continuous and incremental data with the previous chapter's streaming modes. Both chapters answered the same question the same way: REST can be made to fit a surprising range of interactions, if you're willing to add the right header, the right status code, or the right content type. This chapter asks the question those two didn't: when is "make REST fit" the wrong move entirely, and a different protocol the right one?
 
 Chapter 2 built the lens for exactly this decision — seven axes that read an interaction's shape before anyone picks a technology to serve it. This chapter applies that lens to four interactions a shipping platform produces: a browser watching a booking's status change, a customs broker that needs to hear about a container clearing inspection the moment it happens, a live feed of a vessel's cargo events a dispatcher watches all day, and a routing engine calling a capacity-check service a thousand times a second. One interaction shape per example, four different right answers, and REST is the correct one for exactly one of the four.
@@ -87,4 +99,12 @@ This chapter doesn't attempt to teach WebSockets, webhooks, or gRPC in the depth
 {% include excalidraw.html file="17-cross-protocol" alt="Four protocols compared side by side by direction, connection model, and best-fit use case: REST plus SSE shown as client-initiated request with optional one-directional server push over a short-lived HTTP connection for cacheable lookups and status watching; WebSockets shown as a full-duplex, stateful, long-lived connection for bidirectional low-latency conversation; webhooks shown as a server-initiated outbound POST to a client-owned endpoint with retry and signature verification for fire-and-forget events to offline receivers; gRPC shown as binary HTTP/2 request/response and streaming RPCs between service-to-service callers with generated contracts." caption="Figure 17.1 — REST, WebSockets, webhooks, and gRPC by interaction shape." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Run the Chapter 2 axes before reaching past REST. If the interaction is request/response or one-directional server push, cacheable, and reaches a diverse or external client population, stay on REST — with SSE, NDJSON, or chunked encoding from Chapter 16 if the push is continuous. Leave REST for WebSockets only when the interaction shape is truly bidirectional and low-latency, and both sides need to initiate at will. Leave REST for webhooks when the shape is a fire-and-forget event aimed at a receiver with no open connection, and budget for fan-out, at-least-once retries, and signature verification up front. Leave REST for gRPC only when client diversity drops out of the picture entirely — both caller and callee are services you own — and the latency or streaming-RPC needs outweigh giving up human-readable payloads and native browser support. Each of the other three gets its own book in this series for exactly that reason: each is a complete discipline once an axis points at it.</p></div>
+
+## For deeper coverage
+
+- *Cloud Native Design Patterns*, appendix-a-protocols (same series, protocol comparison appendix).
+- *Cloud Native Design Patterns*, appendix-c-websockets (same series, dedicated WebSockets appendix).
+- *Cloud Native Design Patterns*, event-driven (same series, webhooks as fire-and-forget events).
+- Clément Jean, *gRPC Go for Professionals* (Packt, 2023) — streaming RPC shapes.
+- Gough, Bryant & Auburn, *Mastering API Architecture* (O'Reilly, 2022) — protocol selection across an API's lifecycle.
 

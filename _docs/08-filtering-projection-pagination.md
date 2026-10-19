@@ -6,6 +6,18 @@ description: "Keep collection endpoints fast and safe under load: filter and pro
 duration: "30 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Cap `GET /bookings` with a sane default `limit` and a hard ceiling so an unbounded collection endpoint can't become a denial-of-service vector.
+- Separate filtering (which items come back) from field projection (`fields=id,status`), and explain why a projected response isn't a schema-conforming `Booking`.
+- Compare offset/limit, keyset/cursor, and seek pagination, and name the condition — concurrent inserts — that breaks offset's guarantee.
+- Build a keyset cursor from the existing ULID-based `Booking.id` with no extra sequence column or index.
+- Clamp an out-of-range `limit` instead of rejecting it, and surface the effective value in `page.limit`.
+
+## Why this matters
+
 Every chapter so far has sent `GET /bookings` back one of two ways: a single resource, or every booking the store happened to hold. That second shape works fine with five or seven seeded bookings in a demo. It stops working the moment the store holds five million, because `GET /bookings` with no limit on it is not "return the collection," it is "materialize the entire collection in memory, serialize all of it to JSON, and push the whole body down one HTTP connection," regardless of what the caller needed. A client asking for a list view that renders twenty rows on screen gets charged — in server memory, in serialization CPU, in network bytes, in time to first byte — for every row in the table. An unbounded collection endpoint is not a convenience feature; it is a liability with a request line, and a careless client can turn it into a denial-of-service vector without trying hard.
 
 This chapter turns `GET /bookings` from "return everything" into something that stays fast and safe at any collection size: a `limit` with a sane default and a hard ceiling, three pagination strategies with different correctness properties under concurrent writes, and a sparse-fieldset projection that lets a caller ask for less than the full `Booking` representation. None of this is exotic — every production REST API that outlives its first demo builds some version of it — but the choices interact in ways that surface only once real traffic and concurrent writers show up.
@@ -129,3 +141,10 @@ The example's README documents a drift probe worth running once: loosen the keys
 {% include excalidraw.html file="08-pagination-strategies" alt="Three pagination strategies compared side by side against the same GET /bookings endpoint: offset/limit using a row count that drifts when a concurrent insert shifts the window, keyset/cursor using an opaque token over the monotonic booking-id sort key that stays stable under concurrent inserts, and seek using an explicit after_id with the same stability property, with a limit clamp shown capping all three to a maximum page size as a denial-of-service guard regardless of what the client requests." caption="Figure 8.1 — Three pagination strategies, and why keyset is the stable default." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the pagination choice. When the backing collection is effectively static relative to how fast clients page through it, and "jump to page 7" is a real requirement, <strong>offset/limit</strong> is the lower-cost correct answer — every client already expects it, and the drift failure mode never triggers because nothing is being inserted while clients page. The moment the collection is written to concurrently with clients paging through it — the common case for anything backed by live traffic — reach for <strong>keyset/cursor</strong> as the default: it costs an opaque token instead of an integer, and buys a walk provably free of duplicates and gaps regardless of what else is being written. Reach for <strong>seek</strong> when a caller already holds a concrete id for another reason and wants "more after this one" without the cursor-token machinery. Whichever strategy you pick, treat <code>limit</code> as untrusted input with a server-owned ceiling, not a client-owned preference: clamp it to a documented maximum on every request, expose the effective value in <code>page.limit</code>, and never let a caller turn a collection endpoint into unbounded server work just by asking for it.</p></div>
+
+## For deeper coverage
+
+- Lukasz Dynowski & Marcin Dulak, *Learning API Styles* (O'Reilly, 2025) — collection design, including pagination and filtering, across multiple API styles.
+- James Gough, Daniel Bryant & Matthew Auburn, *Mastering API Architecture* (O'Reilly, 2022) — operating collection endpoints at scale.
+- Justin Higginbotham, *Principles of Web API Design* (Addison-Wesley, 2021) — resource and collection design principles.
+- *Data* (Chapter 4, [Cloud Native Design Patterns](https://github.com/patterncatalyst/cloud-native-design-patterns)) — read/write model separation, relevant to sizing a read model that serves a filtered, projected, paginated collection.

@@ -6,6 +6,18 @@ description: "Evolve the API without breaking clients: compare URI, query, heade
 duration: "30 min"
 ---
 
+## Learning objectives
+
+By the end of this chapter you can:
+
+- Compare URI, query-parameter, custom-header, and media-type (`Accept`) versioning strategies and what each does to a resource's identity.
+- Implement a read-only projection like `toV1`/`_to_v1` from one source of truth instead of maintaining parallel stores.
+- Explain why `Vary: Accept` is required for media-type versioning and what an RFC 9111-compliant cache does without it.
+- Distinguish a reversible rename (`price` → `quote`) from a lossy shape collapse (`cargo[]` → `cargoDescription`).
+- Apply `Deprecation` and `Sunset` headers to signal a version's planned retirement.
+
+## Why this matters
+
 Chapter 2's evolution axis named the problem without solving it: some interactions change shape constantly, and REST's independent resources are supposed to absorb that change without forcing every client to upgrade in lockstep. This chapter is where that promise gets tested against a real shape change rather than a hypothetical one. `contracts/schemas/shipping.schema.json`'s `Booking` (the shape every earlier chapter's example has served) carries `quote` (a `Money`) and `cargo` (an array of cargo items). `contracts/openapi/shipping-api-v1.yaml` freezes an older shape of the same resource, `BookingV1`, which carries `price` (the same `Money`, renamed) and `cargoDescription` (a single string, not an array). Those two differences are not cosmetic. A client's deserializer built against `price` has no field called `quote` to fall back on, and a client expecting one string where an array now arrives can't just ignore the extra structure; it has to be rewritten. That is what makes v1 → v2 a **breaking** change rather than an **additive** one: adding a new optional field to `Booking` is something an old client can shrug off entirely, because it was never looking for that field in the first place, while renaming or reshaping a field an old client already depends on breaks it the moment that client parses the response.
 
 Breaking changes are not avoidable forever: a domain model that never renames a field or restructures an array is a domain model that stopped evolving, which is its own kind of failure. What's avoidable is forcing every client to absorb a breaking change on the same day the API ships it. Versioning is the mechanism that buys that separation: a way for an API to serve more than one shape of the same resource at once, so a client on the old contract keeps working while new clients, and clients that choose to upgrade, get the new one. This chapter's example (`examples/14-versioning/`) builds exactly that for the booking resource (one stored booking, two representations) and uses it to make four versioning strategies, and their very different relationships with HTTP caching, concrete.
@@ -171,3 +183,11 @@ The script brings up Quarkus on port `8094` and FastAPI on port `8014`, creates 
 {% include excalidraw.html file="14-versioning-strategies" alt="A diagram comparing four versioning strategies against one stored booking — URI versioning routing /v1/bookings and /v2/bookings to distinct cache-friendly URLs, query-parameter versioning as URI versioning's cousin via ?version=, header versioning via a custom X-API-Version header, and media-type versioning negotiating one URL /bookings/{id} via the Accept header with a required Vary: Accept response header to prevent a cache from serving the wrong representation — alongside the v1 price+cargoDescription shape versus the v2 quote+cargo[] shape produced by the same underlying resource." caption="Figure 14.1 — Four versioning strategies and their caching implications." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the choice of versioning strategy. When client diversity is high and operational constraints matter — public clients, third-party integrators, CDNs and corporate proxies that cache by URL without configuration — reach for URI versioning: it costs the least cleverness, and cacheability holds by construction with no header discipline required. When REST's one-resource-one-URI property matters more than caching ergonomics — an internal API where every response already flows through application-aware caching, or a domain where `self` links must never fork by version — reach for media-type versioning instead, and treat `Vary: Accept` as non-negotiable infrastructure, not an optional nicety, on every negotiated response. Query-parameter versioning is a reasonable URI-versioning substitute when the version reads as request configuration rather than identity; custom-header versioning is a reasonable media-type substitute when a team wants negotiation semantics without registering a vendor MIME type. Whichever strategy wins, the evolution axis still applies underneath it: version the representation, not the resource, and keep exactly one source of truth that every version projects from — forking the data itself to serve a frozen shape is how a system ends up unable to prove its old and new clients are even looking at the same booking.</p></div>
+
+## For deeper coverage
+
+- J.J. Geewax, *API Design Patterns* (Manning, 2021) — versioning strategies and API evolution.
+- *Cloud Native Design Patterns*, appendix-b-versioning (same series, dedicated versioning appendix).
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022).
+- [RFC 9111 — HTTP Caching](https://www.rfc-editor.org/rfc/rfc9111) — `Vary` and cache-key semantics.
+- Lukasz Dynowski & Marcin Dulak, *Learning API Styles* (O'Reilly, 2025).
