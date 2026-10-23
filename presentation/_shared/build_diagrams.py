@@ -1,5 +1,5 @@
 """
-build_diagrams.py — build new REST-deck diagrams (SVG + Excalidraw + PNG).
+build_diagrams.py: build new REST-deck diagrams (SVG + Excalidraw + PNG).
 
 Usage:
     python3 build_diagrams.py

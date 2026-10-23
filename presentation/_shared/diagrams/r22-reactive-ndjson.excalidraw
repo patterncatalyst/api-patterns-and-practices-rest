@@ -4,7 +4,7 @@
   "source": "dgen.py",
   "elements": [
     {
-      "id": "e24593e0-3ca0-4f7b-8818-03dbc86e7d4e",
+      "id": "3c5c1bf0-713a-4278-a184-024e02728899",
       "type": "text",
       "x": 300.5,
       "y": 14,
@@ -38,11 +38,11 @@
       "baseline": 22
     },
     {
-      "id": "26fea5b8-a019-4424-868b-411c1cdde449",
+      "id": "c8d5c3ac-20d3-46c6-9646-cffaa150c4ba",
       "type": "text",
-      "x": 276.5,
+      "x": 285.0,
       "y": 50,
-      "width": 747,
+      "width": 730,
       "height": 18,
       "angle": 0,
       "strokeColor": "#5A5A5A",
@@ -63,16 +63,16 @@
       "locked": false,
       "fontSize": 14,
       "fontFamily": 1,
-      "text": "Multi<String> streamed over the event loop \u2014 never buffered \u2014 through a dedicated writer.",
+      "text": "Multi<String> streamed over the event loop (never buffered) through a dedicated writer.",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Multi<String> streamed over the event loop \u2014 never buffered \u2014 through a dedicated writer.",
+      "originalText": "Multi<String> streamed over the event loop (never buffered) through a dedicated writer.",
       "lineHeight": 1.25,
       "baseline": 14
     },
     {
-      "id": "ba1675a4-6518-4f03-ba59-19151a81d6a0",
+      "id": "6fcecbd1-8546-43b3-8234-12bd90e39ab6",
       "type": "rectangle",
       "x": 40,
       "y": 230,
@@ -100,7 +100,7 @@
       "locked": false
     },
     {
-      "id": "4a7756bf-e3c0-4afb-9774-01bad361b6e1",
+      "id": "0deb91b0-c43b-424d-b0cb-dcc5c49b3e40",
       "type": "text",
       "x": 88.0,
       "y": 254,
@@ -134,7 +134,7 @@
       "baseline": 16
     },
     {
-      "id": "6b4c14a2-c340-417f-ba5a-4f0cdd311327",
+      "id": "9822a453-b161-4495-a9b3-76a10e22502d",
       "type": "text",
       "x": 100.0,
       "y": 274,
@@ -168,7 +168,7 @@
       "baseline": 12
     },
     {
-      "id": "ac26a58c-a7b3-4cab-a8fb-0a57d3902bfd",
+      "id": "688ddaa5-f3a2-42d9-82b5-e3d7d214cb92",
       "type": "text",
       "x": 96.5,
       "y": 290,
@@ -202,7 +202,7 @@
       "baseline": 12
     },
     {
-      "id": "a6afa3d9-b72e-442f-a95b-96beb3497a12",
+      "id": "bc5565f6-fa1c-4b03-98df-dad974b5865c",
       "type": "rectangle",
       "x": 310,
       "y": 230,
@@ -230,7 +230,7 @@
       "locked": false
     },
     {
-      "id": "ddcda690-6c93-488a-b636-926f02575430",
+      "id": "e3bac70d-96e9-4ed2-951c-6337a5eec8fa",
       "type": "text",
       "x": 339.0,
       "y": 254,
@@ -264,7 +264,7 @@
       "baseline": 16
     },
     {
-      "id": "be0823ba-2d28-4192-aa2e-fd55a0d17ebd",
+      "id": "4fdad5ec-4baf-49ce-959e-8295c0c148b8",
       "type": "text",
       "x": 342.5,
       "y": 274,
@@ -298,7 +298,7 @@
       "baseline": 12
     },
     {
-      "id": "42dbf30b-1c9c-4a9e-8357-21df4c259325",
+      "id": "d2083959-6f29-49b1-bde1-da4683e8aab0",
       "type": "rectangle",
       "x": 590,
       "y": 230,
@@ -326,7 +326,7 @@
       "locked": false
     },
     {
-      "id": "0a85cb0d-4a90-4608-ba54-b871b5ec83a1",
+      "id": "b87f7a26-87fb-495d-9b85-b9b3bef38824",
       "type": "text",
       "x": 628.5,
       "y": 254,
@@ -360,7 +360,7 @@
       "baseline": 16
     },
     {
-      "id": "20eb783b-5cd2-455b-b4a2-b1f010873567",
+      "id": "0c142ace-b4c9-406e-8e0e-b4c723fcbd2d",
       "type": "text",
       "x": 631.0,
       "y": 274,
@@ -394,7 +394,7 @@
       "baseline": 12
     },
     {
-      "id": "9cfaa46e-d113-4db8-8341-1526f40b9439",
+      "id": "c0151071-8dc0-4978-a257-8ab4c083ca8c",
       "type": "rectangle",
       "x": 880,
       "y": 230,
@@ -422,7 +422,7 @@
       "locked": false
     },
     {
-      "id": "0be0e6a5-1ffe-4ac6-821e-b80289a9b4b9",
+      "id": "af9297ae-e638-43df-a056-0b5a22c859b9",
       "type": "text",
       "x": 928.5,
       "y": 254,
@@ -456,7 +456,7 @@
       "baseline": 16
     },
     {
-      "id": "13ca56bb-bd33-4610-868c-4b2d1aac0ea0",
+      "id": "cc9fcf8f-a347-41a9-8328-a1fe66cfae1a",
       "type": "text",
       "x": 933.0,
       "y": 274,
@@ -490,7 +490,7 @@
       "baseline": 12
     },
     {
-      "id": "3f9555ed-3767-4f0f-92d3-80b6d9e096dd",
+      "id": "5f55f2b5-0a5c-47af-8e27-09096e2c5187",
       "type": "text",
       "x": 947.5,
       "y": 290,
@@ -524,7 +524,7 @@
       "baseline": 12
     },
     {
-      "id": "5ba3b6e2-e643-4766-a014-6ba34cc82fec",
+      "id": "f4e363c0-5243-4d80-9b5e-703b134b3026",
       "type": "rectangle",
       "x": 1150,
       "y": 245,
@@ -552,7 +552,7 @@
       "locked": false
     },
     {
-      "id": "ed88e144-cd6c-4c69-adaf-9e0c7dfce0e3",
+      "id": "62342186-959b-492f-9734-3ba45f7921ae",
       "type": "text",
       "x": 1176.5,
       "y": 267.0,
@@ -586,7 +586,7 @@
       "baseline": 16
     },
     {
-      "id": "17a1fddb-64d0-4aee-989e-9e90d45bda51",
+      "id": "46a9d96d-6c5d-47b7-9282-b2f89e813352",
       "type": "arrow",
       "x": 260,
       "y": 275,
@@ -626,7 +626,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "c1543900-7d7a-4639-8cb6-e617bb8b1036",
+      "id": "5cd5cb91-1d23-4a0b-812b-73178b0e03ec",
       "type": "arrow",
       "x": 540,
       "y": 275,
@@ -666,7 +666,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "71f6e508-8dd1-4371-8142-24070306c55a",
+      "id": "eb7cc506-3eea-4194-bbcb-0ce97d423eef",
       "type": "arrow",
       "x": 830,
       "y": 275,
@@ -706,7 +706,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "8d2c28df-2f68-45d9-91f5-3484a3ad6590",
+      "id": "deb6deec-c5c1-429f-b560-2c55c3bf5505",
       "type": "arrow",
       "x": 1130,
       "y": 275,
@@ -746,7 +746,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "6356c3fe-3fce-44ab-a1df-5db7f0ca93ca",
+      "id": "8611ea03-f562-488e-b5bf-58ce5a620c25",
       "type": "text",
       "x": 1123.5,
       "y": 257.0,
@@ -780,7 +780,7 @@
       "baseline": 11
     },
     {
-      "id": "7d66497d-17c4-463d-a4ee-fbca9c7356b5",
+      "id": "e569e07e-0ca5-4cc9-acf2-48b1d0aa5790",
       "type": "rectangle",
       "x": 40,
       "y": 370,
@@ -808,7 +808,7 @@
       "locked": false
     },
     {
-      "id": "0d1dc87c-5784-4d56-8455-e90932850a0a",
+      "id": "b93bcaa0-a9b3-4165-8087-d7b89d3dc29e",
       "type": "text",
       "x": 64,
       "y": 389,
@@ -842,11 +842,11 @@
       "baseline": 13
     },
     {
-      "id": "e3f30fa9-da5e-4b5a-9194-3e812f672e2a",
+      "id": "b4cd0521-c803-472b-8b49-28e9035a2206",
       "type": "text",
       "x": 64,
       "y": 413,
-      "width": 647,
+      "width": 639,
       "height": 17,
       "angle": 0,
       "strokeColor": "#B71C1C",
@@ -867,16 +867,16 @@
       "locked": false,
       "fontSize": 13,
       "fontFamily": 1,
-      "text": "double-encodes each line as a quoted JSON string \u2014 breaking newline-delimited JSON.",
+      "text": "double-encodes each line as a quoted JSON string, breaking newline-delimited JSON.",
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "double-encodes each line as a quoted JSON string \u2014 breaking newline-delimited JSON.",
+      "originalText": "double-encodes each line as a quoted JSON string, breaking newline-delimited JSON.",
       "lineHeight": 1.25,
       "baseline": 13
     },
     {
-      "id": "f3474f76-c044-4012-a941-593199c9649b",
+      "id": "6ebc1141-b14e-41fd-92bd-7f84f1ef0471",
       "type": "text",
       "x": 64,
       "y": 443,

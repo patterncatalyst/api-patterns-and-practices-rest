@@ -1,5 +1,5 @@
 """
-diagrams.py — Scene diagrams for the "API Patterns & Practices: REST" 101 deck.
+diagrams.py: Scene diagrams for the "API Patterns & Practices: REST" 101 deck.
 
 Shipping / cargo domain (NOT coffee-shop). Authored against the site's figures
 and contracts (contracts/openapi/shipping-api.yaml, contracts/schemas/shipping.schema.json,
@@ -16,7 +16,7 @@ from dgen import Scene, PALETTE
 def decision_axes():
     s = Scene("r02-decision-axes", width=1300, height=640,
               title="The API decision framework",
-              subtitle="Read the interaction off seven axes before you pick the style — habit is not an axis.")
+              subtitle="Read the interaction off seven axes before you pick the style; habit is not an axis.")
     s.panel(40, 110, 470, 500)
     s.label(64, 142, "The seven axes", size=15, weight="bold", color=PALETTE["rest"])
     axes = [
@@ -32,7 +32,7 @@ def decision_axes():
         s.label(64, 182 + i * 56, a, size=13, color=PALETTE["neutral"])
 
     s.box(590, 265, 210, 110, "Run the interaction",
-          ["through all seven axes", "— let them point"], kind="rest")
+          ["through all seven axes,", "let them point"], kind="rest")
     s.arrow(510, 350, 590, 330, kind="neutral")
 
     outs = [
@@ -78,8 +78,8 @@ def idempotency_matrix():
         s.label(x + 60, 400, " ".join(words[:mid]), size=10, color=PALETTE["muted"], anchor="middle")
         s.label(x + 60, 416, " ".join(words[mid:]), size=10, color=PALETTE["muted"], anchor="middle")
     s.panel(70, 470, 1160, 60)
-    s.label(94, 505, "PUT and DELETE are idempotent by HTTP contract; POST and PATCH are not — "
-                     "make unsafe creates safe to retry with an Idempotency-Key (IETF draft).",
+    s.label(94, 505, "PUT and DELETE are idempotent by HTTP contract; POST and PATCH are not. "
+                     "Make unsafe creates safe to retry with an Idempotency-Key (IETF draft).",
             size=13, color=PALETTE["neutral"])
     s.write()
 
@@ -262,7 +262,7 @@ def range_requests():
 def resource_model():
     s = Scene("r03-resource-model", width=1300, height=560,
               title="Design around resources (nouns, not verbs)",
-              subtitle="Collections and items, nested where it reads as ownership — never mirror the DB.")
+              subtitle="Collections and items, nested where it reads as ownership; never mirror the DB.")
     s.box(60, 240, 300, 80, "/bookings", ["collection of bookings"], kind="rest")
     s.box(500, 160, 320, 80, "/bookings/{id}", ["one booking (item)"], kind="rest")
     s.box(500, 320, 320, 80, "/bookings/{id}/cargo", ["cargo under a booking"], kind="rest")
@@ -293,10 +293,10 @@ def resource_model():
 def quarkus_buildtime():
     s = Scene("r22-quarkus-buildtime", width=1300, height=600,
               title="Quarkus REST: build-time binding, not runtime reflection",
-              subtitle="Resolve @RestHeader / @RestQuery / @RestPath once, at build — not on every request.")
+              subtitle="Resolve @RestHeader / @RestQuery / @RestPath once, at build (not on every request).")
     # Classic path (per request)
     s.panel(40, 120, 1220, 150)
-    s.label(64, 150, "Classic JAX-RS — resolved by reflection, every request", size=13,
+    s.label(64, 150, "Classic JAX-RS: resolved by reflection, every request", size=13,
             weight="bold", color=PALETTE["danger"])
     s.box(70, 175, 230, 70, "Request", kind="danger")
     s.box(430, 175, 320, 70, "reflect: walk @HeaderParam,", ["Method.invoke() per call"], kind="danger")
@@ -306,7 +306,7 @@ def quarkus_buildtime():
     s.label(1130, 214, "every req", size=11, color=PALETTE["danger"])
     # Quarkus path
     s.panel(40, 300, 1220, 200)
-    s.label(64, 330, "Quarkus REST — a build step generates the binding code once", size=13,
+    s.label(64, 330, "Quarkus REST: a build step generates the binding code once", size=13,
             weight="bold", color=PALETTE["platform"])
     s.box(70, 355, 300, 60, "BUILD: processor reads", ["@RestHeader / @RestQuery"], kind="govern")
     s.arrow(370, 385, 470, 385, kind="neutral", label="generates")
@@ -327,7 +327,7 @@ def quarkus_buildtime():
 def quarkus_reactive_ndjson():
     s = Scene("r22-reactive-ndjson", width=1300, height=560,
               title="Reactive NDJSON: a Multi pipeline, one line at a time",
-              subtitle="Multi<String> streamed over the event loop — never buffered — through a dedicated writer.")
+              subtitle="Multi<String> streamed over the event loop (never buffered) through a dedicated writer.")
     s.box(40, 230, 220, 90, "Multi.ticks()", ["one tick every", "STREAM_INTERVAL"], kind="platform")
     s.box(310, 230, 230, 90, ".select().first(n)", ["clamp limit (DoS guard)"], kind="govern")
     s.box(590, 230, 240, 90, "toJsonLine(event)", ["one NDJSON line / tick"], kind="svc")
@@ -340,7 +340,7 @@ def quarkus_reactive_ndjson():
     s.panel(40, 370, 1220, 110)
     s.label(64, 402, "Without a narrowly-scoped @Provider writer, Jackson wins the String lookup and",
             size=13, color=PALETTE["danger"])
-    s.label(64, 426, "double-encodes each line as a quoted JSON string — breaking newline-delimited JSON.",
+    s.label(64, 426, "double-encodes each line as a quoted JSON string, breaking newline-delimited JSON.",
             size=13, color=PALETTE["danger"])
     s.label(64, 456, "Backpressure: the next item is produced only when the socket is ready to take it.",
             size=13, color=PALETTE["neutral"])
@@ -351,14 +351,14 @@ def quarkus_reactive_ndjson():
 def fastapi_asgi_dispatch():
     s = Scene("r23-asgi-dispatch", width=1300, height=600,
               title="FastAPI / ASGI: where each handler actually runs",
-              subtitle="One uvicorn process, one event loop — async def on the loop, plain def in a threadpool.")
+              subtitle="One uvicorn process, one event loop: async def on the loop, plain def in a threadpool.")
     s.panel(40, 110, 1220, 430)
     s.label(64, 142, "single uvicorn process", size=13, weight="bold", color=PALETTE["neutral"])
     # event loop
     s.box(90, 200, 360, 120, "event loop (main thread)",
           ["multiplexes many requests", "by yielding at each await"], kind="platform")
     s.box(90, 380, 360, 110, "async def handler",
-          ["runs ON the loop", "await real I/O — cooperates"], kind="svc")
+          ["runs ON the loop", "await real I/O; cooperates"], kind="svc")
     s.arrow(270, 380, 270, 320, kind="svc", label="scheduled on")
     # threadpool
     s.box(840, 200, 370, 120, "AnyIO threadpool",
@@ -377,7 +377,7 @@ def fastapi_asgi_dispatch():
 def fastapi_bg_sse():
     s = Scene("r23-bg-sse", width=1300, height=560,
               title="StreamingResponse & BackgroundTasks on one loop",
-              subtitle="Stream frames as they're yielded; defer work past the response — both on the event loop.")
+              subtitle="Stream frames as they're yielded; defer work past the response (both on the event loop).")
     # SSE streaming
     s.panel(40, 120, 590, 360)
     s.label(64, 152, "StreamingResponse (SSE)", size=13, weight="bold", color=PALETTE["svc"])
@@ -404,12 +404,12 @@ def fastapi_bg_sse():
 def test_pyramid():
     s = Scene("r24-test-pyramid", width=1300, height=600,
               title="The test pyramid: every layer checks one contract",
-              subtitle="Many fast checks at the base, fewer slow ones on top — all against the shared schema.")
+              subtitle="Many fast checks at the base, fewer slow ones on top (all against the shared schema).")
     levels = [
-        (720, 440, "Contract — lint + schema validation", "platform", "fast · many · drift fails CI"),
-        (560, 360, "Integration — real Postgres & Kafka", "svc", "@QuarkusTest · pytest + TestClient"),
-        (400, 280, "API / E2E — shared Newman collection", "govern", "same assertions, both stacks"),
-        (240, 200, "Load — throughput under concurrency", "rest", "caps + async flow hold"),
+        (720, 440, "Contract: lint + schema validation", "platform", "fast · many · drift fails CI"),
+        (560, 360, "Integration: real Postgres & Kafka", "svc", "@QuarkusTest · pytest + TestClient"),
+        (400, 280, "API / E2E: shared Newman collection", "govern", "same assertions, both stacks"),
+        (240, 200, "Load: throughput under concurrency", "rest", "caps + async flow hold"),
     ]
     for w, y, title, kind, note in levels:
         x = (1300 - w) / 2 - 150

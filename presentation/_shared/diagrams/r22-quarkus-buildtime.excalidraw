@@ -4,7 +4,7 @@
   "source": "dgen.py",
   "elements": [
     {
-      "id": "e43d8d52-0b07-4004-8215-7a915d2af8e2",
+      "id": "7275d021-c40e-4752-a034-81875ee926fe",
       "type": "text",
       "x": 280.5,
       "y": 14,
@@ -38,7 +38,7 @@
       "baseline": 22
     },
     {
-      "id": "6eb92226-b11c-4633-930d-a4504b68fa9a",
+      "id": "4ae59cca-7d86-41e8-ae14-85d6688bfa49",
       "type": "text",
       "x": 301.5,
       "y": 50,
@@ -63,16 +63,16 @@
       "locked": false,
       "fontSize": 14,
       "fontFamily": 1,
-      "text": "Resolve @RestHeader / @RestQuery / @RestPath once, at build \u2014 not on every request.",
+      "text": "Resolve @RestHeader / @RestQuery / @RestPath once, at build (not on every request).",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Resolve @RestHeader / @RestQuery / @RestPath once, at build \u2014 not on every request.",
+      "originalText": "Resolve @RestHeader / @RestQuery / @RestPath once, at build (not on every request).",
       "lineHeight": 1.25,
       "baseline": 14
     },
     {
-      "id": "740ef87b-77f4-4750-9cf0-7b414320b8ac",
+      "id": "4910b55c-3050-42f9-b974-1268c785451f",
       "type": "rectangle",
       "x": 40,
       "y": 120,
@@ -100,11 +100,11 @@
       "locked": false
     },
     {
-      "id": "7934487a-765e-40e2-b429-b541f649c645",
+      "id": "ea79b3d3-8871-47d5-a1f6-9abef2edf799",
       "type": "text",
       "x": 64,
       "y": 137,
-      "width": 421,
+      "width": 413,
       "height": 17,
       "angle": 0,
       "strokeColor": "#B71C1C",
@@ -125,16 +125,16 @@
       "locked": false,
       "fontSize": 13,
       "fontFamily": 1,
-      "text": "Classic JAX-RS \u2014 resolved by reflection, every request",
+      "text": "Classic JAX-RS: resolved by reflection, every request",
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Classic JAX-RS \u2014 resolved by reflection, every request",
+      "originalText": "Classic JAX-RS: resolved by reflection, every request",
       "lineHeight": 1.25,
       "baseline": 13
     },
     {
-      "id": "cf31c93d-f1fa-4c6d-8bf9-5c49f0ef7158",
+      "id": "a996a94c-48ab-4f8e-96c8-3f523d9d09fa",
       "type": "rectangle",
       "x": 70,
       "y": 175,
@@ -162,7 +162,7 @@
       "locked": false
     },
     {
-      "id": "bcf8e4f4-45d9-41ea-a982-a1c31ce0934c",
+      "id": "4174baaa-82b6-4691-a8ce-edf79852555d",
       "type": "text",
       "x": 151.5,
       "y": 202.0,
@@ -196,7 +196,7 @@
       "baseline": 16
     },
     {
-      "id": "e7c533bb-78ce-4456-aeb6-2dce85624851",
+      "id": "92e2dd9f-2663-46c2-afce-e849b04ee494",
       "type": "rectangle",
       "x": 430,
       "y": 175,
@@ -224,7 +224,7 @@
       "locked": false
     },
     {
-      "id": "eaf4266a-2d40-47b1-a598-5434e08e1ca3",
+      "id": "b9315ada-b2b6-44b9-ba50-283e7b89b524",
       "type": "text",
       "x": 460.5,
       "y": 199,
@@ -258,7 +258,7 @@
       "baseline": 16
     },
     {
-      "id": "f3d592a8-dabc-41bc-81bd-d609ccad04c4",
+      "id": "df077e5b-6939-4efb-ad74-669e3f476d1f",
       "type": "text",
       "x": 504.0,
       "y": 219,
@@ -292,7 +292,7 @@
       "baseline": 12
     },
     {
-      "id": "ec8585bd-0b8f-4ba7-93d6-3b736593d201",
+      "id": "58e95dec-77f7-48ee-926f-1c023b9e1357",
       "type": "rectangle",
       "x": 880,
       "y": 175,
@@ -320,7 +320,7 @@
       "locked": false
     },
     {
-      "id": "32136e8d-1f0e-4108-b377-4bddcbd02884",
+      "id": "a5430aa3-ddf7-42db-8e11-9f21155e4269",
       "type": "text",
       "x": 961.5,
       "y": 202.0,
@@ -354,7 +354,7 @@
       "baseline": 16
     },
     {
-      "id": "7fef0f7d-9db8-49d4-b28e-0d4da23b4ad7",
+      "id": "afff330f-0ac5-485d-accc-dbc31385a2bb",
       "type": "arrow",
       "x": 300,
       "y": 210,
@@ -394,7 +394,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "80111cb2-5452-41d0-b906-746518ced76f",
+      "id": "200c48ce-3966-4155-9d6c-b42c95e771e8",
       "type": "arrow",
       "x": 750,
       "y": 210,
@@ -434,7 +434,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "7c53aedd-9cbc-4395-a782-d0f567ed991c",
+      "id": "236c5397-71d3-44b6-baec-dd6dcbeeb886",
       "type": "text",
       "x": 1130,
       "y": 203,
@@ -468,7 +468,7 @@
       "baseline": 11
     },
     {
-      "id": "b6683587-9911-4287-8851-02e5bc9a5a3c",
+      "id": "a2fa9d27-9a51-4079-b9f8-6ef20e5ad2ef",
       "type": "rectangle",
       "x": 40,
       "y": 300,
@@ -496,11 +496,11 @@
       "locked": false
     },
     {
-      "id": "55a38daf-8fff-4250-b863-eadce4e9886a",
+      "id": "3d95626b-231d-486c-b422-8d24a6246d1a",
       "type": "text",
       "x": 64,
       "y": 317,
-      "width": 460,
+      "width": 452,
       "height": 17,
       "angle": 0,
       "strokeColor": "#006E6E",
@@ -521,16 +521,16 @@
       "locked": false,
       "fontSize": 13,
       "fontFamily": 1,
-      "text": "Quarkus REST \u2014 a build step generates the binding code once",
+      "text": "Quarkus REST: a build step generates the binding code once",
       "textAlign": "left",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Quarkus REST \u2014 a build step generates the binding code once",
+      "originalText": "Quarkus REST: a build step generates the binding code once",
       "lineHeight": 1.25,
       "baseline": 13
     },
     {
-      "id": "385c2de5-b50e-45ca-9c0b-e0f7ddfa6569",
+      "id": "954ef00a-bf1f-415b-8a21-8fc4f6b7afef",
       "type": "rectangle",
       "x": 70,
       "y": 355,
@@ -558,7 +558,7 @@
       "locked": false
     },
     {
-      "id": "7544ceb6-d461-421d-9d75-2ea6c3bc6f8e",
+      "id": "3d1bafd7-86b3-4332-99d7-b65fff0eacce",
       "type": "text",
       "x": 114.5,
       "y": 379,
@@ -592,7 +592,7 @@
       "baseline": 16
     },
     {
-      "id": "3d6885b8-b14f-4743-82cb-b9d123f5ca2c",
+      "id": "d89e6d0e-934c-4817-a1cf-2855260da5f3",
       "type": "text",
       "x": 134.0,
       "y": 399,
@@ -626,7 +626,7 @@
       "baseline": 12
     },
     {
-      "id": "c45fea2d-c373-4e14-abc1-71b027a9d311",
+      "id": "3b67d464-8e40-41d5-9901-d42c8a475544",
       "type": "arrow",
       "x": 370,
       "y": 385,
@@ -666,7 +666,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "1b51b86f-f0b6-4be8-9d89-553e610b0874",
+      "id": "ce277903-50da-43f2-b02e-682bd6c4cf00",
       "type": "text",
       "x": 390.5,
       "y": 367.0,
@@ -700,7 +700,7 @@
       "baseline": 11
     },
     {
-      "id": "668a0146-6d1b-4555-ba37-f54de6adf207",
+      "id": "da3f65a6-2c2f-43dc-afa7-608393c41b4c",
       "type": "rectangle",
       "x": 470,
       "y": 355,
@@ -728,7 +728,7 @@
       "locked": false
     },
     {
-      "id": "fb2dc597-0158-4abb-a9e3-3ba9f001ad26",
+      "id": "c34a2f11-498d-43f2-899d-c51cde7eaaf7",
       "type": "text",
       "x": 577.0,
       "y": 379,
@@ -762,7 +762,7 @@
       "baseline": 16
     },
     {
-      "id": "a8a131aa-cd39-4fe1-a7e8-bfef46330d9b",
+      "id": "1b089bc5-89c6-4292-83aa-d63b503f104c",
       "type": "text",
       "x": 541.0,
       "y": 399,
@@ -796,7 +796,7 @@
       "baseline": 12
     },
     {
-      "id": "8fb03ef6-907c-4e83-ac80-e4366036f728",
+      "id": "c16dc98d-2a77-4bd1-be0c-abde94cbab49",
       "type": "rectangle",
       "x": 70,
       "y": 435,
@@ -824,7 +824,7 @@
       "locked": false
     },
     {
-      "id": "d87c5d72-d173-4c90-acc7-faecf737c01d",
+      "id": "cc463574-4fe1-4e8f-8d40-ce680de41169",
       "type": "text",
       "x": 151.5,
       "y": 452.0,
@@ -858,7 +858,7 @@
       "baseline": 16
     },
     {
-      "id": "0b165603-4035-4ffa-8a12-838ca61e3edf",
+      "id": "306be041-695e-477e-8630-9a7d20c8be27",
       "type": "rectangle",
       "x": 430,
       "y": 435,
@@ -886,7 +886,7 @@
       "locked": false
     },
     {
-      "id": "e0171463-da3f-4128-b710-f72994f7badd",
+      "id": "c378b079-e42b-4818-b465-733280bd7dfe",
       "type": "text",
       "x": 451.5,
       "y": 452.0,
@@ -920,7 +920,7 @@
       "baseline": 16
     },
     {
-      "id": "70746806-900b-49ef-854e-7456b425af49",
+      "id": "e18e7739-1d3b-4a08-b0b7-9368e2b65a7f",
       "type": "rectangle",
       "x": 900,
       "y": 435,
@@ -948,7 +948,7 @@
       "locked": false
     },
     {
-      "id": "adbd2bce-9408-436b-a0cf-3b57f5128965",
+      "id": "ae9eaf41-578c-4a81-8568-c34d2365bca1",
       "type": "text",
       "x": 971.5,
       "y": 452.0,
@@ -982,7 +982,7 @@
       "baseline": 16
     },
     {
-      "id": "561c2988-1afd-474b-9633-6f4c19e162d3",
+      "id": "68056cdb-5992-40b9-b6b3-cd770dbd575d",
       "type": "arrow",
       "x": 300,
       "y": 460,
@@ -1022,7 +1022,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "29e4427c-0eab-4dac-8f00-9c9e5d8818ba",
+      "id": "83121dec-4567-4ea4-a53b-ef4e8779db04",
       "type": "arrow",
       "x": 770,
       "y": 460,
@@ -1062,7 +1062,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "d38499c4-5dad-413c-9e81-cfb38d963667",
+      "id": "f484f13c-0593-4627-a46c-0422ab93502a",
       "type": "rectangle",
       "x": 830,
       "y": 360,
@@ -1090,7 +1090,7 @@
       "locked": false
     },
     {
-      "id": "1ff579a7-68e3-4f61-8d0e-811ecd6d9f5c",
+      "id": "a9fe622c-292e-405f-9505-2a4f629937d7",
       "type": "text",
       "x": 852.0,
       "y": 364,
@@ -1124,7 +1124,7 @@
       "baseline": 11
     },
     {
-      "id": "dfd847a0-85e6-4480-9b91-4e3eeefef0c1",
+      "id": "7b328e64-8004-4d2e-bea6-70f64e61eb6f",
       "type": "rectangle",
       "x": 960,
       "y": 360,
@@ -1152,7 +1152,7 @@
       "locked": false
     },
     {
-      "id": "27cee1b4-9e37-434f-847a-4812d40cb473",
+      "id": "5005b710-bfd6-46d2-8989-3aeb33320327",
       "type": "text",
       "x": 987.0,
       "y": 364,
@@ -1186,7 +1186,7 @@
       "baseline": 11
     },
     {
-      "id": "5a067281-20b1-4390-b75b-727d4e9bd6cd",
+      "id": "8a0d9974-5666-48a1-b680-590c320c5bee",
       "type": "rectangle",
       "x": 1100,
       "y": 360,
@@ -1214,7 +1214,7 @@
       "locked": false
     },
     {
-      "id": "96ce75e6-cd25-4cf2-b373-f0b2e9450ba9",
+      "id": "e4a8e4d9-56a2-48f8-ba59-d1979ed10185",
       "type": "text",
       "x": 1125.5,
       "y": 364,
