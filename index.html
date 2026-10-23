@@ -12,7 +12,7 @@ title: Home
       <a class="btn btn--primary"
          href="{{ '/docs/00-outline/' | relative_url }}">Start reading →</a>
       <a class="btn btn--secondary"
-         href="{{ '/plans/iteration-plan/' | relative_url }}">Build &amp; iteration plan</a>
+         href="{{ '/examples/' | relative_url }}">Examples</a>
       <a class="btn btn--secondary"
          href="https://github.com/{{ site.github_username }}/{{ site.github_repo }}"
          rel="noopener">View on GitHub ↗</a>
@@ -25,7 +25,7 @@ title: Home
     <div class="stats">
       <div class="stat"><span class="stat__value">📜</span><span class="stat__label">One OpenAPI 3.1 contract as the single source of truth</span></div>
       <div class="stat"><span class="stat__value">☕</span><span class="stat__label">Every example in both Quarkus and Python/FastAPI</span></div>
-      <div class="stat"><span class="stat__value">✅</span><span class="stat__label">CI validates both stacks against the contract — drift fails the build</span></div>
+      <div class="stat"><span class="stat__value">✅</span><span class="stat__label">CI validates both stacks against the contract: drift fails the build</span></div>
       <div class="stat"><span class="stat__value">📊</span><span class="stat__label">Traced end to end through the Grafana LGTM stack</span></div>
     </div>
   </div>
@@ -40,7 +40,7 @@ title: Home
       contract for a shipping and cargo booking domain. Every hands-on chapter
       ships the same example in <strong>both</strong> Quarkus and
       Python/FastAPI against that one contract, and CI validates both stacks
-      against it — a response that violates the contract fails the build. You
+      against it: a response that violates the contract fails the build. You
       work through resource design, HTTP semantics, pagination, async
       operations, HATEOAS, versioning, streaming and large payloads, then tie
       the contract to its event side with AsyncAPI, CloudEvents and Arazzo. It
