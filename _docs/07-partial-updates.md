@@ -236,12 +236,7 @@ The two are not mutually exclusive on the same resource, either: this chapter's 
 
 ## Proof, not assertion
 
-This chapter's example runs on ports `8087` (Quarkus) and `8007` (FastAPI):
-
-```bash
-cd examples/07-partial-updates
-./verify.sh
-```
+This chapter's example runs on ports `8087` (Quarkus) and `8007` (FastAPI).
 
 `verify.sh` brings both services up with `docker compose`, waits for health, then drives the full sequence against each stack: `POST /bookings` → `201`; a merge patch that changes `requestedPickup` while leaving `origin` byte-identical; a second merge patch setting `requestedPickup` to `null`, asserting the key is gone from the response entirely, not present-and-null; a JSON Patch `replace` on `cargo[0].description`, asserting only that field moved; a JSON Patch with a `test` op asserting `status == CONFIRMED` against a booking that's still `PENDING`, asserting the response is `409` or `422` with a `Problem` body; and `PATCH` with `Content-Type: text/plain` and with plain `application/json`, both asserting `415`. Every response body is schema-validated against `contracts/schemas/shipping.schema.json`, and the run prints `PASS` only when every assertion holds on **both** stacks.
 
@@ -250,6 +245,14 @@ The README's drift probe makes the stakes concrete: comment out the `replace` br
 {% include excalidraw.html file="07-patch-vs-merge" alt="The same Booking resource shown receiving two different partial-update requests side by side: a JSON Merge Patch sent as application/merge-patch+json, a sparse object with requestedPickup changed and a null field marked for deletion, merged recursively into the target; and a JSON Patch sent as application/json-patch+json, an ordered array of add/remove/replace/test operations addressed by JSON Pointer paths like /cargo/0/description, applied in sequence to the same target, with a failing test operation shown short-circuiting the whole array before any operation after it runs." caption="Figure 7.1: JSON Patch vs JSON Merge Patch on the same booking." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the partial-update format choice. When the typical caller already has a sparse object to send (a form, a client diffing its own local state) and the domain has no field where <code>null</code> is a meaningful value distinct from "absent," <strong>JSON Merge Patch</strong> is the lower-cost correct answer: smaller bodies, no operation vocabulary to learn, a result a caller can reason about by eye. When an edit must land on one element inside an array without resending the whole array, or a caller needs to make its write conditional on the resource's current state via <code>test</code>, reach for <strong>JSON Patch</strong>: the verbosity buys precision and a concurrency guard merge patch cannot express at all. Don't guess at the client's capability from the media type alone: declare both, dispatch on <code>Content-Type</code> exactly as this chapter's two stacks do, and return <code>415</code> for anything else: a server that silently accepts a Content-Type it never validated is a server where "which format did that body actually follow" becomes a debugging question instead of a routing fact. And regardless of format, never let either patch style touch a server-assigned field: enforce <code>id</code>/<code>createdAt</code> immutability and the <code>updatedAt</code> restamp as an invariant of the resource, not an artifact of whichever patch happened to be sent.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/07-partial-updates && ./verify.sh
+```
+
+`verify.sh` brings both stacks up, then drives a create, two JSON Merge Patch calls (one that changes a field, one that removes it with `null`), a JSON Patch `replace`, a failing JSON Patch `test` op, and two unsupported-media-type `PATCH` calls against each stack, schema-validating every response body. It prints `PASS` once every assertion holds on both stacks; see `examples/07-partial-updates/README.md` for the full run output.
 
 ## For deeper coverage
 

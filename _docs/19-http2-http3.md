@@ -95,16 +95,19 @@ A detail that carries forward unchanged from earlier chapters: HTTP caching sema
 
 ## Proof
 
-```bash
-cd examples/19-http2-http3
-./verify.sh
-```
-
 Quarkus comes up on port 8098, FastAPI (served by Hypercorn) on port 8018. The script brings both services up with `docker compose`, waits for health, then fires paired `--http1.1` and `--http2-prior-knowledge` requests at each stack's `GET /`, asserting `200` and the expected `%{http_version}` on all four. It prints `PASS` only once every assertion holds for both stacks: the verified half of this chapter's story, with HTTP/3 documented as the local-only half above.
 
 {% include excalidraw.html file="19-http2-http3" alt="HTTP/1.1 serial head-of-line blocking across one request per connection at a time compared with HTTP/2 multiplexed streams over one TCP connection using HPACK header compression but still subject to TCP head-of-line blocking on packet loss, compared with HTTP/3 running independent QUIC streams over UDP with QPACK header compression, connection migration across network changes, and 0-RTT handshake resumption." caption="Figure 19.1: HTTP/1.1, HTTP/2, and HTTP/3 under a REST API." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether the HTTP version underneath a REST API is worth deliberate attention. It matters most when the interaction shape is many small requests over the same connection (a UI firing a resource list followed by a batch of detail fetches, a mobile client polling several endpoints in a burst) because that's exactly the shape HTTP/2's multiplexing and HPACK were built to help, and the shape HTTP/1.1's one-at-a-time connections and repeated headers punish hardest. Weigh client diversity next: HTTP/2 over TLS with ALPN is effectively universal across browsers, mobile clients, and modern HTTP libraries at this point, so enabling it on the server side is close to a free win with no client-side cost, unlike HTTP/3, which still depends on client and intermediary QUIC support that isn't guaranteed across every proxy, corporate firewall, or older HTTP client a diverse population might run. Reach for HTTP/3 specifically when the deployment's reality includes lossy networks (mobile clients on cellular links, geographically distant clients over long paths with real packet loss) where TCP head-of-line blocking is an active, measurable cost, or when clients roam across networks mid-session and connection migration avoids a full reconnect; both are QUIC's actual advantages over HTTP/2, not generic "newer is better" reasoning. Skip investing further than HTTP/2 when the deployment is internal, low-latency, and low-loss (most service-to-service traffic inside a data center) where TCP's head-of-line blocking rarely triggers in practice and the added TLS-and-UDP operational complexity of HTTP/3 buys little. None of this changes the REST contract itself: the decision is entirely about what the transport does to latency and throughput beneath resources, methods, and status codes that stay exactly the same either way.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/19-http2-http3 && ./verify.sh
+```
+
+`verify.sh` brings both services up with `docker compose`, then forces `--http1.1` and `--http2-prior-knowledge` requests at each stack's `GET /` and asserts curl's `%{http_version}` reports `1.1` and `2` respectively. Expect `PASS` once all four negotiations check out for both stacks; the full output from a real run is in `examples/19-http2-http3/README.md`.
 
 ## For deeper coverage
 

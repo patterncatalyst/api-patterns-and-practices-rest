@@ -82,16 +82,19 @@ That loop (edit the contract, each served document reflects the edit or doesn't,
 
 ## Running it
 
-```bash
-cd examples/20-openapi-depth
-./verify.sh
-```
-
 Quarkus comes up on port 8100, FastAPI on port 8020. For each stack, `verify.sh` fetches the live OpenAPI document, runs `check_openapi.py`'s three structural assertions (a JSON-Schema nullable construct present somewhere in the document, a non-empty top-level `webhooks` section, and the `Booking` required-field set matching the shared contract), then drives a real `POST` → `GET` booking round trip and schema-validates both bodies against `#/$defs/Booking`. It prints `PASS` only once every assertion holds for both stacks. The README documents three separate drift probes (dropping a required field, deleting the nullable property, deleting the `webhooks` section), each isolated to one file, each caught by a different assertion, each reverted back to green by undoing the one line that broke it.
 
 {% include excalidraw.html file="20-openapi-in-depth" alt="A shared contract schema feeds a drift check; the Quarkus stack serves a hand-authored static OpenAPI document and the FastAPI stack serves a generated-and-patched OpenAPI document, each exposing a type-array nullable field and a webhooks section, and CI's drift check compares each served document's required-field set against the contract, passing on a match and failing the build on divergence." caption="Figure 20.1: The living-contract loop: edit the contract, each stack serves its document, drift check compares, CI gates on the result." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether OpenAPI depth and drift detection are worth the investment. Client diversity is the strongest driver: a document consumed only by one team reading its own server's source barely needs type-array nullability or a drift gate, because any disagreement surfaces immediately as a code review comment; a document consumed by external partners, a generated SDK pipeline, or a documentation portal nobody on the API team controls needs every nullability and requiredness signal to be exact, because those consumers can't read the implementation to resolve an ambiguity the document left open. Evolution pressure matters just as much as diversity: a contract that changes rarely can get away with an occasional manual comparison between a served document and the schema it's supposed to match; a contract under active development, with fields added and renamed across several chapters' worth of change the way this book's shipping domain has been, needs the comparison running on every push, because that's exactly the cadence at which a hand-authored static document and a generated one drift apart unnoticed. Webhooks specifically are worth the top-level section only when the API calls outward to client-registered endpoints (a booking-confirmation push, a shipment-tracking update) and not worth inventing for an API that only ever answers inbound requests; documenting a webhook nobody will ever receive just adds a section a reader has to figure out is aspirational. Skip the structural drift check only when a single stack's document is itself the generated source of truth with no second artifact to compare against: the moment a second document enters the picture, whether hand-authored or independently generated, the gate is what keeps "the contract" meaning one thing instead of two.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/20-openapi-depth && ./verify.sh
+```
+
+`verify.sh` brings both services up with `docker compose`, fetches each stack's live OpenAPI document, runs `check_openapi.py`'s structural checks (a JSON-Schema nullable construct, a non-empty `webhooks` section, and the `Booking` required-field set matching the shared contract), then drives a `POST`/`GET` booking round trip validated against `#/$defs/Booking`. Expect `PASS` once every assertion holds for both stacks; the full output from a real run is in `examples/20-openapi-depth/README.md`.
 
 ## For deeper coverage
 

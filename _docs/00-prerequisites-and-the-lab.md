@@ -144,12 +144,7 @@ A booking is created `PENDING`, moves to `CONFIRMED` once accepted, `IN_TRANSIT`
 
 ## Running the Ch0 example
 
-The example under `examples/00-prerequisites/` doesn't touch the domain yet (no bookings, no cargo, just a `GET /` and a health check on each service) because its only job is proving the toolchain works before Chapter 4 puts a resource model behind it. Run it with the repository's standard per-chapter verification script:
-
-```bash
-cd examples/00-prerequisites
-./verify.sh
-```
+The example under `examples/00-prerequisites/` doesn't touch the domain yet (no bookings, no cargo, just a `GET /` and a health check on each service) because its only job is proving the toolchain works before Chapter 4 puts a resource model behind it. Run it with the repository's standard per-chapter verification script.
 
 `verify.sh` brings the app stack up with `docker compose`, polls `http://localhost:8080/q/health` and `http://localhost:8000/health` until each one answers (with a timeout, not an indefinite wait), asserts both return HTTP `200`, prints `PASS` with the status codes it saw, and tears the stack down afterward so no container is left running when it exits. That last step matters for a reason beyond tidiness: a chapter's verification is only meaningful if it proves the stack can come up from nothing and shut down cleanly every time, which is exactly what CI depends on when it runs this same script on every commit. A script that only checks "did the container process start" would pass even if the handler inside it threw on every request; polling the actual HTTP endpoint and asserting the status code is what makes `verify.sh` behavioral rather than cosmetic.
 
@@ -186,6 +181,14 @@ uv run uvicorn app.main:app --reload --port 8000
 From here on, every hands-on chapter in this site follows the same shape this one established: a runnable example under `examples/NN-chapter-name/` with both a Quarkus and a Python implementation, a `verify.sh` that asserts response bodies and status codes rather than just "the container started," and a `compose.yaml` that boots cleanly with LGTM available but off by default. Once the contract lands in Chapter 4, a CI job adds one more guarantee on top of each chapter's own `verify.sh`: it validates both stacks' live responses against `contracts/openapi/shipping-api.yaml` directly, so a chapter's "verified" status means the two independent implementations didn't just agree with each other, they agree with the contract that's supposed to govern both. A chapter's footer only flips to `Verification status: verified` once that CI check and both stacks' scripts are green, a status this chapter's own example will carry the moment Chapter 4 extends it with the first real resource.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Run against Compose when you want the exact environment CI validates (both stacks, Postgres, the full network topology), which is the right default for anything you'll compare against a later chapter's expected output. Switch to local dev (<code>quarkus dev</code> / <code>uv run --reload</code>) once you're editing one service's code and want a sub-second feedback loop; rebuilding a container image on every save is the wrong tool for that step, even though the container is still what ships and what CI checks last.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/00-prerequisites && ./verify.sh
+```
+
+`verify.sh` brings both services up with `docker compose`, polls each one's health endpoint until it answers, and asserts both return HTTP `200`. It prints `PASS` once both assertions hold and tears the stack down; see `examples/00-prerequisites/README.md` for the full run output.
 
 ## For deeper coverage
 

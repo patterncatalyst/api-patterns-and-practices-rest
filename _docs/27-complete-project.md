@@ -99,6 +99,14 @@ The operation (Chapter 10) and the CloudEvent (Chapter 21) complete in the same 
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Looking back across the whole book, a handful of these patterns belong in nearly every API a team builds, and the rest are situational: the distinction a reader should walk away able to make for their own service. Contract-first request/response (Chapter 4), a `Problem` body for errors, and pagination for any collection that can grow without bound apply to almost any REST API regardless of domain; skipping them tends to cost a team a rewrite later rather than save it real effort now. HATEOAS, media-type versioning, soft delete with a GDPR purge path, and NDJSON streaming are correct answers to specific conditions (a state machine complex enough that a client benefits from being told its options, more than one representation of a resource that has to coexist, a legal retention requirement, a payload too large or too slow to buffer), and the right call for a given API is to adopt each one only once that condition is actually true for it, not because this book covered it. Async operations and a second, event-based contract apply once an operation takes long enough that a caller shouldn't hold a connection open for it, or once a system has a second audience for a state change beyond whoever asked for it directly. The test a reader can run against their own API: name the specific failure a pattern prevents, and check whether that failure is one their system can actually have. If it can't, the pattern is an API's future problem being solved for it today, at a cost (more surface, more to document, more for the next engineer to learn) this book pays once, in a single chapter, so a reader doesn't have to pay it by trial and error in a production incident.</p></div>
 
+## Build, run, observe
+
+```bash
+cd examples/27-complete-project && ./verify.sh
+```
+
+`verify.sh` brings up Kafka and both stacks with `docker compose`, then drives one booking service through the book's full flow on each: contract-first create/read, keyset pagination with an advancing cursor, HATEOAS links, async confirmation through a bounded poll, media-type versioning, soft delete and GDPR purge, an incrementally-streamed NDJSON manifest, and a background CloudEvents publish to Kafka. Expect `PASS` once every assertion holds for both stacks; the full run output is in `examples/27-complete-project/README.md`.
+
 ## For deeper coverage
 
 - J. J. Geewax, *API Design Patterns* (Manning, 2021): the pattern catalog (pagination, long-running operations, soft delete) this chapter assembles onto one resource.

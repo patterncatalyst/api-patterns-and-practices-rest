@@ -175,16 +175,19 @@ Nothing in this example's contract mandates a poll interval, and that gap should
 
 ## Proof
 
-```bash
-cd examples/10-async-operations
-./verify.sh
-```
-
 The script brings up Quarkus on port `8090` and FastAPI on port `8010` (a pair chosen, like every other chapter's example, to avoid colliding with any other stack already running), waits for both health checks, then drives the full lifecycle against each: create a `PENDING` booking, `POST` the confirmation and check for `202` with a `Location` header and a schema-valid `RUNNING` `Operation`, confirm the booking is *still* `PENDING` immediately afterward, poll until the operation reaches `303`, follow that redirect and check the booking is now `CONFIRMED`, then run the whole sequence a second time but issue `DELETE` on the operation well inside its completion delay and confirm the booking stays `PENDING` forever after. It also checks the failure paths this chapter named: `409` on confirming an already-`CONFIRMED` booking, `404` on confirming or polling an id that was never issued, and a repeat `DELETE` on an already-terminal operation still returning `204`. Every body (`Operation`, `Booking`, `Problem`) is validated against `contracts/schemas/shipping.schema.json` before any assertion about it is trusted, and the script prints `PASS` only when both stacks agree on every one of those outcomes.
 
 <div class="callout callout--warn"><p class="callout__title">Gotcha</p><p>A FastAPI handler that needs <code>asyncio.create_task()</code> (to kick off background work, not just to <code>await</code> something) must itself be <code>async def</code>. A plain <code>def</code> endpoint runs on a thread-pool thread with no event loop attached, and scheduling a task from inside one raises at request time rather than producing a silently wrong result. This is easy to miss because most handlers in an API this size have no reason to be anything but synchronous, which makes the one that does stand out only if you're looking for it.</p></div>
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the sync-vs-async choice itself. Stay synchronous when the work's latency is bounded and small relative to a client's request timeout, and when there's nothing meaningful for the client to do between request and response except wait a few hundred milliseconds: forcing a poll loop onto work that's already fast adds a round trip for no benefit. Reach for <code>202</code> + poll + <code>303</code> specifically when the work's duration is variable, dependent on a system this service doesn't control, or long enough that holding a connection open risks a client-side timeout regardless of whether the work eventually succeeds. Model the in-progress work as its own resource (an <code>Operation</code> with an id, a status, and an address) rather than an ad hoc job token, so the same polling and schema-validation machinery serves every long-running action in the contract, not a bespoke shape per endpoint. And offer a cancel specifically when the work is meaningfully abortable before it commits any side effect; if cancelling can only race a side effect that's already irreversible by the time the client decides to stop, say so in the documentation rather than exposing a <code>DELETE</code> that sometimes quietly does nothing.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/10-async-operations && ./verify.sh
+```
+
+`verify.sh` brings up Quarkus and FastAPI with `docker compose`, drives a booking through the `202`/poll/`303` confirmation lifecycle and a cancel against both stacks, and schema-validates every `Operation`, `Booking`, and `Problem` body against the shared contract. It prints `PASS` once every assertion holds for both stacks; the full run output is in `examples/10-async-operations/README.md`.
 
 ## For deeper coverage
 

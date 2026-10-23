@@ -86,6 +86,14 @@ That same `otel-lgtm` image is also where logs and metrics would correlate with 
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Run the full LGTM stack locally, by default, the moment a chapter's or a project's actual subject is observability rather than a feature that happens to touch a service also emitting telemetry. Everywhere else, keep `lgtm` behind an opt-in profile the way Chapter 0 set it up: a four-container stack with no consumer watching it slows down every boot and buys nothing for a reader working on a resource model, a pagination scheme, or a schema evolution rule that has nothing to do with tracing. The deciding question isn't "does this service have OpenTelemetry wired in," it's "is the thing a reader needs to verify, right now, something only a trace, a log, or a metric can show." A booking's shape is provable with a contract check against `#/$defs/Booking`; a booking's journey through two instrumented stacks and a collector is provable only by querying the pipeline that carries it, which is why this chapter flips the default and Chapter 24 didn't need to. Compose is also the right place to start this verification habit at all (a single `docker compose up`, one collapsed `otel-lgtm` container, one bounded Tempo poll) because it keeps the whole loop (build, run, trace, assert, tear down) on one machine with no cluster to provision first. That's the first of three tiers this book runs the same booking service on, by design: Chapter 26 moves the same contract onto Kubernetes on minikube, where Tempo, Loki, and Mimir stop being one convenient container and start being separate workloads a cluster schedules, and the OpenShift Local appendix moves it again onto a platform with its own operators and security defaults layered on top. Each tier keeps the same deterministic trace-id assertion this chapter establishes; what changes underneath it is how much of the platform a reader is now responsible for standing up themselves.</p></div>
 
+## Build, run, observe
+
+```bash
+cd examples/25-local-with-docker-compose && ./verify.sh
+```
+
+`verify.sh` brings up both stacks along with Postgres and the local LGTM stack via `docker compose`, posts a booking to each stack carrying a fixed W3C `traceparent` header, and polls Tempo for that exact trace id until it returns a span with the right service name and the `POST /bookings` route. Expect `PASS` once every assertion holds; the full run output is in `examples/25-local-with-docker-compose/README.md`.
+
 ## For deeper coverage
 
 - Charity Majors, Liz Fong-Jones & George Miranda, *Observability Engineering* (O'Reilly, 2022): the reasoning behind tracing as a first-class verification tool, not just a debugging aid.

@@ -173,16 +173,19 @@ Freezing v1 forever is rarely the actual plan: the usual intent is to retire it 
 
 ## Proof
 
-```bash
-cd examples/14-versioning
-./verify.sh
-```
-
 The script brings up Quarkus on port `8094` and FastAPI on port `8014`, creates one booking per stack through the ordinary v2-shaped `POST /bookings`, then reads it back through every combination this chapter covers: `GET /v2/bookings/{id}` and `GET /v1/bookings/{id}` for the URI strategy, and `GET /bookings/{id}` with `Accept: application/vnd.shipping.v1+json` and `Accept: application/vnd.shipping.v2+json` for the media-type strategy. Every v2 body is schema-validated against `contracts/schemas/shipping.schema.json`; v1 isn't in that shared schema's `$defs`, so `verify.sh` hand-asserts its fields instead: specifically checking that a v1 response has `price` and `cargoDescription` and does **not** have `quote` or `cargo`, which is the check that catches a v1 endpoint quietly starting to leak the v2 shape. It also asserts `Vary: Accept` is present on every negotiated response. Both failure modes documented in the example's README (a v1 endpoint returning v2's shape, and a missing `Vary` header) produce a `200 OK` with valid JSON, which is exactly why a schema- and field-level check, not a status-code check, is the only thing that proves this chapter's claims hold.
 
 {% include excalidraw.html file="14-versioning-strategies" alt="A diagram comparing four versioning strategies against one stored booking: URI versioning routing /v1/bookings and /v2/bookings to distinct cache-friendly URLs, query-parameter versioning as URI versioning's cousin via ?version=, header versioning via a custom X-API-Version header, and media-type versioning negotiating one URL /bookings/{id} via the Accept header with a required Vary: Accept response header to prevent a cache from serving the wrong representation; alongside the v1 price+cargoDescription shape versus the v2 quote+cargo[] shape produced by the same underlying resource." caption="Figure 14.1: Four versioning strategies and their caching implications." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the choice of versioning strategy. When client diversity is high and operational constraints matter (public clients, third-party integrators, CDNs and corporate proxies that cache by URL without configuration), reach for URI versioning: it costs the least cleverness, and cacheability holds by construction with no header discipline required. When REST's one-resource-one-URI property matters more than caching ergonomics (an internal API where every response already flows through application-aware caching, or a domain where `self` links must never fork by version), reach for media-type versioning instead, and treat `Vary: Accept` as non-negotiable infrastructure, not an optional nicety, on every negotiated response. Query-parameter versioning is a reasonable URI-versioning substitute when the version reads as request configuration rather than identity; custom-header versioning is a reasonable media-type substitute when a team wants negotiation semantics without registering a vendor MIME type. Whichever strategy wins, the evolution axis still applies underneath it: version the representation, not the resource, and keep exactly one source of truth that every version projects from: forking the data itself to serve a frozen shape is how a system ends up unable to prove its old and new clients are even looking at the same booking.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/14-versioning && ./verify.sh
+```
+
+`verify.sh` brings up Quarkus and FastAPI with `docker compose`, creates a booking on each stack, then reads it back through both the URI (`/v1`, `/v2`) and media-type (`Accept: application/vnd.shipping.v{1,2}+json`) versioning strategies, asserting the v1 and v2 field sets and the `Vary: Accept` header. It prints `PASS` once every assertion holds for both stacks; the full run output is in `examples/14-versioning/README.md`.
 
 ## For deeper coverage
 

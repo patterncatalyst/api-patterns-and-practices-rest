@@ -133,16 +133,19 @@ def _with_links(booking: Booking) -> Booking:
 
 ## Proof
 
-```bash
-cd examples/12-hateoas
-./verify.sh
-```
-
 The script brings up Quarkus on port `8092` and FastAPI on port `8012`, then drives one booking through the full `PENDING → CONFIRMED → IN_TRANSIT → DELIVERED` sequence and a second through `PENDING → CANCELLED`, schema-validating every `Booking` body against `contracts/schemas/shipping.schema.json` and asserting the exact `_links` key set at every stop against both stacks. It isn't enough for a response to be schema-valid: `confirm` is a perfectly legitimate `Link` shape whether or not confirming is actually legal right now. So the assertion checks the precise set of relation names present at each state, not merely that whatever's there parses.
 
 The example's README documents a deliberate regression to make that distinction concrete: hard-code `HateoasLinks.forBooking` (or `links_for_booking`) to always emit `confirm`, regardless of status, and re-run `verify.sh`. Every response stays schema-valid (`confirm` still matches `#/$defs/Link`), but the moment a `CONFIRMED` booking's response claims a `confirm` relation it has no business offering, the state assertion fails: `expected _links keys [cancel,self], got [cancel,confirm,self]`. That failure is the whole point of building a dedicated assertion rather than trusting schema validation alone: schema validation checks that a link looks like a link, and only a check against the state machine itself can catch a link that looks right but is lying about what's legal.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the level-2-vs-level-3 choice. Add <code>_links</code> when a resource's evolution axis is rich: a multi-state lifecycle where the legal next actions depend on where the resource currently sits, and where client diversity means many independent clients would otherwise each re-implement (and each independently get wrong) the same transition rules. Skip it when a resource has no meaningful lifecycle, or when there's exactly one client and the team controls both ends of the contract: the payload and discipline cost buys nothing a shared library or a single documented rule wouldn't buy more cheaply. And wherever links do appear, compute them from current state on every response rather than storing them, so the server can never serve a response whose affordances have drifted from what the underlying resource actually allows.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/12-hateoas && ./verify.sh
+```
+
+`verify.sh` brings up Quarkus and FastAPI with `docker compose`, drives one booking through its full lifecycle and a second through cancellation, and asserts the exact `_links` key set at every state against both stacks. It prints `PASS` once every assertion holds for both stacks; the full run output is in `examples/12-hateoas/README.md`.
 
 ## For deeper coverage
 

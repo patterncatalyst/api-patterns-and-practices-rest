@@ -143,16 +143,19 @@ There's a real cost here too. Every additional response shape (`200` full, `206`
 
 ## Proof
 
-```bash
-cd examples/15-range-requests
-./verify.sh
-```
-
 The script brings up Quarkus on port 8095 and FastAPI on port 8015, creates a booking on each stack to mint an id, then drives the full sequence against that booking's manifest: `HEAD` (checking `Accept-Ranges` and capturing `Content-Length` as `TOTAL`), a full `GET` (checking the body is exactly `TOTAL` bytes), a bounded `Range: bytes=0-1023` (checking `206`, the exact `Content-Range` string, and exactly 1,024 bytes of body), an open `Range: bytes=1024-` (checking the range runs to `TOTAL-1`), an unsatisfiable range past `TOTAL` (checking `416` and `Content-Range: bytes */TOTAL`), and `HEAD`/`GET` against an unknown booking id (checking `404` with a schema-valid `Problem`). It checks exact byte counts and exact header values throughout, not just status codes.
 
 The README documents two regressions worth triggering by hand to see that discipline pay off. The first swaps the `206` for a `200` in the bounded-range branch: the handler still slices the right bytes and still sets `Content-Range`, but reports the wrong status. Re-running `verify.sh` fails immediately: `expected HTTP 206, got 200`, because `assert_status` checks the exact code the spec requires for a partial response, not just "some 2xx came back". The second is subtler: drop the `-1` off the end offset in the `Content-Range` header, so a correct `206` response advertises `bytes 0-1024/2097152` for a request that actually returned bytes `0-1023`. The status code is right, the byte count in the body is even right, and a test that only checked those two things would pass. `verify.sh` catches it anyway, because it parses `Content-Range` and compares the literal string against what the request implies: `expected Content-Range 'bytes 0-1023/2097152', got 'bytes 0-1024/2097152'`. Revert either edit and the run goes back to `PASS` for both stacks. The lesson in both cases is the same one Chapter 13's purge example made about soft delete: a response that looks plausible from the outside (right status, right-ish headers) can still disagree with itself in a way only an assertion that checks the *relationship* between fields, not each field in isolation, will ever catch.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether a resource needs Range support at all. Reach for it when the payload is large enough that "download the whole thing" is itself a cost worth avoiding (media files, PDFs, disk images, any document measured in megabytes rather than kilobytes) and when the evolution axis includes resumability or seeking as a real client need, not a hypothetical one. Operational constraints tip the decision further: a manifest served to a mobile client on an unreliable connection, or to many clients fetching overlapping byte windows from a CDN edge, benefits from Range support in proportion to how often a full download would otherwise fail partway through. Skip it for small, uniformly-sized JSON resources (the same documents this site has served since Chapter 3) where the entire body is cheaper to transfer than the extra round trip a <code>HEAD</code> probe would cost, and where there is no meaningful "partial" view of a 2&nbsp;KB payload worth constructing. Client diversity matters too: Range support is only worth building once a realistic client population includes something that will actually use it (a browser's native video element, a download manager, a PDF viewer with lazy page loading) rather than JSON API consumers that always want the whole representation anyway.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/15-range-requests && ./verify.sh
+```
+
+`verify.sh` brings up Quarkus and FastAPI with `docker compose`, then drives `HEAD`, a full `GET`, a bounded `Range`, an open-ended `Range`, and an unsatisfiable `Range` against each stack's manifest, checking exact byte counts and `Content-Range` values rather than just status codes. It prints `PASS` once every assertion holds for both stacks; the full run output is in `examples/15-range-requests/README.md`.
 
 ## For deeper coverage
 
