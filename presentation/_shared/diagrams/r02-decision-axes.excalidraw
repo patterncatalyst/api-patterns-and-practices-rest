@@ -4,7 +4,7 @@
   "source": "dgen.py",
   "elements": [
     {
-      "id": "ec4c9462-a4e8-44e5-a9bf-bf137ae14c66",
+      "id": "fb335b91-bd1c-4a6a-9c0d-c26e7516e509",
       "type": "text",
       "x": 478.5,
       "y": 14,
@@ -38,11 +38,11 @@
       "baseline": 22
     },
     {
-      "id": "a3c288ef-811f-4bd6-b275-d4c2f771388b",
+      "id": "34db068b-48ac-4feb-9d09-af3728a9bd2b",
       "type": "text",
-      "x": 293.0,
+      "x": 297.5,
       "y": 50,
-      "width": 714,
+      "width": 705,
       "height": 18,
       "angle": 0,
       "strokeColor": "#5A5A5A",
@@ -63,16 +63,16 @@
       "locked": false,
       "fontSize": 14,
       "fontFamily": 1,
-      "text": "Read the interaction off seven axes before you pick the style \u2014 habit is not an axis.",
+      "text": "Read the interaction off seven axes before you pick the style; habit is not an axis.",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Read the interaction off seven axes before you pick the style \u2014 habit is not an axis.",
+      "originalText": "Read the interaction off seven axes before you pick the style; habit is not an axis.",
       "lineHeight": 1.25,
       "baseline": 14
     },
     {
-      "id": "c72d0c4e-8faa-494c-adce-289b69d52ea6",
+      "id": "fb0475c0-7750-4be7-82fc-b199faed86ad",
       "type": "rectangle",
       "x": 40,
       "y": 110,
@@ -100,7 +100,7 @@
       "locked": false
     },
     {
-      "id": "8f0b05d9-796f-4120-a406-0220a9b4a58d",
+      "id": "8d878be1-40ed-4224-8a71-2dbadb340f56",
       "type": "text",
       "x": 64,
       "y": 127,
@@ -134,7 +134,7 @@
       "baseline": 15
     },
     {
-      "id": "8a0b5bfe-6dbf-45e6-9ae2-bce3a4643f68",
+      "id": "8facea65-a74e-440f-a20e-939155b4b1a7",
       "type": "text",
       "x": 64,
       "y": 169,
@@ -168,7 +168,7 @@
       "baseline": 13
     },
     {
-      "id": "5735c7fb-3e96-4bcb-951e-dbc50a598b9a",
+      "id": "8ab75433-ab3c-424b-bc45-2a75b8d08141",
       "type": "text",
       "x": 64,
       "y": 225,
@@ -202,7 +202,7 @@
       "baseline": 13
     },
     {
-      "id": "755d9eae-14e0-48e9-b11b-6053b4126516",
+      "id": "e61338b8-540d-4979-9b3d-57f28d8e6a60",
       "type": "text",
       "x": 64,
       "y": 281,
@@ -236,7 +236,7 @@
       "baseline": 13
     },
     {
-      "id": "ce85c7d5-5c73-42ac-9948-6791c2ede1fe",
+      "id": "b004f647-d1dc-4fe1-9613-1e595ed64e2b",
       "type": "text",
       "x": 64,
       "y": 337,
@@ -270,7 +270,7 @@
       "baseline": 13
     },
     {
-      "id": "f8996908-a9aa-487a-8698-71309187a320",
+      "id": "4d6df0cc-944e-4135-af04-dbe848b30434",
       "type": "text",
       "x": 64,
       "y": 393,
@@ -304,7 +304,7 @@
       "baseline": 13
     },
     {
-      "id": "3dd45a9d-f95a-4355-b525-0f6efc86b72d",
+      "id": "e10b3858-5d92-421a-a523-204c431e0e70",
       "type": "text",
       "x": 64,
       "y": 449,
@@ -338,7 +338,7 @@
       "baseline": 13
     },
     {
-      "id": "c902edc1-0da8-4c59-8b03-afacf86a14bc",
+      "id": "8482193e-5ef0-4117-ba1f-7503736a8024",
       "type": "text",
       "x": 64,
       "y": 505,
@@ -372,7 +372,7 @@
       "baseline": 13
     },
     {
-      "id": "4f7b72e8-fe2b-4f55-b5ff-cc164496d615",
+      "id": "c987da13-bb40-4321-9591-a55f1767a483",
       "type": "rectangle",
       "x": 590,
       "y": 265,
@@ -400,7 +400,7 @@
       "locked": false
     },
     {
-      "id": "1a68887d-38c7-43d7-85d2-e8fbcf5e40b9",
+      "id": "9e1a77de-4f7d-4e99-a6db-fcb02409d825",
       "type": "text",
       "x": 604.0,
       "y": 289,
@@ -434,11 +434,11 @@
       "baseline": 16
     },
     {
-      "id": "2e696d62-6fe3-43c6-a170-6a2dd6ac4d26",
+      "id": "c4b68edc-273f-408f-afc4-0bcfdf482060",
       "type": "text",
-      "x": 616.0,
+      "x": 612.5,
       "y": 309,
-      "width": 158,
+      "width": 165,
       "height": 16,
       "angle": 0,
       "strokeColor": "#495057",
@@ -459,20 +459,20 @@
       "locked": false,
       "fontSize": 12,
       "fontFamily": 1,
-      "text": "through all seven axes",
+      "text": "through all seven axes,",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "through all seven axes",
+      "originalText": "through all seven axes,",
       "lineHeight": 1.25,
       "baseline": 12
     },
     {
-      "id": "d571ab5d-8305-4c91-b23e-6598a147110e",
+      "id": "51ffbb15-a52a-4607-a7aa-91518b08b3f7",
       "type": "text",
-      "x": 637.5,
+      "x": 645.0,
       "y": 325,
-      "width": 115,
+      "width": 100,
       "height": 16,
       "angle": 0,
       "strokeColor": "#495057",
@@ -493,16 +493,16 @@
       "locked": false,
       "fontSize": 12,
       "fontFamily": 1,
-      "text": "\u2014 let them point",
+      "text": "let them point",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "\u2014 let them point",
+      "originalText": "let them point",
       "lineHeight": 1.25,
       "baseline": 12
     },
     {
-      "id": "2759dfa7-0c07-42df-953d-29df3fd76191",
+      "id": "d1db923d-9e36-4b4a-8796-a373a989f056",
       "type": "arrow",
       "x": 510,
       "y": 350,
@@ -542,7 +542,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "2e29a7ae-6704-4d31-9ba9-fa5f07eb5f28",
+      "id": "6b231a21-a54e-4b30-bef1-32e4bae4ecdd",
       "type": "rectangle",
       "x": 900,
       "y": 130,
@@ -570,7 +570,7 @@
       "locked": false
     },
     {
-      "id": "0561a81a-dee6-4e6a-8010-790787866b14",
+      "id": "9f8e7763-4399-4c62-b127-9cb9c02ef32a",
       "type": "text",
       "x": 1027.5,
       "y": 154,
@@ -604,7 +604,7 @@
       "baseline": 16
     },
     {
-      "id": "420efaf8-5b31-4899-bfcd-8730cc75edf5",
+      "id": "e5091f0c-6428-4e3b-998e-f12cdff95e3a",
       "type": "text",
       "x": 925.5,
       "y": 174,
@@ -638,7 +638,7 @@
       "baseline": 12
     },
     {
-      "id": "19033bf9-42de-4f2c-8dfa-51088089d4f1",
+      "id": "4c28a7db-fbdb-43d0-bcf5-0912518ed55f",
       "type": "arrow",
       "x": 800,
       "y": 320,
@@ -678,7 +678,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "19caf107-6bdc-493f-8a99-16a1ec2d9cb9",
+      "id": "9e131ffe-3dea-4ae7-a6e7-37d3da5240c7",
       "type": "rectangle",
       "x": 900,
       "y": 222,
@@ -706,7 +706,7 @@
       "locked": false
     },
     {
-      "id": "3ded374f-4526-4383-96b2-1e0fac99c9dc",
+      "id": "32ef8fcf-260e-4978-924e-f6f3cbca1cd1",
       "type": "text",
       "x": 1061.0,
       "y": 246,
@@ -740,7 +740,7 @@
       "baseline": 16
     },
     {
-      "id": "95a4e029-e120-49fc-890b-99f4acb21152",
+      "id": "fa465beb-a12d-4c78-9655-e69b92da661a",
       "type": "text",
       "x": 950.5,
       "y": 266,
@@ -774,7 +774,7 @@
       "baseline": 12
     },
     {
-      "id": "3677f673-b908-409f-a10d-eadf04ea5e68",
+      "id": "41c03cfb-9ad1-434e-967e-52b2a4f5d5e6",
       "type": "arrow",
       "x": 800,
       "y": 320,
@@ -814,7 +814,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "5b1e9f28-592a-4be8-87ba-b2a38eebabf9",
+      "id": "75b1578c-ea69-487d-8d06-a7c1ca0c9275",
       "type": "rectangle",
       "x": 900,
       "y": 314,
@@ -842,7 +842,7 @@
       "locked": false
     },
     {
-      "id": "cf764623-f39f-4f6a-8d32-58fc4d015f2d",
+      "id": "e7153d65-0ccb-4efc-8299-b9e9ff1fc858",
       "type": "text",
       "x": 1046.5,
       "y": 338,
@@ -876,7 +876,7 @@
       "baseline": 16
     },
     {
-      "id": "8a62eb88-7887-450c-998f-f62b9ecbc61b",
+      "id": "9eb66ea6-3b06-435c-989e-dfe13416a7f4",
       "type": "text",
       "x": 954.5,
       "y": 358,
@@ -910,7 +910,7 @@
       "baseline": 12
     },
     {
-      "id": "3b8d401f-9a51-4cca-a498-f31ec228a053",
+      "id": "532a8340-e836-4c85-8648-dc38ea006a63",
       "type": "arrow",
       "x": 800,
       "y": 320,
@@ -950,7 +950,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "644914e9-f03b-4f95-b3e9-1dde4108e579",
+      "id": "dabcfb07-327e-4256-8f88-deae5f42c0fd",
       "type": "rectangle",
       "x": 900,
       "y": 406,
@@ -978,7 +978,7 @@
       "locked": false
     },
     {
-      "id": "d12051ff-3206-4487-81cd-889253e8d556",
+      "id": "fcc902fa-c44e-4da7-a10f-4aba76269c78",
       "type": "text",
       "x": 1032.0,
       "y": 430,
@@ -1012,7 +1012,7 @@
       "baseline": 16
     },
     {
-      "id": "448a868d-ce33-457d-9050-63ae5c463003",
+      "id": "f50b7ddb-ca79-4ad2-9f36-7bbfe0816835",
       "type": "text",
       "x": 961.5,
       "y": 450,
@@ -1046,7 +1046,7 @@
       "baseline": 12
     },
     {
-      "id": "e6b7454b-59a4-4ab6-8aaf-715b827fa393",
+      "id": "b632b748-88f4-487f-a055-8a9d61685f5c",
       "type": "arrow",
       "x": 800,
       "y": 320,
@@ -1086,7 +1086,7 @@
       "endArrowhead": "arrow"
     },
     {
-      "id": "97c52748-66d3-4d44-9455-3fc8cf082d47",
+      "id": "056d41d9-a10e-48bd-9d2a-3c4b29da3ef6",
       "type": "rectangle",
       "x": 900,
       "y": 498,
@@ -1114,7 +1114,7 @@
       "locked": false
     },
     {
-      "id": "ec6d104d-c087-4880-a811-08c6102e199f",
+      "id": "108822db-5451-458b-bb2c-634f1df108fa",
       "type": "text",
       "x": 998.5,
       "y": 522,
@@ -1148,7 +1148,7 @@
       "baseline": 16
     },
     {
-      "id": "6df42d2e-e183-42ad-a29b-f0cb1e50bb0e",
+      "id": "97a15444-7c8f-463c-bd9d-75111cb83603",
       "type": "text",
       "x": 950.5,
       "y": 542,
@@ -1182,7 +1182,7 @@
       "baseline": 12
     },
     {
-      "id": "52fb6930-89d9-438f-9071-2d4e8e599e55",
+      "id": "51265963-5cee-4a36-b5ee-4cfacb281796",
       "type": "arrow",
       "x": 800,
       "y": 320,

@@ -4,7 +4,7 @@
   "source": "dgen.py",
   "elements": [
     {
-      "id": "e4e21442-f72e-42f4-8f67-b04ad824a654",
+      "id": "1ab25429-59d7-4676-82fa-fdc2f57b89a6",
       "type": "text",
       "x": 327.0,
       "y": 14,
@@ -38,7 +38,7 @@
       "baseline": 22
     },
     {
-      "id": "f4c137e4-c155-44dd-9c6f-fe607a0225d3",
+      "id": "f2d9e477-d314-4151-b26f-74f9e14c28ed",
       "type": "text",
       "x": 293.0,
       "y": 50,
@@ -63,16 +63,16 @@
       "locked": false,
       "fontSize": 14,
       "fontFamily": 1,
-      "text": "Many fast checks at the base, fewer slow ones on top \u2014 all against the shared schema.",
+      "text": "Many fast checks at the base, fewer slow ones on top (all against the shared schema).",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Many fast checks at the base, fewer slow ones on top \u2014 all against the shared schema.",
+      "originalText": "Many fast checks at the base, fewer slow ones on top (all against the shared schema).",
       "lineHeight": 1.25,
       "baseline": 14
     },
     {
-      "id": "a881dfa8-ee12-42bf-9450-09d903149af0",
+      "id": "1523b4ad-cb69-4c71-93e1-5af6d8746a54",
       "type": "rectangle",
       "x": 140.0,
       "y": 440,
@@ -100,11 +100,11 @@
       "locked": false
     },
     {
-      "id": "6a1c3064-f75c-4b9d-95f6-31bd12a17079",
+      "id": "cca10e3b-070b-42f3-aee8-eb4c2a701b82",
       "type": "text",
-      "x": 332.0,
+      "x": 337.0,
       "y": 467.0,
-      "width": 336,
+      "width": 326,
       "height": 20,
       "angle": 0,
       "strokeColor": "#343a40",
@@ -125,16 +125,16 @@
       "locked": false,
       "fontSize": 16,
       "fontFamily": 1,
-      "text": "Contract \u2014 lint + schema validation",
+      "text": "Contract: lint + schema validation",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Contract \u2014 lint + schema validation",
+      "originalText": "Contract: lint + schema validation",
       "lineHeight": 1.25,
       "baseline": 16
     },
     {
-      "id": "147fa199-bd90-4f59-a6db-9eb5a727f08b",
+      "id": "26ad2ab2-d65b-4d08-9f18-1ed8ccc9c024",
       "type": "text",
       "x": 890.0,
       "y": 468,
@@ -168,7 +168,7 @@
       "baseline": 12
     },
     {
-      "id": "07d3e0fd-3561-42a9-821d-fadf4bb65dd6",
+      "id": "e7377005-838c-4fd9-9034-94f7b6b880b9",
       "type": "rectangle",
       "x": 220.0,
       "y": 360,
@@ -196,11 +196,11 @@
       "locked": false
     },
     {
-      "id": "b6f26501-755d-492f-8136-bece5518b2eb",
+      "id": "33847551-2571-4b3d-b3a3-99d37b871cfa",
       "type": "text",
-      "x": 332.0,
+      "x": 337.0,
       "y": 387.0,
-      "width": 336,
+      "width": 326,
       "height": 20,
       "angle": 0,
       "strokeColor": "#343a40",
@@ -221,16 +221,16 @@
       "locked": false,
       "fontSize": 16,
       "fontFamily": 1,
-      "text": "Integration \u2014 real Postgres & Kafka",
+      "text": "Integration: real Postgres & Kafka",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Integration \u2014 real Postgres & Kafka",
+      "originalText": "Integration: real Postgres & Kafka",
       "lineHeight": 1.25,
       "baseline": 16
     },
     {
-      "id": "9f28e6a2-7d33-474c-ae83-82420c020817",
+      "id": "08281c7a-c82a-4d1a-b047-affc14b152ec",
       "type": "text",
       "x": 810.0,
       "y": 388,
@@ -264,7 +264,7 @@
       "baseline": 12
     },
     {
-      "id": "79ddc53d-c777-4606-834c-7e9e457bb273",
+      "id": "9efba049-be44-4966-9ccb-62b9ce498f89",
       "type": "rectangle",
       "x": 300.0,
       "y": 280,
@@ -292,11 +292,11 @@
       "locked": false
     },
     {
-      "id": "08e4ae7c-7473-4e39-9e90-294ce8aa2ddd",
+      "id": "aca36831-bd78-4ba0-965e-d8959821db59",
       "type": "text",
-      "x": 327.5,
+      "x": 332.0,
       "y": 307.0,
-      "width": 345,
+      "width": 336,
       "height": 20,
       "angle": 0,
       "strokeColor": "#343a40",
@@ -317,16 +317,16 @@
       "locked": false,
       "fontSize": 16,
       "fontFamily": 1,
-      "text": "API / E2E \u2014 shared Newman collection",
+      "text": "API / E2E: shared Newman collection",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "API / E2E \u2014 shared Newman collection",
+      "originalText": "API / E2E: shared Newman collection",
       "lineHeight": 1.25,
       "baseline": 16
     },
     {
-      "id": "100b6a6f-40cc-450f-9024-2b4a28de674c",
+      "id": "e7caefa3-365b-4685-a9c2-71767b0d45ba",
       "type": "text",
       "x": 730.0,
       "y": 308,
@@ -360,7 +360,7 @@
       "baseline": 12
     },
     {
-      "id": "9d888d5d-c240-48c8-b51c-2f4e71f68c4c",
+      "id": "c0217abd-c253-4c0f-b710-c816c27a4032",
       "type": "rectangle",
       "x": 380.0,
       "y": 200,
@@ -388,11 +388,11 @@
       "locked": false
     },
     {
-      "id": "fef9ae1c-4f55-4e6c-961c-6c75bb10e51a",
+      "id": "cda38cce-78dd-413f-b7bc-3d055c62efeb",
       "type": "text",
-      "x": 332.0,
+      "x": 337.0,
       "y": 227.0,
-      "width": 336,
+      "width": 326,
       "height": 20,
       "angle": 0,
       "strokeColor": "#343a40",
@@ -413,16 +413,16 @@
       "locked": false,
       "fontSize": 16,
       "fontFamily": 1,
-      "text": "Load \u2014 throughput under concurrency",
+      "text": "Load: throughput under concurrency",
       "textAlign": "center",
       "verticalAlign": "top",
       "containerId": null,
-      "originalText": "Load \u2014 throughput under concurrency",
+      "originalText": "Load: throughput under concurrency",
       "lineHeight": 1.25,
       "baseline": 16
     },
     {
-      "id": "db08c48f-4a3a-48c8-a618-983d74a98620",
+      "id": "45c01e02-0055-407b-b826-1e0a1af4cb6c",
       "type": "text",
       "x": 650.0,
       "y": 228,
