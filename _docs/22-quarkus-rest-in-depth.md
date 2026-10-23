@@ -126,6 +126,14 @@ None of these three needs a worked example here: they're why a team already buil
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether Quarkus's build-time model and reactive streaming are worth reaching for over a simpler, more conventional framework. Evolution pressure and deployment footprint drive the build-time half: a service that restarts rarely, runs as one long-lived process on a fixed-size VM, and is never measured on cold-start time gets little practical benefit from eliminating reflective dispatch, since that cost is paid once at boot and amortized over a long uptime: a classic JAX-RS container is a reasonable choice there. The calculus flips once the deployment target is serverless, autoscaled, or a native-image binary: a function scaling from zero, pods scaling with traffic, or anything compiled with GraalVM pays startup cost on every cold instance, which is exactly what Quarkus's build-time metadata erases. Reactive streaming is worth reaching for when a response is large, slow to assemble, or open-ended (a bulk export, a file download, a token stream), because that's where thread-per-request's scaling ceiling and a buffered response's memory footprint bite; for endpoints returning one small, quickly-computed JSON object, `Multi` adds pipeline complexity with no corresponding win, and a synchronous method is the better fit. Skip the reactive model when the real constraint is familiarity with blocking code and load never nears the concurrency where thread-per-request runs out of threads: these strengths show up under specific pressures, not as a blanket argument for Quarkus over every alternative.</p></div>
 
+## Build, run, observe
+
+```bash
+cd examples/22-quarkus-rest-depth && ./verify.sh
+```
+
+`verify.sh` brings up this chapter's single Quarkus service with `docker compose`, checks that `@RestHeader` reflects or defaults the `X-Tenant` header, that `@RestQuery('limit')` drives and clamps the NDJSON export's record count, that every exported record validates against `#/$defs/BookingEvent`, and that a timed read of the export proves incremental delivery rather than a buffered burst. Expect `PASS` once every assertion holds for this Quarkus-only example; the full output from a real run is in `examples/22-quarkus-rest-depth/README.md`.
+
 ## For deeper coverage
 
 - [Quarkus REST guide](https://quarkus.io/guides/rest): the official reference for build-time parameter binding, `@RestHeader`/`@RestQuery`, and reactive return types.

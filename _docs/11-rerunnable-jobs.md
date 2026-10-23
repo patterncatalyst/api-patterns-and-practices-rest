@@ -145,11 +145,6 @@ Notice, too, what `startRun()` is called from: both the scheduler's own tick and
 
 ## Proof
 
-```bash
-cd examples/11-rerunnable-jobs
-./verify.sh
-```
-
 Quarkus comes up on port `8091`, FastAPI on `8011`, both chosen, as with every example in this book, to avoid colliding with another chapter's stack running at the same time. `verify.sh` starts by confirming both the job definition and the run endpoints correctly refuse to do anything before the job has ever been configured (`GET /jobs/manifest-reconcile` and `POST .../runs` both return `404 Problem`) because a job that hasn't been given a schedule yet shouldn't quietly accept run requests for one. It then `PUT`s a schedule of `intervalSeconds=2`, confirming `201` on the first configure and `200` on every subsequent one (the same create-vs-update distinction Chapter 6 established for `PUT`), issues a "run now," polls the resulting run until it reaches `SUCCEEDED`, and lists all runs to confirm that run shows up in the collection. Then it does the part a `202`-and-poll test alone can't prove: it waits past the configured two-second interval with no further client action and confirms the run count went up anyway: proof that the server's own scheduler, not the test script, produced that run. Every run-record body from both stacks is schema-validated against the shared `Operation` type before any assertion trusts it, and the script prints `PASS` only when both stacks agree on every step, including the scheduler firing on its own.
 
 The example's README documents a drift probe worth running once: hardcode `intervalSeconds` to `0` in either stack's job-definition conversion, and `verify.sh` fails immediately on the first `PUT` with a mismatch between what was configured and what came back: proof the schedule round-trips through the server rather than being echoed from the request body unchecked. A second probe (commenting out the line that flips a run to `SUCCEEDED`) makes `verify.sh` time out waiting for a run that never finishes, which is the failure mode a job stuck `RUNNING` forever looks like from the outside.
@@ -157,6 +152,14 @@ The example's README documents a drift probe worth running once: hardcode `inter
 <div class="callout callout--warn"><p class="callout__title">Gotcha</p><p>Disabling a job (<code>enabled: false</code>) stops new scheduled runs from being produced; it does not, and should not, cancel a run that's already <code>RUNNING</code>. The two are independent facts (whether the schedule is currently producing new work, and whether a specific run in flight should be allowed to finish), and conflating them means a client flipping a job off mid-run gets a truncated, inconsistent reconcile pass instead of either a clean completion or an explicit cancel. If a run truly needs to be interruptible, that's a cancel affordance on the run resource itself, the same shape Chapter 10 built for operations, not a side effect of disabling the schedule.</p></div>
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to recurring work. When the interaction shape is a single, bounded request/response (a client wants one thing to happen once, right now, and cares about the outcome of that specific call), model it as a direct synchronous call or, if it's long-running, Chapter 10's <code>202</code>/poll/<code>303</code> operation. Reach for a rerunnable job specifically when the work's correctness depends on it happening on a cadence no single client request initiates (reconciliation, cleanup, periodic sync against an external system) because client diversity and evolution pressure both argue against making any one caller responsible for triggering it. Split the schedule from the execution as two resources with two owners: the client configures <em>when</em> and <em>whether</em>, the server owns <em>that it actually happens</em>, and an on-demand run is an addition to the schedule for an impatient caller, never a substitute for the server owning the clock. Reuse the operation shape for a run record rather than inventing a parallel type: a run is a long-running operation that happens to also be startable by a timer, and a client that already knows how to poll one knows how to poll the other.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/11-rerunnable-jobs && ./verify.sh
+```
+
+`verify.sh` brings up Quarkus and FastAPI with `docker compose`, configures and runs the `manifest-reconcile` job against both stacks, waits past the configured interval to confirm the server's own scheduler produces a run with no client action, and schema-validates every run record against the shared `Operation` type. It prints `PASS` once every assertion holds for both stacks; the full run output is in `examples/11-rerunnable-jobs/README.md`.
 
 ## For deeper coverage
 

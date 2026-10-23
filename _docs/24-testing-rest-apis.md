@@ -95,6 +95,14 @@ That's also exactly why this layer stays this small. Thirty iterations against o
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Build as much of the pyramid as the API's consequences of being wrong justify, not the whole thing reflexively for every service. A contract test is close to free once a shared schema already exists (Chapter 4 already assumed one), so there's rarely a reason to skip it; it's the cheapest layer in this chapter and the one every other layer in this chapter builds on. Integration tests are worth adding the moment business logic exists beyond passing a request straight through to a datastore (a quote formula, a state-transition rule, an error-shaping decision), and belong at build time and in a developer's own loop, not in the CI gate everyone else waits on, the same way `@QuarkusTest` and `pytest` stay out of `verify.sh` here while remaining real and runnable. End-to-end tests belong in CI specifically when more than one deployable artifact needs to agree on one contract (two independently implemented stacks sharing a schema, the way this chapter's Quarkus and FastAPI services do), because that's the condition an in-process integration test structurally cannot check; a single-implementation API can often get by on contract and integration tests alone, reaching for Newman-style E2E only once a second implementation, a second team, or a public-facing client enters the picture. A thin, bounded load layer belongs in CI as a correctness check under light repetition, never as a latency gate: the moment anyone needs an actual answer about sustained throughput, concurrency limits, or degradation under pressure, that's the signal to stand up a dedicated load tool on its own infrastructure and its own schedule, not to keep stretching a thirty-iteration Newman run past the question it was built to answer.</p></div>
 
+## Build, run, observe
+
+```bash
+cd examples/24-testing && ./verify.sh
+```
+
+`verify.sh` brings up both the Quarkus and FastAPI stacks with `docker compose`, validates live create, read, and 404 responses against the shared schema, runs the Newman collection's functional folder against both stacks, and drives a bounded thirty-iteration load run against the Quarkus stack, asserting schema conformance on every iteration. Expect `PASS` once every assertion holds; the full run output is in `examples/24-testing/README.md`.
+
 ## For deeper coverage
 
 - Cloud Native Design Patterns, "Appendix O: Newman": the Newman end-to-end harness this chapter's Postman collection is vendored and adapted from.

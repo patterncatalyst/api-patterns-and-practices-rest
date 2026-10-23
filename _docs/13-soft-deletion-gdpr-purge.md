@@ -130,16 +130,19 @@ That symmetry with soft delete's idempotency carries over to purge as well, and 
 
 ## Proof
 
-```bash
-cd examples/13-soft-delete-purge
-./verify.sh
-```
-
 The script brings up Quarkus on port `8093` and FastAPI on port `8013`, then drives one booking through the full sequence against each stack independently: create, soft-delete, confirm it's hidden from the default collection and 404s on the default single-item read, confirm the audit view still returns it with both `X-Audit-*` headers present and correct, purge it, confirm the audit view now 404s too, and purge it again to confirm the second call also 404s rather than silently succeeding. Every `Booking` and `Problem` body along the way is schema-validated against `contracts/schemas/shipping.schema.json`, the same shared contract every other chapter's example validates against: soft delete and purge don't get a looser contract just because they're deleting things.
 
 The two drift probes documented in the example's README are worth running once by hand, because each one demonstrates a failure mode that's easy to introduce by accident and easy to miss in review. Removing the `status != CANCELLED` filter from `listVisible`/`list_visible` leaves a cancelled booking schema-valid but visible in a collection it has no business appearing in: `verify.sh` catches it with `soft-deleted booking ... is still visible in the default GET /bookings list`, a check that plain schema validation would never fail, because the leaked booking is a perfectly good `Booking`. Leaving the audit map untouched during purge is the subtler one covered above, invisible to the client-facing assertions `verify.sh` runs, and a reminder that a test suite guarding a purge feature in production needs to assert against the store directly, not only through the API a well-behaved client would use. Both probes point at the same underlying lesson: a schema-valid response and a correctly behaving delete feature are two different claims, and only the second one is what this chapter is actually about.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the choice between soft-delete, hard-delete, and purge. Reach for soft delete when the evolution axis matters more than storage cost: when referential integrity, an audit trail, or plain recoverability from an accidental or disputed cancellation outweighs the overhead of a hidden row that lives on indefinitely; that's the default for anything resembling a financial or logistics record, bookings included. Reach for a true hard delete only when a resource has no downstream audience for its history at all: no audit requirement, nothing else references it, and undoing an accidental delete is not a scenario worth building for. Reach for purge specifically when an external constraint (GDPR's right to erasure, a contractual data-retention limit, a support request a compliance team has signed off on) overrides retention outright; model it as its own privileged, clearly named operation rather than a flag on the ordinary delete path, so the two policies, keep it for later, and erase it completely, never get to compete for the same endpoint's behavior. Operational constraints and client diversity both favor the same split: a purge is rare, consequential, and typically gated behind a different authorization check than an ordinary cancellation, which is one more reason it belongs on its own path rather than hidden behind a query parameter a careless client could set by accident.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/13-soft-delete-purge && ./verify.sh
+```
+
+`verify.sh` brings up Quarkus and FastAPI with `docker compose`, drives a booking through create, soft-delete, audit-view read, and purge against both stacks, and checks that purging an already-purged booking returns `404` instead of a second `204`. It prints `PASS` once every assertion holds for both stacks; the full run output is in `examples/13-soft-delete-purge/README.md`.
 
 ## For deeper coverage
 

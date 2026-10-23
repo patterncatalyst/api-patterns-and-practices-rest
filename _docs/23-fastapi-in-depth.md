@@ -130,6 +130,14 @@ None of this is specific to this example's two toy endpoints; it's the rule Fast
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to choosing async def versus plain def per endpoint, rather than picking one style for an entire service. The deciding question is almost always "what does this handler block on": if every I/O call inside it has a real async driver (asyncpg over psycopg2, httpx over requests, an async Kafka client), async def is close to free and keeps the handler cooperating with the event loop the way StreamingResponse and BackgroundTasks both depend on. The moment a handler's only dependency is a blocking library with no async equivalent (a synchronous ORM, a legacy SDK, a CPU-bound computation measured in tens of milliseconds or more), plain def is the better fit, because declaring async def around a blocking call doesn't make the call non-blocking, it just hides a stalled event loop behind a signature that looks safe. Reach past FastAPI's own model once the blocking work is CPU-bound and large enough that a threadpool's cooperative concurrency isn't the fix: true parallel computation needs multiple processes or a C extension that drops the GIL explicitly, not a borrowed thread. Skip worrying about the split for a low-traffic internal service where no slow handler ever competes with enough concurrent requests for a stall to be noticeable: the distinction matters in proportion to how many requests share that one event loop when a handler blocks it.</p></div>
 
+## Build, run, observe
+
+```bash
+cd examples/23-fastapi-depth && ./verify.sh
+```
+
+`verify.sh` brings the FastAPI stack up with `docker compose`, then times the SSE endpoint's frames as they arrive to confirm they stream incrementally, checks that `BackgroundTasks` returns 202 promptly while the notification stays unobservable until a bounded poll picks it up, and confirms the async and sync handlers run on different execution contexts. Expect `PASS` once every assertion holds; the full run output is in `examples/23-fastapi-depth/README.md`.
+
 ## For deeper coverage
 
 - [FastAPI docs: Concurrency and async / await](https://fastapi.tiangolo.com/async/): the official explanation of when `async def` helps and when plain `def` is the right call.

@@ -133,16 +133,19 @@ FastAPI's side mirrors this directly. An endpoint that calls `psycopg2` (a synch
 
 ## Proof
 
-```bash
-cd examples/18-concurrency
-./verify.sh
-```
-
 Quarkus comes up on port 8097, FastAPI on port 8017. The script brings both services up with `docker compose`, waits for health, then fires 20 concurrent requests at each stack's `/io/slow?ms=200` and asserts every response is `200` and the whole batch completes in under 2 seconds: far below the 4-second floor the same 20 requests would need if handled strictly one at a time. It prints `PASS` only once both assertions hold for both stacks. The README documents a drift probe that caps each stack's blocking pool to a single worker by design and points the same assertion at `/io/slow-blocking` instead, watching `verify.sh` fail by wall-clock time with every individual response still a correct `200`: the regression this chapter exists to make visible.
 
 {% include excalidraw.html file="18-concurrency-model" alt="Quarkus blocking worker pool exhausting under many concurrent slow calls next to Quarkus reactive Uni and virtual threads serving the same load on a small fixed pool, alongside Python's async event loop interleaving many coroutines on one thread versus a bounded threadpool queuing once its workers are all asleep, all labeled to show the same requests-waiting-on-I/O workload served without thread exhaustion versus with it." caption="Figure 18.1: Blocking pools versus non-blocking/virtual threads and the async event loop." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to decide whether a reactive, virtual-thread, or async model shift pays off. Reach for it when the <strong>interaction shape</strong> is many concurrent clients each waiting on a slow downstream dependency (a database, a third-party API, another service) where the slow part is I/O, not computation: that's exactly the shape a thread-per-request pool handles worst and an event loop or virtual threads handle best. Weigh it against <strong>team familiarity</strong> and the codebase's current shape: a service already written as straightforward blocking code gets the biggest win from virtual threads (near-zero rewrite, same mental model) or from an async-native driver swap on the Python side, while a greenfield service where the non-blocking contract should be visible in the type signature is the case for Mutiny's `Uni`/`Multi` or FastAPI's `async def`. Skip the model shift entirely for purely CPU-bound work (hashing, encoding, heavy computation) where no amount of non-blocking I/O helps and the real fix is multiprocessing, native code, or more cores, not a different concurrency primitive. And don't reach for it where the load never approaches the pool ceiling in the first place: a low-traffic internal tool with five callers and a worker pool of fifty has no exhaustion problem to solve, and the extra complexity of reactive types or async-only libraries buys nothing a straightforward blocking implementation wasn't already providing.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/18-concurrency && ./verify.sh
+```
+
+`verify.sh` brings both services up with `docker compose`, fires 20 concurrent requests at each stack's non-blocking `/io/slow?ms=200` endpoint, and asserts every response is `200` and the whole batch completes well under the 4-second serial floor. Expect `PASS` once both stacks clear that bound; the full output from a real run is in `examples/18-concurrency/README.md`.
 
 ## For deeper coverage
 

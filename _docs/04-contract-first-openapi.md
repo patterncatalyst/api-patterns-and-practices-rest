@@ -173,16 +173,19 @@ The example's README documents a drift probe worth running once to see the gate'
 
 ## Running it
 
-```bash
-cd examples/04-contract-first
-./verify.sh
-```
-
 The script prints `PASS` only after every assertion holds for both stacks, then tears the containers down. Run it once clean, then try the drift probe from the README and watch it fail: that round trip, breaking the contract and watching the gate catch it, is worth more than reading about it.
 
 {% include excalidraw.html file="04-contract-first-flow" alt="The shared OpenAPI and JSON Schema contract scaffolds both the Quarkus and the FastAPI stack, each stack serves live HTTP responses, CI's verify.sh schema-validates every live response body against the same contract, and the pipeline either merges on a match or fails the build on drift." caption="Figure 4.1: Contract-first: one schema, two stacks, CI as the drift gate." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to contract-first versus code-first: the payoff scales with client diversity and evolution pressure. A single internal consumer reading one team's source barely needs a contract independent of the code; every chapter from here on assumes the opposite: multiple stacks, clients that can't read either server's source, and a shape that has to keep working as fields and endpoints are added for years. Where those conditions hold, write the contract before the first handler, and treat a response that merely returns the right status code as unverified until a schema check (not a code review) confirms its body matches what was written down.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/04-contract-first && ./verify.sh
+```
+
+`verify.sh` brings both stacks up with `docker compose`, then drives create, read, list, add-cargo, replace, merge-patch, and delete calls against each one, schema-validating every response body against the shared contract. It prints `PASS` only once every assertion holds on both stacks; see `examples/04-contract-first/README.md` for the full run output.
 
 ## For deeper coverage
 

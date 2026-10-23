@@ -201,12 +201,7 @@ Both handlers check existence before state (a missing booking is always `404`, e
 
 ## Proof, not assertion
 
-This chapter's example runs on ports `8086` (Quarkus) and `8006` (FastAPI) rather than the `8080`/`8000` every other chapter uses, so it can sit alongside the Chapter 4 and Chapter 5 stacks without a port collision:
-
-```bash
-cd examples/06-content-negotiation
-./verify.sh
-```
+This chapter's example runs on ports `8086` (Quarkus) and `8006` (FastAPI) rather than the `8080`/`8000` every other chapter uses, so it can sit alongside the Chapter 4 and Chapter 5 stacks without a port collision.
 
 `verify.sh` brings both services up with `docker compose`, waits for health, then drives the full negotiation and status-code table against both: a `201` with `Location` and a schema-valid `Booking` body on create; `415` against a `text/plain` body on the same endpoint; `406` against `Accept: application/xml` on a read; a `confirm` → `200`, then the identical `confirm` call again → `409`, checking both the status and that the `Problem` body's `detail` names the blocking state; and a `DELETE` → `404`-on-retry sequence carried over from Chapter 5. It schema-validates every response against `contracts/schemas/shipping.schema.json` and prints `PASS` only when every assertion holds on **both** stacks: a `200` where a `406` belongs fails the run immediately, with the exact expected-versus-actual status printed, the same way a contract-drift probe failed loud in Chapter 4.
 
@@ -215,6 +210,14 @@ The README's drift probe makes the point concrete: disable `_check_accept()` in 
 {% include excalidraw.html file="06-content-negotiation" alt="A request's Accept and Content-Type headers are checked against what the matched endpoint can produce and consume, branching to a 200/201/204 success response when both are satisfied or to a 406/415 Problem response when either is not, alongside a separate status-code map showing 400 for a malformed request, 404 for a missing resource, and 409 for a well-formed request against a resource in the wrong state." caption="Figure 6.1: Negotiation outcomes and the status-code map." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to representation and status-code choices. When a resource can truly be served in more than one shape, declare every shape explicitly in <code>Accept</code>/<code>Content-Type</code> handling rather than defaulting to a wildcard that silently accepts anything: a narrow declaration is what makes <code>406</code> and <code>415</code> meaningful signals instead of dead code nobody can trigger. When a write succeeds and creates a new resource, return <code>201</code> with <code>Location</code>, never a bare <code>200</code>: a client that has to re-derive the new resource's URI from convention is a client the contract failed to serve. When an operation fails because of the resource's current state rather than a bad request or a missing target, reach for <code>409</code> specifically, and put the current and required states in the <code>Problem</code> body's <code>detail</code>: a conflict a caller can't diagnose from the response alone is barely better than a bare <code>500</code>. And treat a framework's automatic negotiation (Quarkus's <code>@Produces</code>/<code>@Consumes</code>) and a hand-rolled equivalent (FastAPI's explicit guards) as carrying the same obligation despite the cost difference: the status code a client receives has to be identical either way, and only a behavioral <code>verify.sh</code> (not a glance at the annotations) proves that it is.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/06-content-negotiation && ./verify.sh
+```
+
+`verify.sh` brings both stacks up, then checks `Accept`/`Content-Type` negotiation (`406` and `415`), the `200`/`201`/`204`/`400`/`404`/`409` status-code set across the booking operations, and that every error body is `application/problem+json`. It prints `PASS` once every assertion holds on both stacks; see `examples/06-content-negotiation/README.md` for the full run output.
 
 ## For deeper coverage
 

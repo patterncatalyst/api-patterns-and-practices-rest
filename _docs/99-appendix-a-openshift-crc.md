@@ -123,6 +123,14 @@ This is the kind of thing an in-cluster build tier is supposed to surface, and s
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Reach for OpenShift Local once the actual target is OpenShift, not Kubernetes in general: the moment a reader needs to validate how a manifest behaves against a Route instead of an Ingress, how a Security Context Constraint admits or rejects a pod before it ever reaches a kubelet, or how an in-cluster BuildConfig builds and pushes an image with no external registry and no host engine in the loop. None of those three things can be faithfully exercised on minikube, no matter how many addons are enabled: an Ingress controller is not a Route, a permissive default pod security profile is not an SCC, and `minikube image build` proves a host-engine build works, not an in-cluster one. What CRC costs in return is real: a heavier VM than minikube needs (`cpus=6`/`memory=20480` minimum for this appendix's two small services, far more for anything with a database or a message broker alongside them), a slower first boot, and, as this appendix's own Quarkus build shows, a build environment with its own storage and kernel quirks that a developer's local Docker Engine doesn't have and can't be assumed away. For a feature under active development, or a CI job that just needs both services reachable for a contract check, minikube or Compose stay the right default: nothing about routing, security admission, or image provenance was in question there. Reach for CRC once the open question is specifically "does this run, admit, and build the way OpenShift runs, admits, and builds things", and treat a result like this appendix's, one service fully proven and the other's failure fully root-caused rather than hidden, as what that question is actually supposed to produce.</p></div>
 
+## Build, run, observe
+
+```bash
+cd examples/99-appendix-a-openshift-crc && ./run-crc.sh
+```
+
+`run-crc.sh` starts OpenShift Local, builds the Quarkus and FastAPI booking images in-cluster from Chapter 25's sources through the chart's BuildConfig and ImageStream pair, rolls out both deployments, and prints each service's edge-TLS Route URL along with a sample booking request. The full command output is in `examples/99-appendix-a-openshift-crc/README.md`.
+
 ## For deeper coverage
 
 - Cloud Native Design Patterns, "Appendix S: OpenShift Local": the same CRC bring-up conventions (`crc start`, Routes, SCCs) this chapter's `run-crc.sh` follows.

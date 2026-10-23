@@ -188,6 +188,14 @@ What this chapter doesn't do: deploy a collector, Tempo, Loki, or Mimir, or re-p
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Move from Compose to Kubernetes the moment a deployment needs a capability Compose structurally cannot provide: host/path-based routing in front of more than one service, a rolling update that never drops available replicas, independent readiness and liveness semantics instead of one healthcheck verdict, a config/secret split with its own access controls, or a scaling decision made by the platform instead of a human running a command. None of those needs are hypothetical dressing in this example: Chapter 25's booking services didn't change to get them, only the manifests wrapping them did. What a cluster buys costs something in return: a `kustomize` base and overlay to maintain instead of one `compose.yaml`, a cluster to provision and tear down (`minikube delete -p ch26-booking`, not run automatically here) instead of `docker compose down`, and more moving parts between a client and a response: an Ingress controller, a Service's label selector, a kubelet polling three separate probes instead of one. For a single-host dev loop or a small CI job that just needs both services reachable for a contract check, Compose remains the right default: Chapter 25 didn't need an Ingress or an HPA to prove its trace-id assertion, and reaching for one anyway would add a cluster to provision for no capability the claim depended on. Reach for Kubernetes once the question stops being "can I reach both containers" and becomes "can this system route, heal, configure, and scale itself unwatched," and reach for the Appendix A tier once it becomes "can this system do all of that under a platform's own security and operator model, not a developer's own best-effort manifests."</p></div>
 
+## Build, run, observe
+
+```bash
+cd examples/26-minikube && ./run-minikube.sh
+```
+
+`run-minikube.sh` starts a minikube cluster, builds the Quarkus and FastAPI booking images from Chapter 25's sources straight into the cluster's image store, applies the kustomized manifests, and waits for both deployments to roll out before printing the Ingress host and sample booking requests. The full command output, including pod status and the HPA, is in `examples/26-minikube/README.md`.
+
 ## For deeper coverage
 
 - Cloud Native Design Patterns, "Appendix R: minikube": the same minikube bring-up conventions (`addons enable`, `image build`) this chapter's `run-minikube.sh` follows.

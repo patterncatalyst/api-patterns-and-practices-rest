@@ -189,14 +189,17 @@ None of this guarantees incremental delivery survives the trip across production
 
 ## Proof
 
-```bash
-cd examples/16-streaming
-./verify.sh
-```
-
 Quarkus comes up on port 8096, FastAPI on port 8016. The script creates a booking on each stack to mint an id, then drives all three endpoints: SSE (status, `Content-Type`, exactly five schema-valid frames, and the frame-to-frame timing spread), SSE against an unknown booking id (404 with a `Problem` body), the NDJSON export (status, `Content-Type`, exactly ten lines, each independently schema-valid against `BookingEvent`), and the dedicated chunked endpoint (status, `Transfer-Encoding: chunked` present, `Content-Length` absent, and at least the expected line count). It prints `PASS` only once every assertion holds for both stacks, including the timing floor, which is the one check in this chapter that distinguishes a response that merely claims to stream from one that actually does.
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to which streaming mode fits a given need. Reach for <strong>SSE</strong> when the interaction axis is strictly one-directional, server-to-client, and lives over a connection a browser or long-running client is willing to hold open (a tracking dashboard, a notification feed, a progress indicator for work already covered by Chapter 10's async pattern but wanted live rather than polled). Reach for <strong>NDJSON</strong> when the shape is a bulk or batch sequence of independent records a consumer wants to start processing before the last one exists (exports, log tails, large result sets a client pipes into its own processing loop one line at a time), where there is no "live" element at all, just a wish to avoid materializing one huge array on either end. Reach for plain <strong>chunked transfer</strong> directly (no SSE or NDJSON framing on top) when the payload is a single large body whose size truly isn't known until generation finishes (a generated report, a computed file) and no record-level structure is needed. Skip all three for a client that needs to send data back over the same channel while the stream is open, or that needs multiplexed concurrent streams on one connection: that's a different interaction shape, and Chapter 17 is where WebSockets, webhooks, and gRPC streaming earn their place against this chapter's HTTP-native options.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/16-streaming && ./verify.sh
+```
+
+`verify.sh` brings both services up with `docker compose`, creates a booking on each stack, then checks the SSE, NDJSON export, and chunked-transfer endpoints, including a frame-to-frame timing assertion that proves the SSE stream arrives incrementally rather than in one buffered burst. Expect `PASS` once every assertion holds for both stacks; the full output from a real run is in `examples/16-streaming/README.md`.
 
 ## For deeper coverage
 

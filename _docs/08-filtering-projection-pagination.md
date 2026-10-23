@@ -127,12 +127,7 @@ A limit below 1 is clamped up to 1 for the same reason: the server, not the clie
 
 ## Proof, not assertion
 
-This chapter's example runs on ports `8088` (Quarkus) and `8008` (FastAPI), not the usual `8080`/`8000` pair, so it can run alongside ch04, ch06, and ch07 without a port collision:
-
-```bash
-cd examples/08-pagination
-./verify.sh
-```
+This chapter's example runs on ports `8088` (Quarkus) and `8008` (FastAPI), not the usual `8080`/`8000` pair, so it can run alongside ch04, ch06, and ch07 without a port collision.
 
 `verify.sh` brings both services up, seeds seven bookings, and establishes a baseline: a default `GET /bookings` (limit 20, comfortably above the seeded count) returns all seven in a single page with `page.nextCursor` null, sorted ascending by id: the ground truth every other assertion checks against, rather than assuming seed order matches id order (ULIDs minted within the same millisecond aren't guaranteed to sort in creation order; only the server's own sorted view is authoritative). From there it walks the full keyset cursor chain at `limit=3`, collecting every id returned across all pages and asserting that ordered list is identical, item for item, to the baseline, proving no duplicates and no gaps across the walk, not just that each page call succeeded. It separately verifies offset pagination returns the expected slice at `offset=3`, seek pagination returns the expected slice after a known id, field projection returns exactly `{id, status}` per item with `origin` and `cargo` absent, and the limit cap holds: `?limit=1000` comes back with `page.limit` at or below 100. Every non-projected response is schema-validated against `contracts/schemas/shipping.schema.json`; the projected response is checked by hand, for the reason covered above. The run prints `PASS` only when every assertion holds on both stacks.
 
@@ -141,6 +136,14 @@ The example's README documents a drift probe worth running once: loosen the keys
 {% include excalidraw.html file="08-pagination-strategies" alt="Three pagination strategies compared side by side against the same GET /bookings endpoint: offset/limit using a row count that drifts when a concurrent insert shifts the window, keyset/cursor using an opaque token over the monotonic booking-id sort key that stays stable under concurrent inserts, and seek using an explicit after_id with the same stability property, with a limit clamp shown capping all three to a maximum page size as a denial-of-service guard regardless of what the client requests." caption="Figure 8.1: Three pagination strategies, and why keyset is the stable default." %}
 
 <div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to the pagination choice. When the backing collection is effectively static relative to how fast clients page through it, and "jump to page 7" is a real requirement, <strong>offset/limit</strong> is the lower-cost correct answer: every client already expects it, and the drift failure mode never triggers because nothing is being inserted while clients page. The moment the collection is written to concurrently with clients paging through it (the common case for anything backed by live traffic), reach for <strong>keyset/cursor</strong> as the default: it costs an opaque token instead of an integer, and buys a walk provably free of duplicates and gaps regardless of what else is being written. Reach for <strong>seek</strong> when a caller already holds a concrete id for another reason and wants "more after this one" without the cursor-token machinery. Whichever strategy you pick, treat <code>limit</code> as untrusted input with a server-owned ceiling, not a client-owned preference: clamp it to a documented maximum on every request, expose the effective value in <code>page.limit</code>, and never let a caller turn a collection endpoint into unbounded server work just by asking for it.</p></div>
+
+## Build, run, observe
+
+```bash
+cd examples/08-pagination && ./verify.sh
+```
+
+`verify.sh` brings both stacks up, seeds seven bookings, and checks offset, keyset-cursor, and seek pagination, sparse-fieldset projection, and the `limit` cap against each stack. It prints `PASS` once every assertion holds on both stacks; see `examples/08-pagination/README.md` for the full run output.
 
 ## For deeper coverage
 
