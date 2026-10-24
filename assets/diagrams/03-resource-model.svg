@@ -33,6 +33,6 @@
 <text x="691.0" y="169.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">exposed as</text>
 <text x="691.0" y="169.0" font-size="11" fill="#555" text-anchor="middle">exposed as</text>
 <path d="M580,265 L620,265" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
-<text x="450" y="420" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="700">Resources are nouns, not verbs —</text>
+<text x="450" y="420" font-size="12" fill="#1a1a1a" text-anchor="middle" font-weight="700">Resources are nouns, not verbs</text>
 <text x="450" y="438" font-size="11" fill="#b8650a" text-anchor="middle">and must not mirror the database tables underneath them.</text>
 </svg>

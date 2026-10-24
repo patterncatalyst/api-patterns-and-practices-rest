@@ -3,7 +3,7 @@
 <rect x="20" y="25" width="900" height="100" rx="12" fill="#fff8ef" stroke="#ddd"/>
 <text x="32" y="45" font-size="12" font-weight="700" fill="#1d1d1d">source of truth (committed to the repo)</text>
 <rect x="20" y="150" width="900" height="140" rx="12" fill="#fafafa" stroke="#ddd"/>
-<text x="32" y="170" font-size="12" font-weight="700" fill="#1d1d1d">runtime generation — each stack derives its own OpenAPI document from code</text>
+<text x="32" y="170" font-size="12" font-weight="700" fill="#1d1d1d">runtime generation: each stack derives its own OpenAPI document from code</text>
 <rect x="20" y="315" width="900" height="140" rx="12" fill="#fafafa" stroke="#ddd"/>
 <text x="32" y="335" font-size="12" font-weight="700" fill="#1d1d1d">CI drift check</text>
 <rect x="20" y="480" width="900" height="120" rx="12" fill="#fff8ef" stroke="#ddd"/>
@@ -31,10 +31,10 @@
 <text x="470.0" y="340.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">diff against contracts/openapi.yaml</text>
 <rect x="160" y="515" width="280" height="60" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
 <text x="300.0" y="543.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">specs agree</text>
-<text x="300.0" y="560.0" font-size="11.5" fill="#555555" text-anchor="middle">CI: GREEN — merge allowed</text>
+<text x="300.0" y="560.0" font-size="11.5" fill="#555555" text-anchor="middle">CI: GREEN, merge allowed</text>
 <rect x="500" y="515" width="280" height="60" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
 <text x="640.0" y="543.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">specs diverge</text>
-<text x="640.0" y="560.0" font-size="11.5" fill="#555555" text-anchor="middle">CI: RED — build fails</text>
+<text x="640.0" y="560.0" font-size="11.5" fill="#555555" text-anchor="middle">CI: RED, build fails</text>
 <path d="M220,85 L390,85" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
 <path d="M500,110 L250,185" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
 <path d="M500,110 L690,185" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>

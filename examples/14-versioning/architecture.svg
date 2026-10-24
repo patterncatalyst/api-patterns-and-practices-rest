@@ -15,7 +15,7 @@
 <rect x="530" y="100" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
 <text x="630.0" y="150.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">version segment in the path</text>
 <rect x="740" y="100" width="200" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
-<text x="840.0" y="150.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">cache key includes the path — works with standard HTTP caches as-is</text>
+<text x="840.0" y="150.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">cache key includes the path: works with standard HTTP caches as-is</text>
 <rect x="30" y="198" width="150" height="90" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
 <text x="105.0" y="248.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Query parameter</text>
 <rect x="190" y="198" width="330" height="90" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
@@ -57,5 +57,5 @@
 <path d="M470,587 L500,587" fill="none" stroke="#b8650a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#am)"/>
 <text x="491.0" y="581.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">breaking shape change</text>
 <text x="491.0" y="581.0" font-size="11" fill="#b8650a" text-anchor="middle">breaking shape change</text>
-<text x="485" y="702" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">Query-param and header/media-type strategies need Vary or an intermediate cache serves the wrong version to the next client — URI versioning avoids this because the version is already part of the cache key.</text>
+<text x="485" y="702" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">Query-param and header/media-type strategies need Vary or an intermediate cache serves the wrong version to the next client; URI versioning avoids this because the version is already part of the cache key.</text>
 </svg>

@@ -46,6 +46,6 @@
 <path d="M390,380 L610,340" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
 <text x="506.0" y="354.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">deploys</text>
 <text x="506.0" y="354.0" font-size="11" fill="#b8650a" text-anchor="middle">deploys</text>
-<text x="470.0" y="520" font-size="12" fill="#1d1d1d" text-anchor="middle">Route vs. Ingress: a Route is OpenShift&#x27;s own resource (host + TLS edge/passthrough/reencrypt on the Router); vanilla Kubernetes uses an Ingress against an Ingress controller instead — the two aren&#x27;t interchangeable.</text>
-<text x="470.0" y="560" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">The cluster builds its own image from source via S2I and deploys it — no external registry or CI push required to run on CRC.</text>
+<text x="470.0" y="520" font-size="12" fill="#1d1d1d" text-anchor="middle">Route vs. Ingress: a Route is OpenShift&#x27;s own resource (host + TLS edge/passthrough/reencrypt on the Router); vanilla Kubernetes uses an Ingress against an Ingress controller instead; the two aren&#x27;t interchangeable.</text>
+<text x="470.0" y="560" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">The cluster builds its own image from source via S2I and deploys it, with no external registry or CI push required to run on CRC.</text>
 </svg>

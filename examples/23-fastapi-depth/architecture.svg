@@ -3,7 +3,7 @@
 <rect x="20" y="25" width="900" height="110" rx="12" fill="#fafafa" stroke="#ddd"/>
 <text x="32" y="45" font-size="12" font-weight="700" fill="#1d1d1d">ASGI server</text>
 <rect x="20" y="160" width="900" height="180" rx="12" fill="#fff8ef" stroke="#ddd"/>
-<text x="32" y="180" font-size="12" font-weight="700" fill="#1d1d1d">the key decision — where does the handler run?</text>
+<text x="32" y="180" font-size="12" font-weight="700" fill="#1d1d1d">the key decision: where does the handler run?</text>
 <rect x="20" y="365" width="900" height="150" rx="12" fill="#fafafa" stroke="#ddd"/>
 <text x="32" y="385" font-size="12" font-weight="700" fill="#1d1d1d">response handling</text>
 <rect x="40" y="60" width="150" height="50" rx="9" fill="#eef4fb" stroke="#2f6db5" stroke-width="2"/>

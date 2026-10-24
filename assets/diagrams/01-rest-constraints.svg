@@ -35,5 +35,5 @@
 <text x="667.5" y="175.0" font-size="11" fill="#b8650a" text-anchor="middle">REST constraints (Fielding)</text>
 <text x="480" y="95" font-size="13" fill="#555555" text-anchor="middle" font-weight="700">vs</text>
 <text x="635" y="375" font-size="11" fill="#555555" text-anchor="middle">Most REST APIs are built on client-server + stateless,</text>
-<text x="635" y="390" font-size="11" fill="#b8650a" text-anchor="middle">but violate the uniform interface — the constraint that matters most.</text>
+<text x="635" y="390" font-size="11" fill="#b8650a" text-anchor="middle">but violate the uniform interface, the constraint that matters most.</text>
 </svg>

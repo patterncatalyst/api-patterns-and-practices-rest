@@ -3,13 +3,13 @@
 <rect x="20" y="25" width="900" height="90" rx="12" fill="#fff8ef" stroke="#ddd"/>
 <text x="32" y="45" font-size="12" font-weight="700" fill="#1d1d1d">single source of truth</text>
 <rect x="20" y="140" width="430" height="190" rx="12" fill="#fafafa" stroke="#ddd"/>
-<text x="32" y="160" font-size="12" font-weight="700" fill="#1d1d1d">sync REST path — $ref&#x27;d by OpenAPI</text>
+<text x="32" y="160" font-size="12" font-weight="700" fill="#1d1d1d">sync REST path: $ref&#x27;d by OpenAPI</text>
 <rect x="490" y="140" width="430" height="190" rx="12" fill="#fafafa" stroke="#ddd"/>
-<text x="502" y="160" font-size="12" font-weight="700" fill="#1d1d1d">event path — $ref&#x27;d by AsyncAPI</text>
+<text x="502" y="160" font-size="12" font-weight="700" fill="#1d1d1d">event path: $ref&#x27;d by AsyncAPI</text>
 <rect x="20" y="355" width="900" height="110" rx="12" fill="#fafafa" stroke="#ddd"/>
-<text x="32" y="375" font-size="12" font-weight="700" fill="#1d1d1d">Arazzo workflow — spans multiple services as one business process</text>
+<text x="32" y="375" font-size="12" font-weight="700" fill="#1d1d1d">Arazzo workflow: spans multiple services as one business process</text>
 <rect x="20" y="490" width="900" height="160" rx="12" fill="#fff3e0" stroke="#ddd"/>
-<text x="32" y="510" font-size="12" font-weight="700" fill="#1d1d1d">governance tier — local-only, tier-gated OUT of CI</text>
+<text x="32" y="510" font-size="12" font-weight="700" fill="#1d1d1d">governance tier: local-only, gated out of CI</text>
 <rect x="340" y="55" width="260" height="50" rx="9" fill="#fff3e0" stroke="#e8870c" stroke-width="2"/>
 <text x="470.0" y="78.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">contracts/schemas/*.json</text>
 <text x="470.0" y="95.0" font-size="11.5" fill="#555555" text-anchor="middle">shared JSON Schema $defs</text>
@@ -55,5 +55,5 @@
 <path d="M590,420 L640,420" fill="none" stroke="#b8650a" stroke-width="2" marker-end="url(#am)"/>
 <path d="M325,465 L260,535" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
 <path d="M815,465 L680,535" fill="none" stroke="#555" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#a)"/>
-<text x="470.0" y="748" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">The schema is the single source of truth for both the sync (OpenAPI) and async (AsyncAPI) contracts. The governance tier runs locally only; it is deliberately excluded from the CI gate.</text>
+<text x="470.0" y="748" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">The schema is the single source of truth for both the sync (OpenAPI) and async (AsyncAPI) contracts. The governance tier runs locally only; it is excluded from the CI gate.</text>
 </svg>
