@@ -30,7 +30,7 @@
 <rect x="210" y="256" width="200" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
 <text x="310.0" y="296.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">server-push (inverted)</text>
 <rect x="420" y="256" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
-<text x="550.0" y="296.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">no open connection — provider POSTs to a client-registered URL</text>
+<text x="550.0" y="296.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">no open connection: provider POSTs to a client-registered URL</text>
 <rect x="690" y="256" width="260" height="70" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
 <text x="820.0" y="296.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">async event notification when the receiver can&#x27;t poll or stay connected</text>
 <rect x="30" y="334" width="170" height="70" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>

@@ -74,8 +74,8 @@
 <path d="M795,460.0 L810,460.0" fill="none" stroke="#555" stroke-width="2" marker-end="url(#a)"/>
 <text x="808.5" y="454.0" font-size="11" fill="#ffffff" stroke="#ffffff" stroke-width="3" paint-order="stroke" text-anchor="middle">time →</text>
 <text x="808.5" y="454.0" font-size="11" fill="#555" text-anchor="middle">time →</text>
-<text x="32" y="175" font-size="11" fill="#555555" text-anchor="start">best fit: progressive download — client renders/saves bytes as they land, total size unknown up front</text>
-<text x="32" y="350" font-size="11" fill="#555555" text-anchor="start">best fit: live updates pushed to a browser — one-way, auto-reconnects via Last-Event-ID</text>
-<text x="32" y="525" font-size="11" fill="#555555" text-anchor="start">best fit: bulk export of many records — each line is a complete, independently parseable JSON object</text>
-<text x="490.0" y="570" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">All three keep one connection open and deliver pieces as they&#x27;re produced — they differ in framing, direction, and what a piece means to the client.</text>
+<text x="32" y="175" font-size="11" fill="#555555" text-anchor="start">best fit: progressive download, client renders/saves bytes as they land, total size unknown up front</text>
+<text x="32" y="350" font-size="11" fill="#555555" text-anchor="start">best fit: live updates pushed to a browser, one-way, auto-reconnects via Last-Event-ID</text>
+<text x="32" y="525" font-size="11" fill="#555555" text-anchor="start">best fit: bulk export of many records, each line a complete, independently parseable JSON object</text>
+<text x="490.0" y="570" font-size="12" fill="#b8650a" text-anchor="middle" font-weight="700">All three keep one connection open and deliver pieces as they&#x27;re produced; they differ in framing, direction, and what a piece means to the client.</text>
 </svg>
