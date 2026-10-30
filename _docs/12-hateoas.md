@@ -26,7 +26,7 @@ The shared contract fixes what a link looks like so every consumer can parse it 
 
 ## The response as a finite-state machine
 
-The booking lifecycle (`_plans/domain-glossary.md`) is a small, fixed graph: a `PENDING` booking can be confirmed or cancelled; a `CONFIRMED` booking can be cancelled or moved into transit; `IN_TRANSIT` leads only to `DELIVERED`; `DELIVERED` and `CANCELLED` are terminal. Every one of those edges is a state-dependent affordance, and `_links` is the field that exposes it. Each `Booking` response carries a `_links` map (relation name to `{href, method, title}`), and the set of keys in that map is computed from nothing but the booking's current `status`:
+The booking lifecycle is a small, fixed graph: a `PENDING` booking can be confirmed or cancelled; a `CONFIRMED` booking can be cancelled or moved into transit; `IN_TRANSIT` leads only to `DELIVERED`; `DELIVERED` and `CANCELLED` are terminal. Every one of those edges is a state-dependent affordance, and `_links` is the field that exposes it. Each `Booking` response carries a `_links` map (relation name to `{href, method, title}`), and the set of keys in that map is computed from nothing but the booking's current `status`:
 
 | Status | `_links` relations | What a client can follow |
 |---|---|---|
