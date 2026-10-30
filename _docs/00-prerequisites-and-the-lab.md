@@ -111,7 +111,7 @@ Both pins (`openjdk-25:1.24-15` and `python-314-minimal:10.2-1791464217`) are ex
 
 ## The lab topology
 
-The Ch0 example's `compose.yaml` brings up three services by default: `quarkus` on port 8080, `python` on port 8000, and a `postgres:17-alpine` database seeded with a `shipping` database, user, and password. Neither application talks to Postgres yet (that wiring arrives with the contract-first build in Chapter 4), but the database is in the stack from day one so the topology you develop against never changes shape later, only grows a schema. Each service carries its own Docker healthcheck (`curl` against the HTTP endpoint for the two apps, `pg_isready` for Postgres), which is what lets `verify.sh` and CI poll for "actually ready," not just "container started."
+The example's `compose.yaml` brings up three services by default: `quarkus` on port 8080, `python` on port 8000, and a `postgres:17-alpine` database seeded with a `shipping` database, user, and password. Neither application talks to Postgres yet (that wiring arrives with the contract-first build in Chapter 4), but the database is in the stack from day one so the topology you develop against never changes shape later, only grows a schema. Each service carries its own Docker healthcheck (`curl` against the HTTP endpoint for the two apps, `pg_isready` for Postgres), which is what lets `verify.sh` and CI poll for "actually ready," not just "container started."
 
 A fourth service, `lgtm` (Grafana's all-in-one image bundling Loki, Grafana, Tempo, and Mimir behind one OpenTelemetry Collector), sits behind a Compose `profiles: ["observability"]` entry, which means plain `docker compose up` never starts it. Neither application exports telemetry at this stage of the site, so bringing up a four-container observability stack to watch two services that emit nothing would just slow down every chapter's first boot for no signal. The profile exists so Chapter 25 (and any chapter after it) can opt in with one flag once there's something worth tracing:
 
@@ -126,7 +126,7 @@ That figure is the shape every later hands-on chapter reuses: two application co
 
 ## The domain this site builds against
 
-Every example from here forward works against one domain: a company that books cargo for shipment between ports. The vocabulary is fixed in `_plans/domain-glossary.md` and reused verbatim in the contract, the code, and every diagram, so a term introduced in one chapter means the same thing in all the others.
+Every example from here forward works against one domain: a company that books cargo for shipment between ports. The vocabulary is fixed up front and reused verbatim in the contract, the code, and every diagram, so a term introduced in one chapter means the same thing in all the others.
 
 A **Booking** is the aggregate root: a customer's request to move cargo from an origin to a destination. It is the resource everything else in the domain hangs off of. A **Cargo** item is one piece of goods carried under a booking: a description, a type, a weight in kilograms, a volume in cubic metres, a hazardous flag. A booking owns one or more cargo items, and a cargo item has no meaning or identity outside the booking that requested it be shipped. A **Location** is a port or terminal, identified by its UN/LOCODE (`USNYC` for New York, `NLRTM` for Rotterdam, `SGSIN` for Singapore) rather than a free-text name, which is what later chapters reference as a cacheable, independently-addressable piece of reference data shared across thousands of bookings. Later parts add a **Route** (the planned sequence of **Leg**s moving a booking's cargo), a **Manifest** (the consolidated listing of everything aboard a voyage, which becomes the large-binary and streaming example in Part 7), and an **Operation** (a server-owned record of long-running work, returned by a `202` and polled for status in Chapter 10).
 
@@ -142,7 +142,7 @@ PENDING ──confirm──▶ CONFIRMED ──load──▶ IN_TRANSIT ──de
 
 A booking is created `PENDING`, moves to `CONFIRMED` once accepted, `IN_TRANSIT` once loaded, and `DELIVERED` on arrival; it can be `CANCELLED` from either of the first two states, but never once it's moved beyond them. Chapter 12's HATEOAS treatment exposes exactly this FSM as response links: a `PENDING` booking's representation offers `confirm` and `cancel` links, a `DELIVERED` booking offers neither, so a client discovers legal next actions from the response instead of hardcoding which states permit which transitions. Chapter 10's async confirmation flow drives a booking through its first transition via a `202` and a poll loop, and Chapter 21's event stream emits a CloudEvent on every transition this diagram shows. One state machine, three different patterns built on top of it.
 
-## Running the Ch0 example
+## Running the example
 
 The example under `examples/00-prerequisites/` doesn't touch the domain yet (no bookings, no cargo, just a `GET /` and a health check on each service) because its only job is proving the toolchain works before Chapter 4 puts a resource model behind it. Run it with the repository's standard per-chapter verification script.
 

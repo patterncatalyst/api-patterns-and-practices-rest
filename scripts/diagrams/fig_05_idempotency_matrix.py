@@ -24,7 +24,7 @@ ROWS = [
     ("PUT", False, True, "PUT /bookings/{id} — idempotent"),
     ("DELETE", False, True, "DELETE /bookings/{id} — idempotent"),
     ("POST", False, False, "POST /bookings — creates, not idempotent"),
-    ("PATCH", False, False, "PATCH /bookings/{id} — not idempotent (Ch7)"),
+    ("PATCH", False, False, "PATCH /bookings/{id} — not idempotent"),
 ]
 
 nodes = [

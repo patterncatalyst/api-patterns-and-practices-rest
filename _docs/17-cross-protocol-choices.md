@@ -87,7 +87,7 @@ The four examples above aren't exhaustive, but they cover the shapes that recur 
 | Interaction shape | Example | Best fit | Why |
 |---|---|---|---|
 | Request/response, cacheable, diverse clients | Look up a booking by id | REST | Ubiquitous, cacheable by URL, no client-side tooling required |
-| Server push over an open connection, one direction | Watch a booking's status change | REST + SSE (Ch16) | One-directional push is exactly what SSE adds to REST; no new protocol needed |
+| Server push over an open connection, one direction | Watch a booking's status change | REST + SSE | One-directional push is exactly what SSE adds to REST; no new protocol needed |
 | Bidirectional, low-latency, either side initiates | Live chat between shipper and support | WebSockets | Full-duplex and stateful; justified when two-way *is* the requirement |
 | Fire-and-forget event to a party with no open connection | Notify a customs broker of clearance | Webhooks | Server-initiated `POST` to a client-owned endpoint; no polling, at-least-once with signed payloads |
 | High-frequency, low-latency, service-to-service, strongly typed | Capacity check from a routing engine | gRPC | Binary encoding, generated stubs, and native streaming RPCs where both ends are owned and HTTP/2 is available |
