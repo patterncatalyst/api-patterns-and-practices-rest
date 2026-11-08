@@ -57,7 +57,7 @@ done
 
 log() { echo "run-crc.sh: $*" >&2; }
 step() { printf '\n\033[1m==> %s\033[0m\n' "$1" >&2; }
-fail() { printf '\nrun-crc.sh: FAIL — %s\n' "$1" >&2; exit 1; }
+fail() { printf '\nrun-crc.sh: FAIL, %s\n' "$1" >&2; exit 1; }
 
 for bin in crc oc helm; do
   command -v "$bin" >/dev/null 2>&1 || fail "required binary '$bin' not found on PATH"

@@ -11,7 +11,7 @@ HTTPS):
 {{- end }}
 {{- end }}
 
-Trigger (or re-trigger) a service's in-cluster build from its Ch25 source:
+Trigger (or re-trigger) a service's in-cluster build from its Docker Compose example source:
   oc start-build <service> --from-dir=examples/25-local-with-docker-compose/<app> --follow -n {{ .Release.Namespace }}
 
 Then roll the Deployment to pick up the freshly pushed tag:

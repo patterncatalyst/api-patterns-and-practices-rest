@@ -175,7 +175,7 @@ public class BookingResource {
             return new PageResult(page, null);
         }
 
-        // Keyset/cursor — the default/stable strategy. A null/blank cursor
+        // Keyset/cursor: the default/stable strategy. A null/blank cursor
         // means "first page"; following page.nextCursor walks the whole set
         // with no dupes or gaps, because each page's lower bound is the
         // highest id actually returned by the page before it.

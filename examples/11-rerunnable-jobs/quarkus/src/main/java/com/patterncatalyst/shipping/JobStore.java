@@ -82,7 +82,7 @@ public class JobStore {
 
     /**
      * Upserts the job definition (server-owned schedule) and re-arms the
-     * periodic ticker at the new {@code intervalSeconds} — this is what
+     * periodic ticker at the new {@code intervalSeconds}; this is what
      * makes "the client configures the schedule" literally true: the
      * scheduler's cadence comes from the configured value, not a hardcoded
      * constant.
@@ -157,7 +157,7 @@ public class JobStore {
     private Operation startRun() {
         // "op_" prefix (not "run_"): this run record reuses
         // #/$defs/Operation verbatim, including its id pattern
-        // (^op_[0-9A-HJKMNP-TV-Z]{26}$) — see model/Operation.java's javadoc.
+        // (^op_[0-9A-HJKMNP-TV-Z]{26}$); see model/Operation.java's javadoc.
         String runId = "op_" + Ulid.generate();
         RunRecord record = new RunRecord(runId, nowUtc());
         runs.put(runId, record);

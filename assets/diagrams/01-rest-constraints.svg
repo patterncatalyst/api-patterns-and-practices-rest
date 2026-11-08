@@ -11,7 +11,7 @@
 <text x="680.0" y="105.0" font-size="11.5" fill="#555555" text-anchor="middle">DELETE /bookings/{id}</text>
 <text x="680.0" y="120.0" font-size="11.5" fill="#555555" text-anchor="middle">nouns + HTTP methods</text>
 <rect x="35" y="230" width="150" height="120" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
-<text x="110.0" y="280.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client–server</text>
+<text x="110.0" y="280.5" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Client-server</text>
 <text x="110.0" y="297.5" font-size="11.5" fill="#555555" text-anchor="middle">UI decoupled from</text>
 <text x="110.0" y="312.5" font-size="11.5" fill="#555555" text-anchor="middle">data storage</text>
 <rect x="210" y="230" width="150" height="120" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>

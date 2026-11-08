@@ -32,7 +32,7 @@ def health() -> dict[str, str]:
 def root(request: Request) -> dict[str, object]:
     # ASGI's `http_version` scope key reports what the server negotiated on
     # this connection ("1.1" or "2"), independent of curl's own
-    # `%{http_version}` reporting — handy for confirming from the response
+    # `%{http_version}` reporting: handy for confirming from the response
     # body itself, not just the client's view.
     return {
         "service": "shipping-python-ch19",

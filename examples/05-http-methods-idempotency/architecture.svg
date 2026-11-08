@@ -55,5 +55,5 @@
 <rect x="370" y="400" width="150" height="55" rx="9" fill="#ffffff" stroke="#1a1a1a" stroke-width="2"/>
 <text x="445.0" y="433.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">No</text>
 <rect x="540" y="400" width="400" height="55" rx="9" fill="#ffffff" stroke="#8a8d91" stroke-width="1.5"/>
-<text x="740.0" y="433.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">PATCH /bookings/{id}: not idempotent (Ch7)</text>
+<text x="740.0" y="433.0" font-size="13.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">PATCH /bookings/{id}: not idempotent</text>
 </svg>

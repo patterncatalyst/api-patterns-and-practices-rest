@@ -125,7 +125,7 @@ def list_bookings(limit: int = 20) -> JSONResponse:
 @app.put("/bookings")
 def replace_collection_not_allowed() -> JSONResponse:
     """The collection resource doesn't support PUT (there's no single
-    "whole collection" state to replace) — 405 with an Allow header naming
+    "whole collection" state to replace): 405 with an Allow header naming
     what it DOES support, and a Problem body instead of an empty one, so a
     caller script doesn't have to special-case this resource's error shape.
     """
@@ -182,7 +182,7 @@ def replace_booking(booking_id: str, payload: BookingRequest) -> JSONResponse:
 
     # Deterministic (not random) cargo ids: PUT must be idempotent, so
     # replacing a booking with the SAME body twice has to produce the SAME
-    # Cargo.id for each item both times — generate_ulid() below mints a
+    # Cargo.id for each item both times; generate_ulid() below mints a
     # fresh random id every call, which POST correctly wants but PUT must
     # not.
     cargo_items = [

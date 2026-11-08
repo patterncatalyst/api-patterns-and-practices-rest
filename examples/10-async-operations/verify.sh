@@ -59,7 +59,7 @@ resolve_location() {
 }
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -145,7 +145,7 @@ run_stack_tests() {
   op_status="$(jq -r '.status' "$body_file")"
   [[ "$op_status" == "RUNNING" || "$op_status" == "PENDING" ]] \
     || fail "$stack operation $op_id: expected RUNNING or PENDING immediately after 202, got $op_status"
-  echo "lib.sh: ok — $stack operation $op_id is $op_status immediately after 202"
+  echo "lib.sh: ok, $stack operation $op_id is $op_status immediately after 202"
 
   # -- Poll GET /operations/{id} until it returns 303 ----------------------
   local waited=0 op_final_status=""
@@ -162,7 +162,7 @@ run_stack_tests() {
   done
   [[ "$op_final_status" == "303" ]] \
     || fail "$stack operation $op_id never returned 303 within ${POLL_TIMEOUT_SECONDS}s"
-  echo "lib.sh: ok — $stack operation $op_id reached 303 within ${waited}s"
+  echo "lib.sh: ok, $stack operation $op_id reached 303 within ${waited}s"
 
   # -- 303's Location must point at the confirmed booking ------------------
   assert_header Location "$headers_file" "$stack GET /operations/{id} (303)"
@@ -175,7 +175,7 @@ run_stack_tests() {
   booking_status="$(jq -r '.status' "$body_file")"
   [[ "$booking_status" == "CONFIRMED" ]] \
     || fail "$stack booking $booking_id: expected CONFIRMED after the 303, got $booking_status"
-  echo "lib.sh: ok — $stack booking $booking_id is CONFIRMED after following the 303"
+  echo "lib.sh: ok, $stack booking $booking_id is CONFIRMED after following the 303"
 
   # -- GET /operations/{id} again -> still 303 (terminal, not re-run) ------
   status="$(curl -sS --max-redirs 0 -o /dev/null -w '%{http_code}' "$(resolve_location "$base" "$op_location")")"
@@ -248,7 +248,7 @@ run_stack_tests() {
   booking2_status="$(jq -r '.status' "$body_file")"
   [[ "$booking2_status" == "PENDING" ]] \
     || fail "$stack booking $booking2_id: expected PENDING after cancel, got $booking2_status"
-  echo "lib.sh: ok — $stack cancelled operation $op2_id left booking $booking2_id PENDING"
+  echo "lib.sh: ok, $stack cancelled operation $op2_id left booking $booking2_id PENDING"
 
   # -- DELETE the (already-terminal) cancelled operation again -> still 204
   status="$(curl -sS -o /dev/null -w '%{http_code}' \

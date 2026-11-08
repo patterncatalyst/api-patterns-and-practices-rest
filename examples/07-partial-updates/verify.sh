@@ -26,7 +26,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -93,7 +93,7 @@ run_stack_tests() {
   origin_after="$(jq -c '.origin' "$body_file")"
   [[ "$patched_pickup" == "2026-03-01" ]] || fail "$stack merge-patch did not apply (got requestedPickup=$patched_pickup)"
   [[ "$origin_after" == "$origin_before" ]] || fail "$stack merge-patch touched 'origin' it was never given (before=$origin_before after=$origin_after)"
-  echo "lib.sh: ok — $stack merge-patch changed requestedPickup and left origin untouched"
+  echo "lib.sh: ok, $stack merge-patch changed requestedPickup and left origin untouched"
 
   # -- Merge Patch: a field set to null DELETES it (RFC 7396) -------------
   # requestedPickup is optional/nullable-by-absence in the schema, so
@@ -106,7 +106,7 @@ run_stack_tests() {
   if jq -e 'has("requestedPickup")' "$body_file" >/dev/null; then
     fail "$stack merge-patch with requestedPickup:null did not remove the field"
   fi
-  echo "lib.sh: ok — $stack merge-patch null removed requestedPickup"
+  echo "lib.sh: ok, $stack merge-patch null removed requestedPickup"
 
   # -- JSON Patch (application/json-patch+json): replace op ---------------
   status="$(curl -sS -o "$body_file" -w '%{http_code}' \
@@ -119,7 +119,7 @@ run_stack_tests() {
   patched_description="$(jq -r '.cargo[0].description' "$body_file")"
   [[ "$patched_description" == "Re-palletized electronics" ]] \
     || fail "$stack json-patch replace did not apply (got cargo[0].description=$patched_description)"
-  echo "lib.sh: ok — $stack json-patch replace changed cargo[0].description"
+  echo "lib.sh: ok, $stack json-patch replace changed cargo[0].description"
 
   # -- JSON Patch: a failing `test` op -> 409 (or 422), Problem ------------
   # The booking's status is still PENDING (nothing above touched it), so
@@ -131,7 +131,7 @@ run_stack_tests() {
   if [[ "$status" != "409" && "$status" != "422" ]]; then
     fail "$stack json-patch failing test op: expected HTTP 409 or 422, got $status"
   fi
-  echo "lib.sh: ok — $stack json-patch failing test op: HTTP $status"
+  echo "lib.sh: ok, $stack json-patch failing test op: HTTP $status"
   validate_body Problem "$body_file"
 
   # -- PATCH with an unsupported Content-Type -> 415, Problem --------------

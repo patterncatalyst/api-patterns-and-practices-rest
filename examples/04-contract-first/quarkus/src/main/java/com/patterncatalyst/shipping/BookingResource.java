@@ -71,7 +71,7 @@ public class BookingResource {
                 null);
         store.put(booking);
 
-        // A literal header string, NOT Response.created(URI) — per the
+        // A literal header string, NOT Response.created(URI): per the
         // JAX-RS spec, ResponseBuilder.location(URI) resolves a relative
         // URI into an absolute one against the base URI, which would make
         // Quarkus's Location header shape diverge from the Python stack's

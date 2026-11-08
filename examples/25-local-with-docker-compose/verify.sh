@@ -57,7 +57,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "verify.sh: FAIL — $*" >&2
+  echo "verify.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -106,14 +106,14 @@ poll_for_trace() {
       -H 'Accept: application/json' \
       "$TEMPO_BASE/api/traces/$trace_id" || echo "000")"
     if [[ "$code" == "200" ]]; then
-      echo "verify.sh: ok — Tempo returned trace $trace_id after ${waited}s" >&2
+      echo "verify.sh: ok, Tempo returned trace $trace_id after ${waited}s" >&2
       return 0
     fi
     sleep "$TRACE_POLL_INTERVAL"
     waited=$(( waited + TRACE_POLL_INTERVAL ))
   done
 
-  echo "verify.sh: FAIL — Tempo never returned trace $trace_id within ${TRACE_POLL_TIMEOUT}s (last HTTP code: ${code:-none})" >&2
+  echo "verify.sh: FAIL, Tempo never returned trace $trace_id within ${TRACE_POLL_TIMEOUT}s (last HTTP code: ${code:-none})" >&2
   return 1
 }
 
@@ -152,18 +152,18 @@ assert_trace_has_service_and_route() {
   ' "$trace_file")"
 
   if [[ "$has_service" != "true" ]]; then
-    echo "verify.sh: FAIL — $context: no resource with service.name=$service_name in the Tempo trace" >&2
+    echo "verify.sh: FAIL, $context: no resource with service.name=$service_name in the Tempo trace" >&2
     return 1
   fi
   if [[ "$has_route" != "true" ]]; then
-    echo "verify.sh: FAIL — $context: no span tagged with HTTP route /bookings in the Tempo trace" >&2
+    echo "verify.sh: FAIL, $context: no span tagged with HTTP route /bookings in the Tempo trace" >&2
     return 1
   fi
   if [[ "$has_method" != "true" ]]; then
-    echo "verify.sh: FAIL — $context: no span tagged with HTTP method POST in the Tempo trace" >&2
+    echo "verify.sh: FAIL, $context: no span tagged with HTTP method POST in the Tempo trace" >&2
     return 1
   fi
-  echo "verify.sh: ok — $context: Tempo trace has service.name=$service_name, POST /bookings span" >&2
+  echo "verify.sh: ok, $context: Tempo trace has service.name=$service_name, POST /bookings span" >&2
 }
 
 run_traced_booking() {

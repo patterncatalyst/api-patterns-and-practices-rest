@@ -59,7 +59,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -103,11 +103,11 @@ ARAZZO_FILE="$REPO_ROOT/contracts/arazzo/booking-workflow.yaml"
 
 grep -q "shipping.schema.json" "$OPENAPI_FILE" \
   || fail "contracts/openapi/shipping-api.yaml does not \$ref shipping.schema.json"
-echo "lib.sh: ok — OpenAPI \$refs shipping.schema.json"
+echo "lib.sh: ok, OpenAPI \$refs shipping.schema.json"
 
 grep -q "shipping.schema.json" "$ASYNCAPI_FILE" \
   || fail "contracts/asyncapi/shipping-events.yaml does not \$ref shipping.schema.json"
-echo "lib.sh: ok — AsyncAPI \$refs shipping.schema.json"
+echo "lib.sh: ok, AsyncAPI \$refs shipping.schema.json"
 
 "$LGTM_VERIFY_VENV_DIR/bin/python" -I "$SCRIPT_DIR/check_arazzo.py" "$ARAZZO_FILE"
 
@@ -168,12 +168,12 @@ check_cloud_event() {
     jq -e "has(\"$attr\")" "$event_file" >/dev/null \
       || fail "$stack: CloudEvents envelope missing required attribute '$attr'"
   done
-  echo "lib.sh: ok — $stack CloudEvents envelope has specversion/id/source/type"
+  echo "lib.sh: ok, $stack CloudEvents envelope has specversion/id/source/type"
 
   local data_file="$TMP_DIR/${stack}-event-data.json"
   jq -c '.data' "$event_file" > "$data_file"
   validate_body BookingEvent "$data_file"
-  echo "lib.sh: ok — $stack BookingEvent data conforms to #/\$defs/BookingEvent"
+  echo "lib.sh: ok, $stack BookingEvent data conforms to #/\$defs/BookingEvent"
 }
 
 run_stack_tests() {
@@ -202,11 +202,11 @@ run_stack_tests() {
   local location_a booking_a
   location_a="$(extract_header Location "$headers_file")"
   booking_a="$(jq -r '.id' "$body_file")"
-  echo "lib.sh: ok — $stack created booking A ($booking_a)"
+  echo "lib.sh: ok, $stack created booking A ($booking_a)"
 
   jq -e '._links.confirm and ._links.cancel' "$body_file" >/dev/null \
     || fail "$stack: PENDING booking A missing HATEOAS confirm/cancel links"
-  echo "lib.sh: ok — $stack booking A (PENDING) carries confirm+cancel _links"
+  echo "lib.sh: ok, $stack booking A (PENDING) carries confirm+cancel _links"
 
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$(resolve_location "$base" "$location_a")")"
   assert_status 200 "$status" "$stack GET Location (A)"
@@ -224,7 +224,7 @@ run_stack_tests() {
   validate_body Booking "$body_file"
   local booking_b
   booking_b="$(jq -r '.id' "$body_file")"
-  echo "lib.sh: ok — $stack created booking B ($booking_b)"
+  echo "lib.sh: ok, $stack created booking B ($booking_b)"
 
   # -------------------------------------------------------------------
   # 4c. Keyset pagination (Ch8): limit=1 twice, following the cursor,
@@ -240,7 +240,7 @@ run_stack_tests() {
   [[ -n "$page1_id" && "$page1_id" != "null" ]] || fail "$stack: pagination page 1 returned no items"
   [[ -n "$next_cursor" && "$next_cursor" != "null" ]] || fail "$stack: pagination page 1 has no nextCursor despite >1 visible booking"
   jq -e '._links.self' "$body_file" >/dev/null || fail "$stack: BookingCollection missing _links.self"
-  echo "lib.sh: ok — $stack pagination page 1: item=$page1_id, nextCursor=$next_cursor"
+  echo "lib.sh: ok, $stack pagination page 1: item=$page1_id, nextCursor=$next_cursor"
 
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$base/bookings?limit=1&cursor=$next_cursor")"
   assert_status 200 "$status" "$stack GET /bookings?limit=1&cursor=... (page 2)"
@@ -250,7 +250,7 @@ run_stack_tests() {
   [[ -n "$page2_id" && "$page2_id" != "null" ]] || fail "$stack: pagination page 2 returned no items"
   [[ "$page2_id" != "$page1_id" ]] || fail "$stack: pagination cursor did not advance — page 2 repeated page 1's item"
   [[ "$page2_id" > "$page1_id" ]] || fail "$stack: pagination page 2's id ($page2_id) is not > page 1's id ($page1_id)"
-  echo "lib.sh: ok — $stack pagination cursor advances: page1=$page1_id -> page2=$page2_id (no overlap)"
+  echo "lib.sh: ok, $stack pagination cursor advances: page1=$page1_id -> page2=$page2_id (no overlap)"
 
   # -------------------------------------------------------------------
   # 4d. Async confirmation (Ch10): 202 -> bounded poll -> 303.
@@ -263,7 +263,7 @@ run_stack_tests() {
 
   local op_location
   op_location="$(extract_header Location "$headers_file")"
-  echo "lib.sh: ok — $stack confirmation accepted, operation at $op_location"
+  echo "lib.sh: ok, $stack confirmation accepted, operation at $op_location"
 
   local attempt=0 op_status=""
   while (( attempt < POLL_MAX_ATTEMPTS )); do
@@ -285,7 +285,7 @@ run_stack_tests() {
   resolved_location="$(extract_header Location "$headers_file")"
   [[ "$resolved_location" == *"$booking_a"* ]] \
     || fail "$stack: operation's 303 Location ($resolved_location) does not reference booking A ($booking_a)"
-  echo "lib.sh: ok — $stack operation reached 303 See Other -> $resolved_location"
+  echo "lib.sh: ok, $stack operation reached 303 See Other -> $resolved_location"
 
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$base/bookings/$booking_a")"
   assert_status 200 "$status" "$stack GET /bookings/{A} (post-confirmation)"
@@ -294,7 +294,7 @@ run_stack_tests() {
     || fail "$stack: booking A did not transition to CONFIRMED after the operation succeeded"
   jq -e '._links.cancel and (._links.confirm | not)' "$body_file" >/dev/null \
     || fail "$stack: CONFIRMED booking A should carry only a cancel _link (no confirm)"
-  echo "lib.sh: ok — $stack booking A is CONFIRMED with state-appropriate _links"
+  echo "lib.sh: ok, $stack booking A is CONFIRMED with state-appropriate _links"
 
   # -------------------------------------------------------------------
   # 4e. Media-type versioning (Ch14): Accept negotiates v1 vs v2.
@@ -308,7 +308,7 @@ run_stack_tests() {
     || fail "$stack: v1 negotiation returned Content-Type '$v1_content_type'"
   jq -e 'has("cargoDescription") and has("price") and (has("cargo") | not) and (has("quote") | not)' "$body_file" >/dev/null \
     || fail "$stack: v1 body does not have the frozen (cargoDescription/price, no cargo/quote) shape"
-  echo "lib.sh: ok — $stack Accept:v1 negotiates the frozen BookingV1 shape"
+  echo "lib.sh: ok, $stack Accept:v1 negotiates the frozen BookingV1 shape"
 
   status="$(curl -sS -D "$headers_file" -o "$body_file" -w '%{http_code}' \
     -H 'Accept: application/vnd.shipping.booking.v2+json' "$base/bookings/$booking_a")"
@@ -318,7 +318,7 @@ run_stack_tests() {
   [[ "$v2_content_type" == *"application/vnd.shipping.booking.v2+json"* ]] \
     || fail "$stack: v2 negotiation returned Content-Type '$v2_content_type'"
   validate_body Booking "$body_file"
-  echo "lib.sh: ok — $stack Accept:v2 negotiates the current Booking shape"
+  echo "lib.sh: ok, $stack Accept:v2 negotiates the current Booking shape"
 
   # -------------------------------------------------------------------
   # 4f. Soft delete + GDPR purge (Ch13), on booking A.
@@ -337,7 +337,7 @@ run_stack_tests() {
     || fail "$stack: includeDeleted view of booking A is not CANCELLED"
   assert_header X-Audit-Deleted-At "$headers_file" "$stack audit view"
   assert_header X-Audit-Reason "$headers_file" "$stack audit view"
-  echo "lib.sh: ok — $stack soft-deleted booking A is CANCELLED + audit headers present under includeDeleted=true"
+  echo "lib.sh: ok, $stack soft-deleted booking A is CANCELLED + audit headers present under includeDeleted=true"
 
   status="$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE "$base/bookings/$booking_a/purge")"
   assert_status 204 "$status" "$stack DELETE /bookings/{A}/purge"
@@ -345,7 +345,7 @@ run_stack_tests() {
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$base/bookings/$booking_a?includeDeleted=true")"
   assert_status 404 "$status" "$stack GET /bookings/{A}?includeDeleted=true (post-purge)"
   validate_body Problem "$body_file"
-  echo "lib.sh: ok — $stack booking A is gone for good after purge (even the audit view 404s)"
+  echo "lib.sh: ok, $stack booking A is gone for good after purge (even the audit view 404s)"
 
   # -------------------------------------------------------------------
   # 4g. NDJSON manifest export (Ch16-style streaming), on booking B.
@@ -371,14 +371,14 @@ run_stack_tests() {
     [[ -z "$first_ts" ]] && first_ts="$ts"
     last_ts="$ts"
   done
-  echo "lib.sh: ok — $stack manifest export emitted ${#manifest_lines[@]} valid BookingEvent lines"
+  echo "lib.sh: ok, $stack manifest export emitted ${#manifest_lines[@]} valid BookingEvent lines"
 
   local spread
   spread="$(awk -v a="$last_ts" -v b="$first_ts" 'BEGIN { printf "%.3f", a - b }')"
   echo "lib.sh: $stack manifest timing — first line at ${first_ts}, last line at ${last_ts}, spread ${spread}s" >&2
   awk_ge "$spread" "$MANIFEST_MIN_SPREAD_SECONDS" \
     || fail "$stack: manifest export spread ${spread}s is below the ${MANIFEST_MIN_SPREAD_SECONDS}s floor — looks BUFFERED, not incremental"
-  echo "lib.sh: ok — $stack manifest export spread ${spread}s >= ${MANIFEST_MIN_SPREAD_SECONDS}s floor — genuinely incremental"
+  echo "lib.sh: ok, $stack manifest export spread ${spread}s >= ${MANIFEST_MIN_SPREAD_SECONDS}s floor — genuinely incremental"
 
   # -------------------------------------------------------------------
   # 4h. Background CloudEvents (Ch21): booking A's confirmation publish.

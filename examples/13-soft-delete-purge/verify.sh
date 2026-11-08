@@ -24,7 +24,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -85,13 +85,13 @@ run_stack_tests() {
   if jq -e --arg id "$booking_id" '.items[] | select(.id == $id)' "$body_file" >/dev/null; then
     fail "$stack soft-deleted booking $booking_id is still visible in the default GET /bookings list"
   fi
-  echo "lib.sh: ok — $stack soft-deleted booking hidden from default collection"
+  echo "lib.sh: ok, $stack soft-deleted booking hidden from default collection"
 
   # -- GET /bookings/{id} -> 404 (hidden by default) -----------------------
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$base/bookings/$booking_id")"
   assert_status 404 "$status" "$stack GET /bookings/{id} (default, post-soft-delete)"
   validate_body Problem "$body_file"
-  echo "lib.sh: ok — $stack soft-deleted booking 404s on the default single-resource GET"
+  echo "lib.sh: ok, $stack soft-deleted booking 404s on the default single-resource GET"
 
   # -- GET /bookings/{id}?includeDeleted=true -> 200, Booking + audit ------
   local headers_file="$TMP_DIR/${stack}-audit-headers.txt"
@@ -107,7 +107,7 @@ run_stack_tests() {
   local audit_reason
   audit_reason="$(grep -i '^X-Audit-Reason:' "$headers_file" | head -1 | sed -E 's/^[^:]*:[[:space:]]*//' | tr -d '\r\n')"
   [[ "$audit_reason" == "gdpr-test-cancellation" ]] || fail "$stack audit reason: expected gdpr-test-cancellation, got $audit_reason"
-  echo "lib.sh: ok — $stack audit view shows CANCELLED booking + X-Audit-* trail (record still exists in the store)"
+  echo "lib.sh: ok, $stack audit view shows CANCELLED booking + X-Audit-* trail (record still exists in the store)"
 
   # -- DELETE /bookings/{id}/purge -> 204 (GDPR hard delete) ---------------
   status="$(curl -sS -o "$body_file" -w '%{http_code}' -X DELETE "$base/bookings/$booking_id/purge")"
@@ -118,7 +118,7 @@ run_stack_tests() {
     "$base/bookings/$booking_id?includeDeleted=true")"
   assert_status 404 "$status" "$stack GET /bookings/{id}?includeDeleted=true (post-purge)"
   validate_body Problem "$body_file"
-  echo "lib.sh: ok — $stack purge erased the booking AND its audit trail"
+  echo "lib.sh: ok, $stack purge erased the booking AND its audit trail"
 
   # -- purge again -> 404 (nothing left to erase) --------------------------
   status="$(curl -sS -o "$body_file" -w '%{http_code}' -X DELETE "$base/bookings/$booking_id/purge")"

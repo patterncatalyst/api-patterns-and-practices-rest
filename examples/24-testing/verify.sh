@@ -44,7 +44,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "verify.sh: FAIL — $*" >&2
+  echo "verify.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -105,7 +105,7 @@ run_contract_checks() {
   assert_status 404 "$status" "$stack GET /bookings/{nonexistent}"
   validate_body Problem "$body_file"
 
-  echo "verify.sh: ok — $stack live contract checks passed (POST/GET/404, all schema-valid)"
+  echo "verify.sh: ok, $stack live contract checks passed (POST/GET/404, all schema-valid)"
 }
 
 run_contract_checks "quarkus" "$QUARKUS_BASE"
@@ -129,9 +129,9 @@ run_newman_functional() {
       --reporters cli \
       --timeout-request 5000 \
       --color off | tee "$output_file"; then
-    echo "verify.sh: ok — $stack Newman functional run passed (all assertions green)"
+    echo "verify.sh: ok, $stack Newman functional run passed (all assertions green)"
   else
-    echo "verify.sh: FAIL — $stack Newman functional run failed" >&2
+    echo "verify.sh: FAIL, $stack Newman functional run failed" >&2
     tail -30 "$output_file" >&2
     return 1
   fi
@@ -165,9 +165,9 @@ if "${NEWMAN_CMD[@]}" run "$SCRIPT_DIR/collections/shipping.postman_collection.j
     --reporters cli \
     --timeout-request 5000 \
     --color off | tee "$load_output_file"; then
-  echo "verify.sh: ok — load run completed $LOAD_ITERATIONS/$LOAD_ITERATIONS iterations"
+  echo "verify.sh: ok, load run completed $LOAD_ITERATIONS/$LOAD_ITERATIONS iterations"
 else
-  echo "verify.sh: FAIL — bounded load run failed" >&2
+  echo "verify.sh: FAIL, bounded load run failed" >&2
   tail -30 "$load_output_file" >&2
   exit 1
 fi

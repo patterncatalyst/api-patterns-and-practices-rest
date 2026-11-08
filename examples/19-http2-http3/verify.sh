@@ -21,7 +21,7 @@ PROJECT="ch19-h2"
 COMPOSE_FILE="$SCRIPT_DIR/compose.yaml"
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -53,7 +53,7 @@ check_protocol() {
   if [[ "$version" != "$expected_version" ]]; then
     fail "$stack $curl_flag GET /: expected http_version '$expected_version', got '$version'"
   fi
-  echo "lib.sh: ok — $stack $curl_flag negotiated HTTP/$version"
+  echo "lib.sh: ok, $stack $curl_flag negotiated HTTP/$version"
 }
 
 echo

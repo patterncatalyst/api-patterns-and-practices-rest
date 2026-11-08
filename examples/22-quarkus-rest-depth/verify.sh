@@ -75,7 +75,7 @@ awk_ge() {
 }
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -123,7 +123,7 @@ defaulted_value="$(jq -r '.defaulted' "$body_file")"
   || fail "GET /tenant with header: expected tenant 'acme-shipping', got '$tenant_value'"
 [[ "$defaulted_value" == "false" ]] \
   || fail "GET /tenant with header: expected defaulted=false, got '$defaulted_value'"
-echo "lib.sh: ok — @RestHeader reflects explicit X-Tenant value '$tenant_value' (defaulted=$defaulted_value)"
+echo "lib.sh: ok, @RestHeader reflects explicit X-Tenant value '$tenant_value' (defaulted=$defaulted_value)"
 
 status="$(curl -sS -o "$body_file" -w '%{http_code}' "$BASE/tenant")"
 assert_status 200 "$status" "GET /tenant without X-Tenant header"
@@ -134,7 +134,7 @@ defaulted_value="$(jq -r '.defaulted' "$body_file")"
   || fail "GET /tenant without header: expected documented default 'public', got '$tenant_value'"
 [[ "$defaulted_value" == "true" ]] \
   || fail "GET /tenant without header: expected defaulted=true, got '$defaulted_value'"
-echo "lib.sh: ok — @RestHeader falls back to documented default 'public' when X-Tenant is absent (defaulted=$defaulted_value)"
+echo "lib.sh: ok, @RestHeader falls back to documented default 'public' when X-Tenant is absent (defaulted=$defaulted_value)"
 
 # ---------------------------------------------------------------------------
 # Step 4: @RestQuery('limit') DRIVES the NDJSON export's record count.
@@ -163,14 +163,14 @@ assert_export_line_count() {
   mapfile -t lines < <(grep . "$ndjson_file")
   [[ "${#lines[@]}" -eq "$expected" ]] \
     || fail "$label: expected $expected NDJSON lines, got ${#lines[@]}"
-  echo "lib.sh: ok — $label produced ${#lines[@]} lines (expected $expected)"
+  echo "lib.sh: ok, $label produced ${#lines[@]} lines (expected $expected)"
 
   local line
   for line in "${lines[@]}"; do
     echo "$line" > "$frame_file"
     validate_body BookingEvent "$frame_file"
   done
-  echo "lib.sh: ok — $label: all ${#lines[@]} lines validate as BookingEvent"
+  echo "lib.sh: ok, $label: all ${#lines[@]} lines validate as BookingEvent"
 }
 
 # limit=3 and limit=8 produce DIFFERENT counts — proves the query param
@@ -211,7 +211,7 @@ done < <(curl -sS -N --max-time 8 "$BASE/bookings/events/export?limit=$TIMING_LI
 mapfile -t timed_lines < <(grep . "$timed_file")
 [[ "${#timed_lines[@]}" -eq "$TIMING_LIMIT" ]] \
   || fail "timed export: expected $TIMING_LIMIT lines, got ${#timed_lines[@]}"
-echo "lib.sh: ok — timed export emitted ${#timed_lines[@]} lines"
+echo "lib.sh: ok, timed export emitted ${#timed_lines[@]} lines"
 
 first_ts=""
 last_ts=""
@@ -223,14 +223,14 @@ for row in "${timed_lines[@]}"; do
   [[ -z "$first_ts" ]] && first_ts="$ts"
   last_ts="$ts"
 done
-echo "lib.sh: ok — all ${#timed_lines[@]} timed lines validate as BookingEvent"
+echo "lib.sh: ok, all ${#timed_lines[@]} timed lines validate as BookingEvent"
 
 spread="$(awk -v a="$last_ts" -v b="$first_ts" 'BEGIN { printf "%.3f", a - b }')"
 echo "lib.sh: NDJSON timing — first line read at ${first_ts}, last line read at ${last_ts}, spread ${spread}s" >&2
 if ! awk_ge "$spread" "$MIN_SPREAD_SECONDS"; then
   fail "NDJSON export: line-to-line spread ${spread}s is below the ${MIN_SPREAD_SECONDS}s floor — these lines look BUFFERED (all arrived in one burst), not delivered incrementally"
 fi
-echo "lib.sh: ok — NDJSON spread ${spread}s >= ${MIN_SPREAD_SECONDS}s floor — delivery is genuinely incremental"
+echo "lib.sh: ok, NDJSON spread ${spread}s >= ${MIN_SPREAD_SECONDS}s floor — delivery is genuinely incremental"
 
 echo
 echo "PASS — Ch22 Quarkus REST in depth: @RestHeader binds and defaults an" \

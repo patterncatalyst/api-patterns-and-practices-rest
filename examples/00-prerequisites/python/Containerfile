@@ -1,5 +1,5 @@
-# Ch0 boot skeleton — FastAPI, UBI 10, uv-managed.
-# Build: docker build -f Containerfile -t ch00-shipping-python .
+# Boot skeleton: FastAPI, UBI 10, uv-managed.
+# Build: docker build -f Containerfile -t shipping-python .
 #
 # UBI 10 publishes only the -minimal Python image (no ubi10/python-312).
 # Pin: registry.access.redhat.com/ubi10/python-314-minimal:10.2-1791464217
@@ -22,7 +22,7 @@ COPY pyproject.toml ./
 COPY app ./app
 
 # No uv.lock committed yet for this boot skeleton (two pure-Python deps);
-# --locked is adopted once the lockfile lands with the Ch4 API build.
+# --locked is adopted once the lockfile lands with the contract-first API build.
 RUN uv sync --no-dev
 
 # ── Stage 2: Runtime ────────────────────────────────────────

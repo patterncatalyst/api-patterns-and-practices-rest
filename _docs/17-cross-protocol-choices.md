@@ -10,34 +10,41 @@ duration: "22 min"
 
 By the end of this chapter you can:
 
-- Compare REST+SSE, WebSockets, webhooks, and gRPC against the Chapter 2 interaction-shape axes.
+- Compare REST+SSE, WebSockets, webhooks, and gRPC against the interaction-shape axes.
 - Identify when a full-duplex `Upgrade: websocket` connection is justified over a one-directional SSE feed.
 - Design a signed webhook (`X-Signature`, HMAC) with at-least-once delivery and fan-out.
 - Recognize when gRPC's streaming RPC shapes (`stream CargoEvent`, `stream RouteProposal`) beat REST for service-to-service calls.
-- Map an interaction shape to the right protocol using this chapter's lookup table.
+- Map an interaction shape to the right protocol with a lookup table.
 
 ## Why this matters
 
-Chapter 15 stretched REST to carry large binary resources with `Range` requests. Chapter 16 stretched it further, carrying continuous and incremental data with the previous chapter's streaming modes. Both chapters answered the same question the same way: REST can be made to fit a surprising range of interactions, if you're willing to add the right header, the right status code, or the right content type. This chapter asks the question those two didn't: when is "make REST fit" the wrong move entirely, and a different protocol the right one?
+REST with `Range` requests carries large binary resources, and REST with SSE, NDJSON and chunked encoding carries continuous data. REST fits a wide range of interactions if you add the right header, status code or content type. It stops fitting when the interaction needs something HTTP request/response can't give.
 
-Chapter 2 built the lens for exactly this decision: seven axes that read an interaction's shape before anyone picks a technology to serve it. This chapter applies that lens to four interactions a shipping platform produces: a browser watching a booking's status change, a customs broker that needs to hear about a container clearing inspection the moment it happens, a live feed of a vessel's cargo events a dispatcher watches all day, and a routing engine calling a capacity-check service a thousand times a second. One interaction shape per example, four different right answers, and REST is the correct one for exactly one of the four.
+Seven axes read an interaction's shape before anyone picks a technology: among them interaction shape, latency, payload shape, cacheability and client diversity. Four interactions on a shipping platform show the lens at work:
+
+- A browser watching a booking's status change.
+- A customs broker that must hear a container cleared inspection the moment it happens.
+- A dispatcher watching a vessel's cargo events all day.
+- A routing engine calling a capacity-check service a thousand times a second.
+
+Four shapes, four different answers, and REST is the right one for one of them.
+
+{% include excalidraw.html file="17-cross-protocol" alt="Four protocols compared side by side by direction, connection model, and best-fit use case: REST plus SSE shown as client-initiated request with optional one-directional server push over a short-lived HTTP connection for cacheable lookups and status watching; WebSockets shown as a full-duplex, stateful, long-lived connection for bidirectional low-latency conversation; webhooks shown as a server-initiated outbound POST to a client-owned endpoint with retry and signature verification for fire-and-forget events to offline receivers; gRPC shown as binary HTTP/2 request/response and streaming RPCs between service-to-service callers with generated contracts." caption="Figure 17.1: REST, WebSockets, webhooks, and gRPC by interaction shape." %}
 
 ## REST and its push ceiling
 
-Start with what REST, plus the previous chapter's streaming modes, already covers well. A `GET /bookings/{id}` call is request/response: the client asks, the server answers once, and the exchange is over. Server-Sent Events extend that shape by one dimension: the server keeps the HTTP connection open and keeps writing events, so a client can watch a booking's status change from `CONFIRMED` to `IN_TRANSIT` to `DELIVERED` without polling. NDJSON streams a large result set as it's produced instead of buffering the whole thing first. Chunked transfer encoding lets a response start before its total size is known. All three are still, structurally, one request followed by a stream of server output over a single HTTP connection the client opened.
+`GET /bookings/{id}` is request/response: one question, one answer. SSE adds a push tail. The server keeps the connection open and writes events, so a client sees `CONFIRMED`, `IN_TRANSIT`, `DELIVERED` without polling. NDJSON and chunked encoding stream a result as it is produced. All three are one client request followed by server output on one connection.
 
-That structure is also the ceiling. SSE and chunked encoding are one-directional: the server pushes, and the client's only channel back to the server is to close the connection or open a new HTTP request. A dispatcher watching live cargo events over SSE cannot use that same connection to acknowledge an event, filter the stream, or send a command: every one of those needs is a separate `POST`, round-tripping through DNS, TLS, and connection setup again, layered awkwardly on top of a connection that's already open and already working in the other direction. For the dispatcher scenario, where the *watching* is the whole requirement, that one-directional limit is not a problem; the dispatcher doesn't need to talk back, only to watch. SSE is the right tool there precisely because it doesn't try to be more than a push channel.
+That structure is also the ceiling. The only way back to the server is to close the connection or open a new request. A dispatcher who wants to acknowledge an event, filter the stream or send a command needs a separate `POST`, with its own connection setup. If watching is the whole requirement, there's no problem: SSE is right because it doesn't try to be more than a push channel.
 
-REST's other strengths carry forward from every chapter before this one: it rides plain HTTP, which means every corporate proxy, CDN, and firewall already understands it; a browser opens an `EventSource` without a library; `GET` responses are cacheable by URL the moment they aren't continuous streams; and a public booking-status endpoint consumed by browsers, mobile apps, and partner systems needs nothing more exotic than a contract and a client diversity axis note from Chapter 2 says explicitly that REST is the lowest common denominator every heterogeneous client population already speaks. None of that changes here. What changes is the shape of the next three interactions, each of which breaks one of REST's assumptions badly enough that forcing it through REST produces a worse design than reaching for something else.
+REST also brings what the rest of the toolchain already understands. Every proxy, CDN and firewall passes plain HTTP, a browser opens an `EventSource` without a library, and a `GET` is cacheable by URL. A public booking-status endpoint for browsers, mobile apps and partners needs a contract and nothing more. The next three interactions each break one of these assumptions.
 
-## WebSockets: when the client needs to talk back
+## WebSockets: the client needs to talk back
 
-A WebSocket connection starts as an HTTP request (the `Upgrade: websocket` handshake) and then stops being HTTP at all. What's left is a single, full-duplex, stateful TCP-like channel: either side can send a message at any time, independent of whether the other side is "answering" anything, and the connection stays open for the life of the session rather than the life of one exchange. That's a different interaction shape from request/response-with-a-push-tail, and it's the shape a live chat between a shipper and a carrier's support desk has: either party can type at any moment, neither is "requesting" from the other, and the connection needs to exist independent of any one message.
-
-Run the Chapter 2 axes and the case for leaving REST is specific, not general. Interaction shape is the decisive one: bidirectional, low-latency, many-small-messages traffic where either side initiates is not request/response with a push tail, it's a conversation, and SSE has no channel for the client's half of that conversation. Latency matters too: a WebSocket message after the handshake pays no new connection setup, no new TLS negotiation, and no HTTP header overhead per message, which matters when messages are frequent and small. Set those two axes against the ones that now argue the other way. Cacheability disappears entirely: there's no URL to key a cache on once the handshake succeeds, because what follows isn't a sequence of addressable requests, it's a private channel. Client diversity gets harder: a corporate proxy that happily passes HTTP may terminate or refuse the `Upgrade` handshake, and some strict firewalls block it outright, which Chapter 2 already named as the kind of infrastructure vote that tends to favor REST. Operationally, a WebSocket is a long-lived stateful connection a load balancer has to keep pinned to one backend instance, which is a harder scaling problem than a REST server that can treat every request as independent and route it anywhere. A chat feature between a shipper and a support desk justifies absorbing those costs because the two-way, low-latency conversation is the entire point. A booking-status feed that only needs to be watched does not. SSE already serves it, at a fraction of the operational cost, which is why Chapter 16 reached for SSE and not WebSockets for exactly that case.
+A WebSocket starts as an HTTP request with an `Upgrade: websocket` handshake and then stops being HTTP. What remains is one full-duplex, stateful channel. Either side sends at any time, and the connection lives for the session, not for one exchange. A live chat between a shipper and a carrier's support desk has that shape: neither party is requesting from the other.
 
 ```
-// Illustrative — not a running example
+// Illustrative, not a running example
 ws.send(JSON.stringify({ type: "message", text: "ETA on the NLRTM leg?" }));
 ws.onmessage = (event) => {
   const msg = JSON.parse(event.data);
@@ -45,11 +52,21 @@ ws.onmessage = (event) => {
 };
 ```
 
+| Axis | Effect of choosing WebSockets |
+|---|---|
+| Interaction shape | Bidirectional, either side initiates. SSE has no channel for the client's half. |
+| Latency | After the handshake, no new connection, TLS negotiation or per-message HTTP headers. |
+| Cacheability | Gone. After the handshake there are no addressable requests to key a cache on. |
+| Client diversity | Worse. A proxy that passes HTTP may refuse the `Upgrade`, and strict firewalls block it. |
+| Operations | A long-lived stateful connection must stay pinned to one backend, which is harder to scale than independent requests. |
+
+Chat justifies those costs because the two-way, low-latency conversation is the whole point. A status feed that is only watched does not, and SSE serves it at a fraction of the cost.
+
 ## Webhooks: push to an endpoint the client owns
 
-A customs broker waiting to hear that a container cleared inspection has a different problem than a dispatcher watching a live feed. The dispatcher's system is online and connected, actively watching a stream; the broker's system might not have a connection open at all, and the event that matters (inspection clearance) happens on the shipping platform's schedule, not the broker's. Polling `GET /bookings/{id}` every few seconds until the status flips is the REST-native answer, and it's a bad one: most polls return nothing new, the broker pays the infrastructure cost of asking constantly, and there's an unavoidable lag between the event happening and the next poll noticing it.
+A customs broker waiting for inspection clearance has no connection open, and the event happens on the platform's schedule. Polling `GET /bookings/{id}` every few seconds works and is wasteful: most polls return nothing new, the broker pays to ask constantly, and the lag is up to one poll interval.
 
-A webhook inverts who initiates. The broker registers a URL on their own infrastructure; when the booking's customs status changes, the shipping platform makes an outbound `POST` to that URL carrying the event, with no open connection and no polling required on either side. This is the fire-and-forget event shape from Chapter 2's first axis, and it's the shape "notify the customs broker" has: the confirming service doesn't need to know who's listening or wait for an acknowledgment to proceed, it only needs to deliver a signal.
+A webhook inverts who initiates. The broker registers a URL on its own infrastructure. When the booking's customs status changes, the platform sends an outbound `POST`:
 
 ```json
 POST https://broker.example.com/webhooks/shipping-events
@@ -63,14 +80,20 @@ X-Signature: sha256=4f0a...
 }
 ```
 
-Webhooks trade REST's cacheability and uniform-interface guarantees for something REST's client-initiated model can't offer at all: push to a party the server can't keep a live connection to. That trade comes with three obligations a REST `GET` never had. First, fan-out: a customs-clearance event may have several subscribers (the broker, the carrier, an internal audit log), and the platform owns delivering to all of them, not just one. Second, delivery semantics: a `POST` to an endpoint that's down, slow, or returns a `500` has to be retried, which means the event is delivered *at least once* and the receiver has to tolerate and de-duplicate repeats (an idempotency key on the event, not the HTTP method, does that work here). Third, security: an endpoint that accepts unauthenticated `POST` requests from the internet is an open door, so a webhook payload needs a verifiable signature (the `X-Signature` header above, HMAC'd over the payload with a shared secret) so the receiver can confirm the shipping platform actually sent it and not an attacker who found the URL. None of those three is REST's fault to carry, because webhooks aren't REST: they're a convention layered on top of plain HTTP `POST`, and the convention has to supply what polling a cacheable `GET` would have gotten without any extra work.
+The platform signals and moves on, with no connection held and no polling. Webhooks give up REST's cacheability and uniform interface for push to a party the server can't keep a connection to. They also carry three obligations a `GET` never had:
 
-## gRPC: when the caller and callee are both yours
+- **Fan-out.** One event may have several subscribers, such as the broker, the carrier and an audit log, and the platform delivers to all of them.
+- **At-least-once delivery.** A `POST` to an endpoint that is down, slow or returning `500` is retried, so receivers must tolerate repeats. An idempotency key on the event, not the HTTP method, de-duplicates.
+- **Signatures.** An endpoint that accepts unauthenticated `POST`s from the internet is open to anyone who finds the URL. An HMAC of the payload under a shared secret, sent in `X-Signature`, lets the receiver verify the sender.
 
-The fourth interaction (a routing engine calling a capacity-check service a thousand times a second) is the one Chapter 2's worked example used to introduce the framework, and it's worth returning to now that streaming is on the table. Both ends of this call are services the same team deploys; there's no browser, no third-party partner, and no unknown client population, which removes the client-diversity axis that argues hardest for REST everywhere else in this book. What's left are the axes that argue against it: latency (a capacity check gating a routing decision needs single-digit-millisecond round trips a thousand times over), payload shape (small, fixed-schema messages where JSON's self-describing text format is pure overhead paid on every call), and now, specifically for this chapter, streaming shape: gRPC supports not just unary request/response but client-streaming, server-streaming, and full bidirectional streaming RPCs defined directly in the service contract.
+Webhooks aren't REST. They're a convention over plain `POST`, and the convention has to supply what a cacheable `GET` provides by default.
+
+## gRPC: caller and callee are both yours
+
+The routing engine and the capacity-check service are deployed by the same team. There's no browser, no partner and no unknown client population, so client diversity, the axis that argues hardest for REST, drops out. The remaining axes argue against it: single-digit-millisecond round trips a thousand times over, small fixed-schema messages where JSON's self-describing text is overhead on every call, and streaming defined in the contract:
 
 ```protobuf
-// Illustrative — not a running example
+// Illustrative, not a running example
 service CapacityCheck {
   rpc CheckCapacity(CapacityRequest) returns (CapacityReply);
   rpc StreamVesselEvents(VesselQuery) returns (stream CargoEvent);
@@ -78,27 +101,55 @@ service CapacityCheck {
 }
 ```
 
-That last RPC shape (bidirectional streaming, defined in the contract itself) is something none of REST, SSE, or webhooks offer, and it's the gRPC-specific answer to the same "both sides need to talk" problem WebSockets solve for browsers. The difference is what surrounds the connection: gRPC runs over HTTP/2, encodes messages as binary Protocol Buffers rather than JSON, and generates client and server stubs directly from the `.proto` file, which buys strong, compiler-checked contracts and low per-message overhead at the cost of the properties REST trades on. A gRPC payload isn't human-readable on the wire the way a REST JSON body is: debugging it means decoding the protobuf, not reading a response in a browser's network tab. Browser support is a bigger gap than it looks: browsers can't open a raw HTTP/2 connection with the trailers gRPC depends on, so browser clients need gRPC-Web and a translating proxy, which is exactly the "every arbitrary client speaks it natively" property REST has and gRPC doesn't. And a corporate proxy that passes REST's plain HTTP without a second thought often doesn't know what to do with gRPC's framing at all. None of that matters for a routing engine calling a capacity-check service it was deployed alongside: there's no browser and no uncontrolled proxy in that path, which is exactly why the client-diversity axis is the one that has to be checked first, every time, before reaching for gRPC.
+gRPC supports unary, client-streaming, server-streaming and bidirectional RPCs. Bidirectional streaming in the contract is something REST, SSE and webhooks don't offer. gRPC runs over HTTP/2, encodes messages as binary Protocol Buffers, and generates client and server stubs from the `.proto` file. That gives compiler-checked contracts and low per-message overhead. The costs:
+
+- Payloads aren't readable on the wire. Debugging means decoding protobuf, not reading a response in a network tab.
+- Browsers can't open a raw HTTP/2 connection with the trailers gRPC needs, so browser clients need gRPC-Web and a translating proxy.
+- Proxies that pass REST without a thought often don't understand gRPC framing.
+
+None of that matters between two services you deploy together. Check client diversity first, every time, before reaching for gRPC.
 
 ## Matching interaction shape to protocol
 
-The four examples above aren't exhaustive, but they cover the shapes that recur across a shipping platform, and the table below is the same Chapter 2 reasoning condensed to a lookup.
-
 | Interaction shape | Example | Best fit | Why |
 |---|---|---|---|
-| Request/response, cacheable, diverse clients | Look up a booking by id | REST | Ubiquitous, cacheable by URL, no client-side tooling required |
-| Server push over an open connection, one direction | Watch a booking's status change | REST + SSE | One-directional push is exactly what SSE adds to REST; no new protocol needed |
-| Bidirectional, low-latency, either side initiates | Live chat between shipper and support | WebSockets | Full-duplex and stateful; justified when two-way *is* the requirement |
-| Fire-and-forget event to a party with no open connection | Notify a customs broker of clearance | Webhooks | Server-initiated `POST` to a client-owned endpoint; no polling, at-least-once with signed payloads |
-| High-frequency, low-latency, service-to-service, strongly typed | Capacity check from a routing engine | gRPC | Binary encoding, generated stubs, and native streaming RPCs where both ends are owned and HTTP/2 is available |
+| Request/response, cacheable, diverse clients | Look up a booking by id | REST | Ubiquitous, cacheable by URL, no client tooling |
+| Server push, one direction | Watch a booking's status | REST + SSE | SSE adds one-directional push without a new protocol |
+| Bidirectional, low-latency, either side initiates | Live chat, shipper and support | WebSockets | Full-duplex and stateful |
+| Fire-and-forget event to a party with no open connection | Notify a customs broker | Webhooks | Server-initiated `POST`, at-least-once, signed |
+| High-frequency, low-latency, service to service, typed | Capacity check from a routing engine | gRPC | Binary encoding, generated stubs, native streaming RPCs |
 
-Read the table by its left column, not its right one: the shape of the interaction is the input, the protocol is the output, and the four rows that leave REST only do so because one of the seven axes (bidirectionality, an offline receiver, or a latency and client-ownership profile that removes REST's main advantage) forced the issue. REST stays the default for everything that doesn't trip one of those signals, which in most shipping-platform traffic is most of it: booking CRUD, cargo lookups, catalog queries, and anything a browser or an unknown third party needs to call.
+Read the table from the left. The interaction shape is the input and the protocol is the output. The three non-REST rows leave REST only because an axis forced it: bidirectionality, an offline receiver, or a latency and ownership profile that removes REST's main advantage. REST stays the default for booking CRUD, cargo lookups, catalog queries and anything a browser or unknown third party calls.
 
-This chapter doesn't attempt to teach WebSockets, webhooks, or gRPC in the depth this book teaches REST: each is wide enough to be its own book, and each is one, elsewhere in this series. What belongs here is the recognition moment: an interaction whose shape doesn't fit request/response-plus-push is not a failure of REST to try harder, it's a signal pointing at a different tool, and naming that signal is more valuable than forcing one more header onto a design that was never going to fit.
+## When to leave REST
 
-{% include excalidraw.html file="17-cross-protocol" alt="Four protocols compared side by side by direction, connection model, and best-fit use case: REST plus SSE shown as client-initiated request with optional one-directional server push over a short-lived HTTP connection for cacheable lookups and status watching; WebSockets shown as a full-duplex, stateful, long-lived connection for bidirectional low-latency conversation; webhooks shown as a server-initiated outbound POST to a client-owned endpoint with retry and signature verification for fire-and-forget events to offline receivers; gRPC shown as binary HTTP/2 request/response and streaming RPCs between service-to-service callers with generated contracts." caption="Figure 17.1: REST, WebSockets, webhooks, and gRPC by interaction shape." %}
+| Signal | Stay or leave |
+|---|---|
+| Request/response or one-way push, cacheable, diverse or external clients | Stay on REST, with SSE, NDJSON or chunked encoding for continuous push |
+| Bidirectional, low-latency, either side initiates | WebSockets |
+| Fire-and-forget event, receiver has no open connection | Webhooks, with fan-out, retries and signatures budgeted up front |
+| Both ends are services you own, and latency or streaming RPCs outweigh readable payloads and browser support | gRPC |
 
-<div class="callout callout--safe"><p class="callout__title">Decision</p><p>Run the Chapter 2 axes before reaching past REST. If the interaction is request/response or one-directional server push, cacheable, and reaches a diverse or external client population, stay on REST, with SSE, NDJSON, or chunked encoding from Chapter 16 if the push is continuous. Leave REST for WebSockets only when the interaction shape is truly bidirectional and low-latency, and both sides need to initiate at will. Leave REST for webhooks when the shape is a fire-and-forget event aimed at a receiver with no open connection, and budget for fan-out, at-least-once retries, and signature verification up front. Leave REST for gRPC only when client diversity drops out of the picture entirely (both caller and callee are services you own) and the latency or streaming-RPC needs outweigh giving up human-readable payloads and native browser support. Each of the other three gets its own book in this series for exactly that reason: each is a complete discipline once an axis points at it.</p></div>
+An interaction that doesn't fit request/response plus push is a signal to pick another tool, not a reason to add one more header.
+
+> **🤖 Explore with your agent**
+>
+> "Review the shipping platform's API surface in contracts/ and examples/16-streaming/. For each of `GET /bookings/{id}`, `GET /bookings/{id}/events`, a customs-clearance notification and a routing-engine capacity check, name the interaction shape and pick REST, SSE, WebSockets, webhooks or gRPC with a one-line reason. Flag any case where leaving REST isn't justified."
+>
+> Check: the reply keeps `GET /bookings/{id}` on REST and `/events` on SSE, and gives the customs notification a signed, retried webhook.
+
+## Build, run, observe
+
+No example of its own. The streaming example shows the SSE case that stays on REST:
+
+```bash
+cd examples/16-streaming && ./verify.sh
+```
+
+Experiments:
+
+- Open the SSE feed and look for a way to acknowledge an event on the same connection. The protocol has none, which is the case for WebSockets.
+- Sketch the webhook receiver for a `500` response. The platform retries, so the receiver sees the event twice and must de-duplicate on the event's idempotency key.
 
 ## For deeper coverage
 
@@ -107,4 +158,3 @@ This chapter doesn't attempt to teach WebSockets, webhooks, or gRPC in the depth
 - *Cloud Native Design Patterns*, event-driven (same series, webhooks as fire-and-forget events).
 - Clément Jean, *gRPC Go for Professionals* (Packt, 2023): streaming RPC shapes.
 - Gough, Bryant & Auburn, *Mastering API Architecture* (O'Reilly, 2022): protocol selection across an API's lifecycle.
-

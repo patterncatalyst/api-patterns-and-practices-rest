@@ -68,8 +68,8 @@ public final class Ulid {
     }
 
     /**
-     * A deterministic, non-random "ULID-shaped" id derived from {@code seed}
-     * — same seed in, same 26-char Crockford string out, every time.
+     * A deterministic, non-random "ULID-shaped" id derived from {@code seed}:
+     * same seed in, same 26-char Crockford string out, every time.
      *
      * Used by PUT (full replace), NOT by POST: an idempotent replace must
      * converge on the SAME resource state (including sub-resource ids like

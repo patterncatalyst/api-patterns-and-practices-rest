@@ -164,7 +164,7 @@ def _merge_patch(target: Any, patch: Any) -> Any:
 
 @app.patch("/bookings/{booking_id}")
 async def patch_booking(booking_id: str, request: Request) -> JSONResponse:
-    """Dispatch on Content-Type to one of this chapter's two partial-update
+    """Dispatch on Content-Type to one of the two partial-update
     media types. Starlette's routing is path-based only (unlike JAX-RS's
     `@Consumes`, which can route the SAME path to different methods by
     Content-Type), so the dispatch has to happen by hand, here."""

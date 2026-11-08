@@ -1,4 +1,4 @@
-# Contracts — the single source of truth
+# Contracts: the single source of truth
 
 Every payload type in the shipping/cargo domain is defined **once** and reused
 across four contract languages. CI (`.github/workflows/contracts.yml`) lints and
@@ -8,16 +8,16 @@ from the Jekyll site (`_config.yml` → `exclude: contracts/`).
 ```
 contracts/
 ├── schemas/
-│   └── shipping.schema.json      # JSON Schema 2020-12 — ALL payload types ($defs)
+│   └── shipping.schema.json      # JSON Schema 2020-12, ALL payload types ($defs)
 ├── openapi/
-│   ├── shipping-api.yaml         # OpenAPI 3.1 — the current contract (v2), sync request/response
-│   └── shipping-api-v1.yaml      # frozen v1 shape, for the versioning chapter (Ch14)
+│   ├── shipping-api.yaml         # OpenAPI 3.1, the current contract (v2), sync request/response
+│   └── shipping-api-v1.yaml      # frozen v1 shape, for the versioning chapter (Chapter 14)
 ├── asyncapi/
-│   └── shipping-events.yaml      # AsyncAPI 3.0 — booking lifecycle event channels
+│   └── shipping-events.yaml      # AsyncAPI 3.0, booking lifecycle event channels
 ├── cloudevents/
 │   └── booking-confirmed.example.json   # CloudEvents 1.0 envelope; data = BookingEvent
 └── arazzo/
-    └── booking-workflow.yaml     # Arazzo 1.0.1 — book → confirm → poll → track sequence
+    └── booking-workflow.yaml     # Arazzo 1.0.1, book → confirm → poll → track sequence
 ```
 
 ## The reuse rule (acceptance criterion #11)
@@ -30,7 +30,7 @@ contracts/
 - The CloudEvents `data` and the Arazzo inputs reference the same components.
 
 No payload type is ever defined twice. Change it in the schema and every
-contract — and both stacks generated from them — moves together.
+contract (and both stacks generated from them) moves together.
 
 ## Which contract when? (the recurring Decision box)
 
@@ -53,5 +53,5 @@ import json, jsonschema  # data payloads validate against the shared schema
 PY
 ```
 
-Artifacts are published to **Apicurio Registry** (the xRegistry touchpoint, Ch21)
+Artifacts are published to **Apicurio Registry** (the xRegistry touchpoint, Chapter 21)
 when the registry service from the stack is running.

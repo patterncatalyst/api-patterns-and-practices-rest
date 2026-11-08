@@ -72,7 +72,7 @@ def get(op_id: str) -> Operation | None:
 
 def cancel(op_id: str) -> bool:
     """Cancels a still-PENDING/RUNNING operation. Returns False if unknown
-    or already terminal (SUCCEEDED/FAILED) — the caller treats DELETE as
+    or already terminal (SUCCEEDED/FAILED); the caller treats DELETE as
     idempotent either way. The delayed completion below checks `cancelled`
     before mutating anything, so a cancel that wins the race leaves the
     booking PENDING.

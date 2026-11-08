@@ -36,7 +36,7 @@ final class HateoasLinks {
             }
             case CONFIRMED -> links.put("cancel", new Link("/bookings/" + id, "DELETE", "Cancel this booking"));
             case IN_TRANSIT, DELIVERED, CANCELLED -> {
-                // self only — no further client-driven transition from here.
+                // self only; no further client-driven transition from here.
             }
         }
         return links;

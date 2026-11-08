@@ -91,12 +91,12 @@ def _now_utc() -> str:
 
 def configure(enabled: bool, interval_seconds: int) -> tuple[JobDefinition, bool]:
     """Upserts the job definition (server-owned schedule) and re-arms the
-    periodic ticker at the new `interval_seconds` — this is what makes "the
+    periodic ticker at the new `interval_seconds`; this is what makes "the
     client configures the schedule" literally true: the ticker's cadence
     comes from the configured value, not a hardcoded constant. Must be
     called from a coroutine running on the event loop (an `async def`
-    endpoint), since it creates an asyncio task — see Ch10's
-    operations.start_confirmation for the same gotcha.
+    endpoint), since it creates an asyncio task, the same gotcha as
+    an `async def` confirmation handler.
     """
     global _definition
     created = _definition is None

@@ -1,7 +1,7 @@
 # API Patterns and Practices: REST
 
 Designing **REST APIs** well, with runnable examples in **Quarkus** and
-**Python/FastAPI** against one OpenAPI contract — a chapter-based Jekyll site plus a
+**Python/FastAPI** against one OpenAPI contract, a chapter-based Jekyll site plus a
 companion conference deck, in the `lgtm` house style.
 
 **Live site:** https://patterncatalyst.github.io/api-patterns-and-practices-rest/
@@ -12,14 +12,14 @@ project (REST → [gRPC](https://github.com/patterncatalyst/api-patterns-and-pra
 
 ## What's here
 
-- **27 chapters + an OpenShift Local (CRC) appendix**, across 12 parts — from resource
+- **27 chapters + an OpenShift Local (CRC) appendix**, across 12 parts, from resource
   design and HTTP semantics through pagination, async operations, HATEOAS, versioning,
-  streaming and large payloads, backend concurrency, HTTP/2–3, multi-protocol contracts
+  streaming and large payloads, backend concurrency, HTTP/2 and HTTP/3, multi-protocol contracts
   (OpenAPI + AsyncAPI + CloudEvents + Arazzo), framework deep-dives, and testing.
 - **Both stacks, first-class:** every hands-on chapter ships a Quarkus **and** a
   Python/FastAPI example against the **same** OpenAPI contract.
 - **Contract-first:** `contracts/` is the single source of truth. CI validates both
-  stacks against it — a response that violates the schema fails the build.
+  stacks against it: a response that violates the schema fails the build.
 - **Behavioral verification:** each example's `verify.sh` asserts response *semantics*
   against the contract, not just a status code.
 - **Three tiers:** Docker Compose → minikube (Kubernetes) → CRC (OpenShift Local).
@@ -31,7 +31,7 @@ project (REST → [gRPC](https://github.com/patterncatalyst/api-patterns-and-pra
 The canonical **shipping / cargo booking** domain used across patterncatalyst
 material: `Booking` (the aggregate root), `Cargo`, `Location` (UN/LOCODE), `Route`,
 `Operation`, and `Money` as a decimal string. See `_plans/domain-glossary.md`. The
-gRPC sibling continues the same story — gRPC is the internal routing/tracking service
+gRPC sibling continues the same story: gRPC is the internal routing/tracking service
 this REST booking service calls.
 
 ## Build locally
@@ -53,7 +53,7 @@ bash examples/04-contract-first/verify.sh
 | Path | What |
 |---|---|
 | `_docs/` | The 27 chapters + appendix (Markdown). |
-| `contracts/` | OpenAPI + AsyncAPI + shared JSON Schema + CloudEvents + Arazzo — the source of truth. |
+| `contracts/` | OpenAPI + AsyncAPI + shared JSON Schema + CloudEvents + Arazzo, the source of truth. |
 | `examples/` | One runnable example per hands-on chapter, Quarkus + Python, each with `verify.sh`. |
 | `presentation/` | The three `.pptx` deck builders. |
 | `_plans/` | Iteration plan, coverage matrix, domain glossary. |
@@ -61,18 +61,18 @@ bash examples/04-contract-first/verify.sh
 
 ## Licence
 
-MIT — prose and code.
+MIT: prose and code.
 
 ## License
 
 This project is dual-licensed to separate the code from the writing:
 
-- **Code** — everything under `examples/`, plus build and helper scripts and
-  inline code snippets — is licensed under the **Apache License 2.0**
+- **Code**: everything under `examples/`, plus build and helper scripts and
+  inline code snippets, is licensed under the **Apache License 2.0**
   ([`LICENSE`](LICENSE)).
-- **Content** — the tutorial and book prose (chapters under `_docs/`),
+- **Content**: the tutorial and book prose (chapters under `_docs/`),
   diagrams and images under `assets/`, and the slide decks under
-  `presentation/` — is licensed under **Creative Commons Attribution 4.0
+  `presentation/`, is licensed under **Creative Commons Attribution 4.0
   International (CC BY 4.0)** ([`LICENSE-docs.md`](LICENSE-docs.md)).
 
 Copyright 2026 PatternCatalyst (Robert Sedor).

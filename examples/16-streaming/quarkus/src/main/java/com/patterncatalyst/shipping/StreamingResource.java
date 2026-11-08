@@ -70,7 +70,7 @@ public class StreamingResource {
         // ticks() emits 0, 1, 2, ... at a fixed cadence; starting AFTER the
         // interval (not at t=0) means the client sees the connection open
         // immediately but the first `data:` frame only arrives one interval
-        // later — genuinely spaced out, not all buffered and flushed at
+        // later: genuinely spaced out, not all buffered and flushed at
         // once. select().first(N) completes (closes) the stream after the
         // Nth tick instead of ticking forever.
         return Multi.createFrom().ticks()

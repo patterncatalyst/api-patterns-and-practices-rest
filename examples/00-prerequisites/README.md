@@ -1,8 +1,8 @@
-# Ch0 — Boot skeleton + Compose/LGTM
+# Chapter 0: Boot skeleton + Compose/LGTM
 
-The toolchain-pin example for Part 0. Two tiny services — one Quarkus, one
-FastAPI — answer a health check over Docker Compose, fronted by Postgres.
-No resources, no contract yet: that's Ch4, where both stacks start serving
+The toolchain-pin example for Part 0. Two tiny services (one Quarkus, one
+FastAPI) answer a health check over Docker Compose, fronted by Postgres.
+No resources, no contract yet: that's Chapter 4, where both stacks start serving
 `contracts/openapi/shipping-api.yaml` for the **shipping/cargo** domain (a
 customer books cargo for transport from an origin to a destination; see
 `_plans/domain-glossary.md`). This chapter only proves the stack boots.
@@ -21,7 +21,7 @@ customer books cargo for transport from an origin to a destination; see
 
 Exact UBI tags are pinned in each `Containerfile`; re-check with
 `skopeo list-tags docker://registry.access.redhat.com/ubi10/<repo>` and bump
-deliberately.
+the pin by hand.
 
 ## Run it
 
@@ -32,7 +32,7 @@ Automated (what CI runs):
 ```
 
 Brings the app stack up with `docker compose`, polls both health endpoints,
-asserts `200`, prints `PASS`, and tears the stack down — no orphaned
+asserts `200`, prints `PASS`, and tears the stack down, no orphaned
 containers afterward.
 
 Manual, app stack only (Quarkus + FastAPI + Postgres):
@@ -53,7 +53,7 @@ docker compose --profile observability up --build
 # Grafana: http://localhost:3000 (anonymous admin)
 ```
 
-The `observability` profile is **off by default** — `docker compose up` and
+The `observability` profile is **off by default**, `docker compose up` and
 `verify.sh` never start it, so a first boot and CI both stay fast. Neither
 app exports telemetry yet; OTel wiring lands with the contract-first build
 in later chapters.
@@ -72,6 +72,6 @@ in later chapters.
 
 ## Architecture
 
-![Ch0 lab topology](architecture.svg)
+![Chapter 0 lab topology](architecture.svg)
 
 Editable source: `architecture.excalidraw`.

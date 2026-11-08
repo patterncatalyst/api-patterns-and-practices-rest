@@ -21,8 +21,8 @@ const {
   addSectionDivider, addNotes,
 } = H;
 
-const OUT = path.resolve(__dirname, "api-patterns-rest-100-r1.1.pptx");
-const REV = "r1.1";
+const OUT = path.resolve(__dirname, "api-patterns-rest-100-r1.2.pptx");
+const REV = "r1.2";
 
 const pres = newDeck();
 pres.title = "API Patterns & Practices: REST 100 (Concepts)";
@@ -184,11 +184,11 @@ divider("02", "Designing resources with a contract",
   const s = S();
   addCodeSlide(s, "RESOURCES", "Nouns, not verbs: the shipping domain", "url shapes",
     [
-      "// Not good — verbs in the path, the DB leaking out",
+      "// Not good: verbs in the path, the DB leaking out",
       "POST /create-booking",
       "GET  /booking-row?table=bookings&pk=42",
       "",
-      "// Good — nouns addressed by the uniform method set",
+      "// Good: nouns addressed by the uniform method set",
       "POST /bookings                     # create a booking",
       "GET  /bookings/{bookingId}         # one booking",
       "GET  /bookings/{bookingId}/cargo   # cargo under it",
@@ -300,14 +300,14 @@ divider("03", "HTTP semantics done right",
   const s = S();
   addCodeSlide(s, "SEMANTICS", "Partial updates: JSON Patch vs Merge Patch", "json",
     [
-      "// JSON Patch — RFC 6902 · application/json-patch+json",
+      "// JSON Patch (RFC 6902 · application/json-patch+json)",
       "// An ordered list of operations; precise, can test/move/remove.",
       "[",
       "  { \"op\": \"replace\", \"path\": \"/requestedPickup\", \"value\": \"2026-11-02\" },",
       "  { \"op\": \"add\", \"path\": \"/cargo/-\", \"value\": { \"description\": \"pallets\", \"type\": \"GENERAL\" } }",
       "]",
       "",
-      "// JSON Merge Patch — RFC 7396 · application/merge-patch+json",
+      "// JSON Merge Patch (RFC 7396 · application/merge-patch+json)",
       "// Looks like the resource; null means delete. Simpler, less precise.",
       "{ \"requestedPickup\": \"2026-11-02\", \"quote\": null }",
     ],
@@ -346,7 +346,7 @@ divider("04", "Collections at scale",
       "}",
     ],
     "limit is capped (max 100, default 20) as a DoS guard; nextCursor is null on the last page.");
-  addNotes(s, "Here's the collection contract in practice. The request combines all three techniques: status and origin filter server-side so the client isn't shipped rows it will throw away; limit caps the page; and fields= asks for a sparse projection (just id, status, and origin), which cuts payload size when a client only needs a summary view. The response shape is the part worth copying. It's an object, not a bare array, with three parts: items is the page of bookings; page is the metadata: the limit that was applied, the count actually returned, and nextCursor, the opaque keyset cursor for the following page, which is null when you've reached the end; and _links carries a ready-made next link so a client can follow pagination without constructing URLs itself, which is HATEOAS applied to collections. Two guard rails from the contract: limit has a maximum of 100 and a default of 20, so a client can't ask for a million rows and a client that forgets to ask still gets a sane page: that cap is a denial-of-service defence, not a nicety. And nextCursor being null is the unambiguous end-of-collection signal, so clients don't have to guess whether an empty page means 'done' or 'try again'.");
+  addNotes(s, "Here's the collection contract in practice. The request combines all three techniques: status and origin filter server-side so the client isn't shipped rows it will throw away; limit caps the page; and fields= asks for a sparse projection (just id, status, and origin), which cuts payload size when a client only needs a summary view. Copy the response shape. It's an object, not a bare array, with three parts: items is the page of bookings; page is the metadata: the limit that was applied, the count actually returned, and nextCursor, the opaque keyset cursor for the following page, which is null when you've reached the end; and _links carries a ready-made next link so a client can follow pagination without constructing URLs itself, which is HATEOAS applied to collections. Two guard rails from the contract: limit has a maximum of 100 and a default of 20, so a client can't ask for a million rows and a client that forgets to ask still gets a sane page: that cap is a denial-of-service defence, not a nicety. And nextCursor being null is the unambiguous end-of-collection signal, so clients don't have to guess whether an empty page means 'done' or 'try again'.");
 }
 
 /* --- sub-resources --- */
@@ -391,7 +391,7 @@ divider("05", "Asynchronous work & jobs",
   const s = S();
   addCodeSlide(s, "ASYNC", "The 202 → poll → 303 contract", "http",
     [
-      "# 1 · Start the work — accepted, not finished",
+      "# 1 · Start the work: accepted, not finished",
       "POST /bookings/bkg_01H.../confirmation",
       "HTTP/1.1 202 Accepted",
       "Location: /operations/op_01H...",
@@ -400,7 +400,7 @@ divider("05", "Asynchronous work & jobs",
       "GET /operations/op_01H...",
       "HTTP/1.1 200 OK   { \"status\": \"RUNNING\" }",
       "",
-      "# 3 · Done — redirect to the result",
+      "# 3 · Done: redirect to the result",
       "HTTP/1.1 303 See Other",
       "Location: /bookings/bkg_01H...",
     ],
@@ -419,7 +419,7 @@ divider("05", "Asynchronous work & jobs",
     "In our domain: a reconcile Job re-checks manifests against bookings, run nightly or on demand.",
     "The alternative, one fat custom method carrying all config every time, couples permission-to-configure with permission-to-run.",
   ], { fontSize: 16 });
-  addNotes(s, "Rerunnable jobs are the async pattern's cousin, for work that recurs. The motivating observation: some functionality runs over and over, and making the client re-send all of its configuration on every call is both wasteful and a security smell. So split it into two resources. A Job resource holds the configuration: what to reconcile, with what parameters, and it persists. Executing the job is a separate act that produces an Operation, exactly the long-running-operation resource from the last pattern, so you get status and polling for free. The execution can be triggered two ways: on demand, by POSTing to run the job, or on a schedule the server owns, and that last point matters, because the client shouldn't have to stay running to fire a nightly task; the server holds the clock. In our domain the concrete example is a reconcile job that re-checks consolidated manifests against the bookings they claim to cover, which you'd run nightly and also on demand after a correction. The design payoff is in the last bullet: by separating the Job (configure) from its execution (run), you can grant different permissions to each: someone may be allowed to run a reconcile without being allowed to change what it reconciles. Fold both into one fat custom method that carries all the config every time, and you've welded those two permissions together and lost that control.");
+  addNotes(s, "Rerunnable jobs are the async pattern's cousin, for work that recurs. The motivating observation: some functionality runs over and over, and making the client re-send all of its configuration on every call is both wasteful and a security smell. So split it into two resources. A Job resource holds the configuration: what to reconcile, with what parameters, and it persists. Executing the job is a separate act that produces an Operation, exactly the long-running-operation resource from the last pattern, so you get status and polling without extra design. The execution can be triggered two ways: on demand, by POSTing to run the job, or on a schedule the server owns, and that last point matters, because the client shouldn't have to stay running to fire a nightly task; the server holds the clock. In our domain the concrete example is a reconcile job that re-checks consolidated manifests against the bookings they claim to cover, which you'd run nightly and also on demand after a correction. The design payoff is in the last bullet: by separating the Job (configure) from its execution (run), you can grant different permissions to each: someone may be allowed to run a reconcile without being allowed to change what it reconciles. Fold both into one fat custom method that carries all the config every time, and you've welded those two permissions together and lost that control.");
 }
 
 /* ======================= DIVIDER 06 ======================= */
@@ -442,7 +442,7 @@ divider("06", "Evolution & lifecycle",
   const s = S();
   addCodeSlide(s, "LIFECYCLE", "State-dependent _links on a Booking", "json",
     [
-      "// GET /bookings/bkg_01H...  — a PENDING booking",
+      "// GET /bookings/bkg_01H...: a PENDING booking",
       "{",
       "  \"id\": \"bkg_01H9XZ8K3QJ7M2N4P6R8T0V2W4\",",
       "  \"status\": \"PENDING\",",
@@ -554,7 +554,7 @@ divider("08", "Multi-protocol contracts",
       "  \"subject\": \"bkg_01H...\",",
       "  \"time\": \"2026-10-11T14:30:00Z\",",
       "  \"datacontenttype\": \"application/json\",",
-      "  \"data\": {                         // data = $defs/BookingEvent — same schema",
+      "  \"data\": {                         // data = $defs/BookingEvent, same schema",
       "    \"bookingId\": \"bkg_01H...\", \"status\": \"CONFIRMED\",",
       "    \"previousStatus\": \"PENDING\", \"origin\": { \"unLocode\": \"USNYC\" }",
       "  }",
@@ -609,7 +609,7 @@ divider("10", "The complete project & wrap-up",
     "Async confirmation (202 → poll → 303) plus a CloudEvents stream off the same booking row.",
     "HATEOAS-driven lifecycle, soft deletion with purge, and a versioning strategy: the patterns, ready to implement in either stack.",
   ], { fontSize: 16 });
-  addNotes(s, "The complete project is where every pattern stops being a slide and becomes one running system, so it's worth seeing them assembled. One OpenAPI contract defines the surface, and the domain is modelled as resources: Booking as the aggregate root, Cargo as a sub-resource, Operation for long-running work, Manifest as the large binary. The methods and status codes follow the semantics we covered, and because the design respects the safe/idempotent matrix, the client and gateway retries are safe by construction rather than by luck. Reading the collection uses keyset pagination with a capped limit; fetching the manifest uses HEAD plus Range plus 206; live status uses streaming. Confirmation is the async operation: 202, poll the Operation, 303 to the result. The very same state transition emits a CloudEvents message onto the lifecycle stream off the same booking row, with the payload typed by the shared schema so the two can't disagree. The lifecycle is HATEOAS-driven, so clients follow links instead of hard-coding the state machine; deletion is soft with a governed purge path for GDPR; and there's a considered versioning strategy for the day a breaking change arrives. That's the whole 100-level arc as one design. On the site it ships twice, Quarkus and Python/FastAPI, validated against the one contract in CI, and those two builds are exactly what the companion implementation decks walk through.");
+  addNotes(s, "The complete project is where every pattern stops being a slide and becomes one running system, so here they are assembled. One OpenAPI contract defines the surface, and the domain is modelled as resources: Booking as the aggregate root, Cargo as a sub-resource, Operation for long-running work, Manifest as the large binary. The methods and status codes follow the semantics we covered, and because the design respects the safe/idempotent matrix, the client and gateway retries are safe by construction rather than by luck. Reading the collection uses keyset pagination with a capped limit; fetching the manifest uses HEAD plus Range plus 206; live status uses streaming. Confirmation is the async operation: 202, poll the Operation, 303 to the result. The very same state transition emits a CloudEvents message onto the lifecycle stream off the same booking row, with the payload typed by the shared schema so the two can't disagree. The lifecycle is HATEOAS-driven, so clients follow links instead of hard-coding the state machine; deletion is soft with a governed purge path for GDPR; and there's a considered versioning strategy for the day a breaking change arrives. That's the whole 100-level arc as one design. On the site it ships twice, Quarkus and Python/FastAPI, validated against the one contract in CI, and those two builds are exactly what the companion implementation decks walk through.");
 }
 
 /* --- OpenAPI wrap --- */

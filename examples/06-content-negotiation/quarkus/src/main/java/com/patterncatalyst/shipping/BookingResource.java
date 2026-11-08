@@ -91,7 +91,7 @@ public class BookingResource {
                 null);
         store.put(booking);
 
-        // A literal header string, NOT Response.created(URI) — per the
+        // A literal header string, NOT Response.created(URI): per the
         // JAX-RS spec, ResponseBuilder.location(URI) resolves a relative
         // URI into an absolute one against the base URI, which would make
         // Quarkus's Location header shape diverge from the Python stack's
@@ -202,7 +202,7 @@ public class BookingResource {
 
     /**
      * 409 Conflict path: confirming a booking is only valid from
-     * {@code PENDING} — confirming it twice, or confirming one that's
+     * {@code PENDING}: confirming it twice, or confirming one that's
      * already cancelled/in transit/delivered, is a state conflict, not a
      * validation error (the request is well-formed; the resource just
      * isn't in a state that allows it). This rounds out the status-code

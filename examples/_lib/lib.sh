@@ -172,7 +172,7 @@ wait_for_http() {
     waited=$(( waited + interval ))
   done
 
-  echo "lib.sh: FAIL — $url did not become healthy within ${timeout}s (last HTTP code: ${code:-none})" >&2
+  echo "lib.sh: FAIL, $url did not become healthy within ${timeout}s (last HTTP code: ${code:-none})" >&2
   return 1
 }
 
@@ -183,10 +183,10 @@ assert_status() {
   local context="${3:-}"
 
   if [[ "$expected" != "$actual" ]]; then
-    echo "lib.sh: FAIL — ${context:-status check}: expected HTTP $expected, got $actual" >&2
+    echo "lib.sh: FAIL, ${context:-status check}: expected HTTP $expected, got $actual" >&2
     return 1
   fi
-  echo "lib.sh: ok — ${context:-status check}: HTTP $actual" >&2
+  echo "lib.sh: ok, ${context:-status check}: HTTP $actual" >&2
 }
 
 # assert_header <header-name> <response-headers-file-or-string> <context>
@@ -207,10 +207,10 @@ assert_header() {
   fi
 
   if ! grep -qi "^${header_name}:" <<<"$headers_text"; then
-    echo "lib.sh: FAIL — ${context:-header check}: missing '$header_name' header" >&2
+    echo "lib.sh: FAIL, ${context:-header check}: missing '$header_name' header" >&2
     return 1
   fi
-  echo "lib.sh: ok — ${context:-header check}: '$header_name' header present" >&2
+  echo "lib.sh: ok, ${context:-header check}: '$header_name' header present" >&2
 }
 
 # ---------------------------------------------------------------------------
@@ -240,7 +240,7 @@ validate_body() {
   fi
 
   if [[ "$rc" -ne 0 ]]; then
-    echo "lib.sh: FAIL — body does not conform to #/\$defs/$type_name" >&2
+    echo "lib.sh: FAIL, body does not conform to #/\$defs/$type_name" >&2
     return "$rc"
   fi
 }

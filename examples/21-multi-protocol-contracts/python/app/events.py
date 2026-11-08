@@ -67,7 +67,7 @@ def publish_confirmed(confirmed: Booking, previous_status: BookingStatus) -> Non
             "subject": confirmed.id,
             "time": occurred_at,
             "datacontenttype": "application/json",
-            "data": data.model_dump(mode="json", exclude_none=True),
+            "data": data.model_dump(mode="json", exclude_none=True),  # #/$defs/BookingEvent
         }
         payload = json.dumps(envelope).encode("utf-8")
 

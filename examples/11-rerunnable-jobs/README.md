@@ -1,20 +1,20 @@
-# Ch11 — Rerunnable jobs
+# Chapter 11: Rerunnable jobs
 
-Extends the [Ch4 contract-first anchor](../04-contract-first/) with a
+Extends the [Chapter 4 contract-first anchor](../04-contract-first/) with a
 server-owned, **rerunnable** job: `manifest-reconcile`, which re-checks
 manifests against bookings on a schedule the server itself drives.
 
 - `contracts/openapi/shipping-api.yaml` / `contracts/schemas/shipping.schema.json`
-  — the `Booking`/`Cargo` resource model (unchanged from Ch4), plus
-  `Operation`/`OperationStatus` (introduced in Ch10), reused here as the
+ : the `Booking`/`Cargo` resource model (unchanged from Chapter 4), plus
+  `Operation`/`OperationStatus` (introduced in Chapter 10), reused here as the
   shape of a job **run record**.
 - The job **definition** itself (`id`/`enabled`/`intervalSeconds`/
-  `createdAt`/`updatedAt`) is a small local shape — documented below, not in
+  `createdAt`/`updatedAt`) is a small local shape, documented below, not in
   the shared schema, since it has no shipping-domain meaning.
 
 Quarkus (`quarkus/`, host port **8091**) and FastAPI (`python/`, host port
 **8011**) independently implement the identical protocol against an
-in-memory store. These ports are deliberately unique across the repo's
+in-memory store. These ports are unique across the repo's
 examples so this stack can run alongside any other chapter's without a
 clash.
 
@@ -47,13 +47,13 @@ curl -si -X PUT localhost:8091/jobs/manifest-reconcile \
 # 2. Read the schedule back.
 curl -s localhost:8091/jobs/manifest-reconcile | jq .
 
-# 3. Trigger an on-demand run ("run now") — independent of the scheduler.
+# 3. Trigger an on-demand run ("run now"): independent of the scheduler.
 curl -si -X POST localhost:8091/jobs/manifest-reconcile/runs
 
 # 4. Poll the run until it SUCCEEDS.
 curl -s localhost:8091/jobs/manifest-reconcile/runs/<runId> | jq .
 
-# 5. List every run the job has produced — both "run now" calls AND the
+# 5. List every run the job has produced: both "run now" calls AND the
 #    scheduler's own automatic runs show up here, in the same shape.
 curl -s localhost:8091/jobs/manifest-reconcile/runs | jq .
 
@@ -77,20 +77,20 @@ with two different owners, not one:
 | **Job definition** (schedule) | Server, configured by the client | WHEN the job should run, and whether it's enabled at all | `PUT`/`GET /jobs/manifest-reconcile` |
 | **Run** (execution) | Server, entirely | ONE execution of the job, with its own lifecycle | `POST`/`GET /jobs/manifest-reconcile/runs[/{runId}]` |
 
-A client **configures** the job — it never drives an individual execution.
+A client **configures** the job, it never drives an individual execution.
 Executions happen because:
 
 1. **The server's own scheduler** fires a run automatically, on the
    interval the client configured, for as long as the job stays `enabled`.
 2. **An explicit "run now"** (`POST /jobs/manifest-reconcile/runs`) lets a
-   client trigger ONE additional execution on demand — useful for "I don't
+   client trigger ONE additional execution on demand, useful for "I don't
    want to wait for the next scheduled tick," not a way to replace the
    schedule.
 
 Both paths produce the exact same kind of resource: a run record that goes
 through `PENDING` -> `RUNNING` -> `SUCCEEDED`/`FAILED`, reusing the
-`Operation`/`OperationStatus` shape from Ch10's shared contract rather than
-inventing a parallel "JobRun" type — a rerunnable job's single execution
+`Operation`/`OperationStatus` shape from Chapter 10's shared contract rather than
+inventing a parallel "JobRun" type, a rerunnable job's single execution
 *is* a long-running operation, just one the server itself may also start.
 
 ```
@@ -110,24 +110,24 @@ Client                 Job definition            Scheduler            Run record
 
 ## Scheduler per stack
 
-Both stacks implement the SAME pattern as Ch10's background worker, just
+Both stacks implement the SAME pattern as Chapter 10's background worker, just
 with a periodic re-fire instead of a one-shot delay, and the period is
-re-armed every time the client reconfigures the schedule — so "the client
+re-armed every time the client reconfigures the schedule, so "the client
 configures the schedule" is literally true, not just a figure of speech:
 
 - **Quarkus** (`JobStore.java`): a daemon-thread `ScheduledExecutorService`
-  (the same primitive Ch10 uses for its one-shot confirmation delay).
+  (the same primitive Chapter 10 uses for its one-shot confirmation delay).
   `configure()` cancels the current `ScheduledFuture` and re-arms
   `scheduleAtFixedRate(this::tick, intervalSeconds, intervalSeconds,
   SECONDS)` at the newly configured interval.
 - **FastAPI** (`app/jobs.py`): `asyncio.create_task` running an
-  `await asyncio.sleep(interval_seconds)` loop (the same primitive Ch10
+  `await asyncio.sleep(interval_seconds)` loop (the same primitive Chapter 10
   uses for its one-shot confirmation delay). `configure()` cancels the
   current ticker task and starts a fresh one at the new interval.
 
-Both keep the actual "reconcile" work deliberately trivial and fast (a scan
-of the in-memory `BookingStore`/`app.store`, counting `PENDING` bookings) —
-the point of this chapter is the rerunnable-job *protocol*, not a real
+Both keep the actual "reconcile" work trivial and fast (a scan
+of the in-memory `BookingStore`/`app.store`, counting `PENDING` bookings).
+The point of this chapter is the rerunnable-job *protocol*, not a real
 manifest-reconciliation engine. `verify.sh` configures `intervalSeconds=2`
 so the scheduler's own behavior is observable within a few seconds, keeping
 CI bounded.
@@ -141,12 +141,12 @@ CI bounded.
 | POST   | `/jobs/manifest-reconcile/runs`           | 202/404 | `Location: .../runs/{runId}`, body = run record (`Operation` shape) |
 | GET    | `/jobs/manifest-reconcile/runs`           | 200/404 | newest-first array of run records |
 | GET    | `/jobs/manifest-reconcile/runs/{runId}`   | 200/404 | one run record |
-| POST   | `/bookings`, `/bookings/{id}/cargo`, etc. | — | from Ch4 — `BookingStore` is what the reconcile run's trivial work scans |
+| POST   | `/bookings`, `/bookings/{id}/cargo`, etc. | n/a | from Chapter 4, `BookingStore` is what the reconcile run's trivial work scans |
 
 Errors are always `Problem` (`application/problem+json`): 404 for an
 unconfigured job or an unknown run, 400 for an invalid job definition
 (missing `enabled`/`intervalSeconds`, or `intervalSeconds < 1`). `_links`
-(HATEOAS) is intentionally omitted everywhere — that's Ch12.
+(HATEOAS) is omitted everywhere, that's Chapter 12.
 
 ## The drift probe
 
@@ -154,7 +154,7 @@ unconfigured job or an unknown run, 400 for an invalid job definition
 drifts from the protocol. To see it happen, introduce one of these edits in
 either stack and re-run `./verify.sh`.
 
-**Option A — drop the schedule from the job definition.**
+**Option A: drop the schedule from the job definition.**
 
 In `python/app/jobs.py`'s `_JobDefinitionRecord.to_job_definition`, hardcode
 `intervalSeconds=0` instead of `self.interval_seconds`:
@@ -169,28 +169,28 @@ hardcode `0` instead of `intervalSeconds`.)
 Re-run `./verify.sh`. It fails immediately after the first `PUT`:
 
 ```
-lib.sh: FAIL — python job definition: expected intervalSeconds=2, got 0
+lib.sh: FAIL, python job definition: expected intervalSeconds=2, got 0
 ```
 
-**Option B — a run-now that never reaches SUCCEEDED.**
+**Option B: a run-now that never reaches SUCCEEDED.**
 
 In `python/app/jobs.py`'s `_execute_run`, comment out the
 `record.status = OperationStatus.SUCCEEDED` line (leaving the run stuck
-`RUNNING` forever). Re-run `./verify.sh` — it polls for
+`RUNNING` forever). Re-run `./verify.sh`, it polls for
 `POLL_TIMEOUT_SECONDS` (10s) and then fails with:
 
 ```
-lib.sh: FAIL — python run op_... never reached SUCCEEDED within 10s
+lib.sh: FAIL, python run op_... never reached SUCCEEDED within 10s
 ```
 
 (Or in `quarkus/.../JobStore.java`'s `executeRun`, comment out
 `record.status.set(OperationStatus.SUCCEEDED);`.)
 
-Revert either edit and re-run `./verify.sh` — it goes back to `PASS` for
+Revert either edit and re-run `./verify.sh`, it goes back to `PASS` for
 both stacks. That round trip (break it, watch the gate catch it, fix it,
 watch the gate go green again) is the thing worth internalizing: the
 configure-vs-execute split and the job's own scheduler autonomy are both
-enforced mechanically — not just "does the server respond to a PUT."
+enforced mechanically: not just "does the server respond to a PUT."
 
 ## Diagram
 

@@ -118,7 +118,7 @@ def _check_accept(request: Request) -> JSONResponse | None:
 
 def _check_content_type(request: Request, expected: str = "application/json") -> JSONResponse | None:
     """415 guard: the request body's Content-Type must match `expected`
-    exactly (ignoring any ``; charset=...`` parameter) — a body sent with
+    exactly (ignoring any ``; charset=...`` parameter); a body sent with
     the wrong media type never reaches the pydantic parser.
     """
     content_type = _parse_media_types(request.headers.get("content-type", ""))
@@ -311,7 +311,7 @@ def delete_booking(booking_id: str, request: Request) -> Response:
 
 @app.post("/bookings/{booking_id}/confirm")
 def confirm_booking(booking_id: str, request: Request) -> JSONResponse:
-    """409 Conflict path: confirming a booking is only valid from PENDING —
+    """409 Conflict path: confirming a booking is only valid from PENDING:
     confirming it twice, or confirming one that's already
     cancelled/in-transit/delivered, is a state conflict, not a validation
     error (the request is well-formed; the resource just isn't in a state
