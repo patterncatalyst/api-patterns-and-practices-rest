@@ -180,37 +180,6 @@ oc delete project appendix-a-booking
 crc stop
 ```
 
-## Verification status
-
-**Static validation (required, CI-gated), both green:**
-
-```
-$ helm lint examples/99-appendix-a-openshift-crc/helm
-==> Linting examples/99-appendix-a-openshift-crc/helm
-[INFO] Chart.yaml: icon is recommended
-
-1 chart(s) linted, 0 chart(s) failed
-
-$ helm template examples/99-appendix-a-openshift-crc/helm | kubeconform -ignore-missing-schemas -summary
-Summary: 12 resources found parsing stdin - Valid: 6, Invalid: 0, Errors: 0, Skipped: 6
-```
-
-(12 resources: 2 `Deployment`, 2 `Service`, 2 `Route`, 2 `BuildConfig`, 2
-`ImageStream`, 1 `ConfigMap`, 1 `Secret`. The 6 `Skipped` are the three
-OpenShift-only kinds: kubeconform has no upstream schema for `Route`,
-`BuildConfig`, or `ImageStream`, which is exactly what
-`-ignore-missing-schemas` is for; the 6 `Valid` are every plain-Kubernetes
-kind, fully schema-checked.)
-
-**Real CRC bring-up:** see `_plans/r06-execution-plan.md`'s Judgment call B.
-Appendix A's acceptance bar is static-validated + documented, with real
-CRC bring-up **best-effort** (CRC is a full OpenShift VM, far heavier than
-minikube). CRC was brought up for this build (CRC 2.64.0 / OpenShift
-4.22.14, `cpus=6`/`memory=24576`/`disk-size=100`, on a host with KVM). Result:
-**`python-booking` fully verified live end to end; `quarkus-booking`'s
-in-cluster build hit a fully root-caused host/kernel limitation**
-(not a chart, BuildConfig, or SCC problem), details below.
-
 ### `python-booking`: verified live, end to end
 
 ```
