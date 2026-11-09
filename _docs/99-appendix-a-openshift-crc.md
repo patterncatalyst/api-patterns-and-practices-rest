@@ -4,7 +4,7 @@ order: 99
 part: "Running it: Docker → minikube → CRC"
 appendix: true
 appendix_label: "A"
-description: "Redeploying the same two Chapter 25 booking images onto OpenShift Local: per-app Routes with edge TLS, an in-cluster BuildConfig/ImageStream build with no external registry, restricted-v2 SCCs, and an unvarnished account of where the Quarkus build hit a host limitation."
+description: "The same two booking images on OpenShift Local: per-app Routes with edge TLS, an in-cluster BuildConfig and ImageStream build, restricted-v2 admission, and a Quarkus build failure traced to its root cause."
 duration: "35 min"
 ---
 
@@ -12,23 +12,31 @@ duration: "35 min"
 
 By the end of this chapter you can:
 
-- Replace a minikube `Ingress` with per-service OpenShift `Route`s terminating edge TLS at the cluster router.
-- Build and push a container image entirely inside the cluster via a `BuildConfig`/`ImageStream` pair, with no external registry or host container engine.
-- Explain why OpenShift's `restricted-v2` Security Context Constraint assigns a UID instead of honoring a Deployment's requested `runAsUser`, and build images that tolerate it.
-- Diagnose a build failure down to a root cause (a non-root UID combined with a node's overlay storage mode) instead of treating it as an unexplained platform quirk.
-- Decide when a project's target platform justifies standing up OpenShift Local (CRC) instead of staying on minikube.
+- Replace a minikube `Ingress` with per-service OpenShift `Route`s that terminate edge TLS at the cluster router.
+- Build and push a container image entirely inside the cluster with a `BuildConfig` and `ImageStream`, with no external registry or host container engine.
+- Explain why the `restricted-v2` Security Context Constraint assigns a UID instead of honoring a Deployment's `runAsUser`, and build images that tolerate it.
+- Trace a build failure to its root cause: a non-root UID combined with a node's overlay storage mode.
+- Decide when a target platform justifies OpenShift Local (CRC) over minikube.
 
 ## Why this matters
 
-Chapter 26 moved the Chapter 25 booking images from "two containers on one host" to "a Kubernetes deployment tier": a `Deployment`/`Service` pair for each app, an Ingress routing by host and path, probes replacing a single healthcheck, a ConfigMap and Secret standing in for a plaintext environment block, an HPA replacing a manual scale command. Every one of those primitives is upstream Kubernetes, installed on minikube through a handful of `minikube addons enable` calls and an ingress-nginx controller a reader never has to think about by name. This appendix takes the same two images (still `examples/25-local-with-docker-compose/quarkus` and `examples/25-local-with-docker-compose/python`, still built from their own unmodified Containerfiles, no third copy of the application anywhere) and runs them on **OpenShift Local (CRC)**, a real single-node OpenShift cluster that installs and boots inside a local VM on a laptop. "Real" is doing work in that sentence: CRC is not a minikube profile with OpenShift-flavored labels painted on. It's the actual OpenShift control plane, the actual router, the actual integrated image registry, the actual admission chain a cluster administrator would recognize from a production OpenShift install, just sized down to fit one machine.
+The minikube tier uses upstream Kubernetes: a `Deployment` and `Service` per app, an Ingress routing by host and path, probes, a ConfigMap and Secret, an HPA. This appendix runs the same two images, built from `examples/25-local-with-docker-compose/quarkus` and `examples/25-local-with-docker-compose/python` with their unmodified Containerfiles, on **OpenShift Local (CRC)**. CRC is a single-node OpenShift cluster in a local VM, with the real control plane, router, integrated image registry and admission chain.
 
-That distinction is the whole reason this appendix exists, and it exists for every container-based project in this catalog, not just this one. The house standard behind this book's sibling projects is that a container tutorial doesn't stop at "it runs on Kubernetes": it keeps going until it also runs on OpenShift, because a meaningful share of the audience this book is written for doesn't get to choose their target platform, and the platform they're handed enforces rules plain Kubernetes doesn't. Three of those rules carry this appendix: OpenShift ships its own **Route** resource instead of relying on an Ingress controller a cluster operator has to choose and install; it ships an **integrated image registry** inside the cluster, addressable the moment the cluster exists; and it admits every pod through a **Security Context Constraint**, a stricter, OpenShift-specific gate that has no equivalent in a stock kubeadm or minikube cluster. None of the three are optional add-ons on OpenShift the way ingress-nginx and metrics-server are optional addons on minikube: they're part of what "OpenShift" means as a platform, present on day one of any cluster a reader stands up, CRC included.
+Many teams don't choose their target platform, and OpenShift enforces rules plain Kubernetes doesn't. Three carry this appendix:
 
-What doesn't change matters too, because this appendix keeps a narrow scope about what it re-proves. The ConfigMap/Secret → `envFrom` wiring, the per-app probe shape (Quarkus's three distinct `/q/health/started`, `/q/health/ready`, `/q/health/live` endpoints against the FastAPI app's single `/health` answering all three), and the `RollingUpdate` strategy with `maxUnavailable: 0` are copied forward from Chapter 26's manifests unchanged. `examples/99-appendix-a-openshift-crc/` carries no `verify.sh`; this is a cluster-tier example exactly like Chapter 26's minikube directory, `scripts/validate.py`'s `cluster-dir-no-verify` check enforces the absence, and the only CI coverage is static: `helm lint` plus `helm template | kubeconform -ignore-missing-schemas` against the chart under `helm/`. Bringing CRC up, building both images, and watching them run is a by-hand step a reader drives with `run-crc.sh`, the same division of labor Chapter 26 established for minikube.
+| OpenShift feature | Replaces on minikube |
+|---|---|
+| **Route**, served by the cluster router | An Ingress controller someone chooses and installs |
+| **Integrated image registry**, addressable from day one | A host-engine build loaded into the node |
+| **Security Context Constraint** admitting every pod | A permissive default pod security posture |
+
+None is an add-on. They're present on any OpenShift cluster, CRC included.
+
+Unchanged from the minikube tier: the ConfigMap and Secret wired through `envFrom`, the per-app probes (Quarkus's `/q/health/started`, `/q/health/ready` and `/q/health/live` against FastAPI's single `/health`), and `RollingUpdate` with `maxUnavailable: 0`. `examples/99-appendix-a-openshift-crc/` has no `verify.sh`, like the minikube directory. CI is static: `helm lint` and `helm template | kubeconform -ignore-missing-schemas` against the chart under `helm/`. `run-crc.sh` does the bring-up by hand.
 
 ## Routes and edge TLS
 
-Chapter 26's `booking-ingress` puts both applications behind one `Ingress` object, one host (`booking.ch26.local`), and tells the two backends apart by URL prefix: `/quarkus` routed to `quarkus-service`, `/python` routed to `python-service`, with an `nginx.ingress.kubernetes.io/rewrite-target` annotation stripping the prefix before the request reaches either pod. That design exists because minikube has no router of its own; ingress-nginx is a `Deployment` a reader installs as an addon, and routing two backends behind one controller through one host keeps the addon's footprint small. OpenShift doesn't need that compromise, because the router isn't an addon: it's part of the cluster, running from the moment `crc start` finishes. `helm/templates/route.yaml` gives each booking service its **own** `Route`, its own real external hostname, with no path-prefix gymnastics standing between the client and either app:
+The minikube Ingress puts both apps behind one host and separates them by prefix (`/quarkus`, `/python`), with a rewrite annotation, because ingress-nginx is an addon and one controller keeps its footprint small. The OpenShift router runs from the moment `crc start` finishes, so `helm/templates/route.yaml` gives each service its own `Route` and hostname, with no path prefix:
 
 {% raw %}
 ```yaml
@@ -36,6 +44,9 @@ apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "appendix-a.labels" $root | nindent 4 }}
 spec:
   to:
     kind: Service
@@ -49,7 +60,12 @@ spec:
 ```
 {% endraw %}
 
-`values.yaml` sets `route: true` for both `quarkus-booking` and `python-booking`, so the template ranging over `.Values.services` emits two Routes, not one shared object standing in front of both. Each resolves to a hostname of the form `<service>-<namespace>.apps-crc.testing` (`python-booking-appendix-a-booking.apps-crc.testing` for the Python side in the real run below) served by CRC's own ingress operator against a wildcard certificate for `*.apps-crc.testing`. `termination: edge` is the headline difference from Chapter 26's plain-HTTP Ingress: TLS ends at the cluster's router, not inside either booking process, and neither application needs a certificate, a keystore, or a single line of TLS-handling code to get it. `insecureEdgeTerminationPolicy: Redirect` closes the other half of the gap: a plain HTTP request doesn't get served unencrypted, it gets a redirect to the HTTPS form of the same URL. Both properties showed up exactly as specified against a live CRC instance:
+`values.yaml` sets `route: true` for `quarkus-booking` and `python-booking`, and the template ranges over `.Values.services` to emit one Route each. Each gets a hostname of the form `<service>-<namespace>.apps-crc.testing`, served by CRC's ingress operator under a wildcard certificate for `*.apps-crc.testing`.
+
+- `termination: edge` ends TLS at the router. Neither app needs a certificate, a keystore or TLS code.
+- `insecureEdgeTerminationPolicy: Redirect` answers plain HTTP with a redirect to the HTTPS URL instead of serving it unencrypted.
+
+Both held on a live CRC instance:
 
 ```bash
 $ curl -sS -D - -o /dev/null http://python-booking-appendix-a-booking.apps-crc.testing/health
@@ -65,41 +81,53 @@ $ curl -skv https://python-booking-appendix-a-booking.apps-crc.testing/health 2>
 < HTTP/1.1 200 OK
 ```
 
-`CN=*.apps-crc.testing`, issued by `ingress-operator`, is the cluster router's own wildcard certificate: not anything the FastAPI app generated, mounted, or even knows exists. A `curl -k` is still needed on a local CRC instance because that certificate authority isn't in any client's trust store by default, which is exactly the self-signed situation any local developer cluster has; a production OpenShift Route would front the same mechanism with a certificate a real CA issued, with no change to the Route object's shape.
+`CN=*.apps-crc.testing`, issued by `ingress-operator`, is the router's wildcard certificate, which the FastAPI app never generated or saw. `curl -k` is needed locally because that authority isn't in a client trust store, as on any local cluster. A production Route fronts the same mechanism with a certificate from a real CA and the same Route shape.
 
-## In-cluster builds: BuildConfig, ImageStream, and no external registry
+## In-cluster builds: BuildConfig and ImageStream
 
-Chapter 26's build step is a single command run against the host's own container engine, redirected straight into minikube's image store: `minikube image build -p ch26-booking -t booking/quarkus:1.0 -f Containerfile examples/25-local-with-docker-compose/quarkus`. It's driver-agnostic and avoids a registry push entirely, but it still depends on a container engine running on the developer's own machine: Docker or Podman has to be present and working for that command to do anything. OpenShift replaces that dependency with a build that happens entirely inside the cluster, with no host engine involved at any point. `helm/templates/buildconfig.yaml` defines a `BuildConfig` per service, a Docker-strategy build reading a **binary source**: not a Git URL, not a prebuilt image, but a tarball of a local directory streamed straight into the cluster:
+The minikube build, `minikube image build -p ch26-booking -t booking/quarkus:1.0 -f Containerfile examples/25-local-with-docker-compose/quarkus`, avoids a registry push but still needs Docker or Podman on the developer's machine. OpenShift builds inside the cluster. `helm/templates/buildconfig.yaml` defines a Docker-strategy `BuildConfig` per service reading a **binary source**, a tarball of a local directory streamed into the cluster:
 
+{% raw %}
 ```yaml
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+    {{- include "appendix-a.labels" $root | nindent 4 }}
 spec:
+  runPolicy: Serial
   source:
     type: Binary
   strategy:
     type: Docker
     dockerStrategy:
-      dockerfilePath: Containerfile
+      dockerfilePath: {{ $root.Values.build.dockerfilePath }}
   output:
     to:
       kind: ImageStreamTag
-      name: "quarkus-booking:v1"
+      name: "{{ $name }}:{{ $root.Values.image.tag }}"
 ```
+{% endraw %}
 
-`run-crc.sh` drives that BuildConfig with `oc start-build quarkus-booking -n appendix-a-booking --from-dir=examples/25-local-with-docker-compose/quarkus --follow`: the `--from-dir` flag is what makes the source binary rather than Git-backed, packing the exact directory Chapter 25 and Chapter 26 already build from and shipping it to a build pod OpenShift schedules on the cluster's own node. That build pod runs the project's own, completely unmodified `Containerfile` through the Docker build strategy and pushes the finished image straight to an `ImageStream`: `helm/templates/imagestream.yaml`'s per-service object, a thin tracking record the integrated registry uses to resolve a short name like `quarkus-booking:v1` to a real image digest inside `image-registry.openshift-image-registry.svc:5000`. No `podman push`, no `docker login`, no registry credential of any kind touches this path; the only thing that leaves the developer's machine is the source tree itself, over `oc start-build`'s own streaming connection. `values.yaml`'s `image.registry` points every Deployment at that same in-cluster DNS name, so the Deployment's image reference and the BuildConfig's output land on the identical coordinate with nothing to reconcile by hand.
+With `build.dockerfilePath: "Containerfile"` and `image.tag: "v1"` in `values.yaml`, the Quarkus build writes to `quarkus-booking:v1`.
 
-A production project with room to edit its own `pom.xml` would reach for `quarkus-openshift`'s true binary-S2I build path instead of a Docker-strategy BuildConfig: that extension adds an `openshift` Maven profile and gets a purpose-built S2I builder image rather than a generic Docker build. This appendix doesn't take that path because it would mean editing `examples/25-local-with-docker-compose/quarkus`, and the Chapter 25 apps are reused completely unmodified here exactly as Chapter 26 reused them unmodified on minikube. A Docker-strategy BuildConfig earns the identical property that actually matters for this appendix's point (the image is built inside the cluster and lands in the cluster's own registry, no external registry, no host engine) directly from the same Containerfile compose and minikube already proved out.
+`run-crc.sh` drives it with `oc start-build quarkus-booking -n appendix-a-booking --from-dir=examples/25-local-with-docker-compose/quarkus --follow`. `--from-dir` makes the source binary instead of Git-backed. A build pod on the cluster's node runs the unmodified `Containerfile` and pushes the result to an `ImageStream`, the integrated registry's tracking record that resolves `quarkus-booking:v1` to a digest inside `image-registry.openshift-image-registry.svc:5000`. No `podman push`, no `docker login` and no registry credential is involved; only the source tree leaves the machine. `values.yaml`'s `image.registry` points each Deployment at the same in-cluster name, so the BuildConfig output and the Deployment image are the same coordinate.
+
+A project that can edit its `pom.xml` would use the `quarkus-openshift` extension's binary S2I build with a purpose-built builder image. That would mean editing the shared Quarkus app, so the Docker-strategy BuildConfig is used instead. It gives the property that matters here: the image is built in the cluster and lands in the cluster's registry.
 
 ## Security Context Constraints
 
-Minikube's default pod security posture is permissive enough that Chapter 26's manifests can pin a specific `runAsUser` (`185` for the Quarkus image, `1001` for the Python image, both matching each Containerfile's own declared `USER`) and have that request simply honored. OpenShift doesn't honor it. Every pod OpenShift admits passes through a **Security Context Constraint**, and the cluster's default, `restricted-v2`, actively rejects a pod that demands a specific UID of its own; instead, it *assigns* one from a high range reserved for the namespace the pod lands in. `helm/templates/deployment.yaml` drops `runAsUser` entirely for both booking Deployments rather than fighting that default: no `runAsUser` key appears anywhere in either container's `securityContext`, only `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, an all-capabilities drop, and `seccompProfile: RuntimeDefault`. Both Chapter 25 images were already built to tolerate an arbitrary assigned UID (the Quarkus side's UBI base image and the Python side's `COPY --chown=1001:0` both put the application's files in group `0` rather than owned by one specific uid), so whichever UID `restricted-v2` hands out, the container runs under it without a single line of either Containerfile changing.
+Minikube honors a pinned `runAsUser` (`185` for Quarkus, `1001` for Python, each matching its Containerfile's `USER`). OpenShift doesn't. Every pod passes a Security Context Constraint, and the default `restricted-v2` rejects a pod that demands its own UID and **assigns** one from a high range reserved for the namespace.
 
-That assignment held exactly as designed on a live CRC instance. `oc -n appendix-a-booking exec deploy/python-booking -- id` returned `uid=1000700000(1000700000) gid=0(root) groups=0(root),1000700000`: a UID nowhere near the `1001` the Containerfile's own `USER` line names, picked entirely by the cluster, with the container running normally under it regardless. The gap between what minikube lets a manifest ask for and what OpenShift actually grants is the practical shape of "OpenShift is stricter than vanilla Kubernetes by default": a plain Kubernetes Deployment that pins `runAsUser` to a fixed value works unmodified on minikube and is rejected outright on OpenShift's default SCC, and the fix isn't a chart change or an SCC exception: a stateless image built to run under group `0` with no UID assumptions, which both Chapter 25 images already are, needs neither.
+`helm/templates/deployment.yaml` therefore has no `runAsUser`. Each container's `securityContext` keeps `runAsNonRoot: true`, `allowPrivilegeEscalation: false`, a drop-all capability set and `seccompProfile: RuntimeDefault`. Both images tolerate an arbitrary UID because their files are group `0`: the Quarkus UBI base image and the Python `COPY --chown=1001:0` both put the application in group `0`, not under one UID.
 
-## The live bring-up: one service runs end to end, one hits a documented wall
+On a live CRC instance, `oc -n appendix-a-booking exec deploy/python-booking -- id` returned `uid=1000700000(1000700000) gid=0(root) groups=0(root),1000700000`, nowhere near the `1001` the Containerfile names, and the container ran normally. A Deployment that pins `runAsUser` works on minikube and is rejected under the default SCC. The fix is not an SCC exception but a stateless image built to run under group `0` with no UID assumptions.
 
-Both Deployments, both Routes, and both BuildConfig/ImageStream pairs deployed cleanly through one `helm upgrade --install` against a real CRC instance: CRC 2.64.0, OpenShift 4.22.14, sized to `cpus=6`/`memory=24576`/`disk-size=100` on a host with KVM. `python-booking` went the rest of the way live, end to end: its in-cluster build completed in twenty seconds and pushed to the integrated registry, its Deployment rolled out, its Route served the edge-TLS handshake captured above, and a real booking request through that Route came back exactly as Chapter 25 and Chapter 26 both proved it would:
+## The live bring-up
+
+Both Deployments, Routes and BuildConfig and ImageStream pairs deployed with one `helm upgrade --install` on CRC 2.64.0 (OpenShift 4.22.14), sized to `cpus=6`, `memory=24576` and `disk-size=100` on a KVM host. `python-booking` ran end to end: the in-cluster build finished in twenty seconds and pushed to the registry, the Deployment rolled out, the Route served the edge-TLS handshake above, and a booking request returned as it did on the earlier tiers:
 
 ```bash
 $ curl -sSk -D - -X POST https://python-booking-appendix-a-booking.apps-crc.testing/bookings \
@@ -111,17 +139,33 @@ location: /bookings/bkg_01M4RNPRQ4JNFN8THTCCSA73Q6
 content-type: application/json
 ```
 
-`quarkus-booking`'s in-cluster build did not reach that point, and this appendix reports exactly why rather than quietly dropping the Quarkus side from its evidence. The build fails deterministically, partway through Maven, with `Cannot create resource output directory: /build/target/classes`. It is not an SCC or RBAC problem: the build pod runs under the `privileged` SCC OpenShift grants `openshift-builder` pods by design, confirmed by reading the pod's own `openshift.io/scc` annotation. It is not a disk or quota problem: the node had 52 GB free and no `ResourceQuota` or `LimitRange` on the project. Reproducing the exact `WORKDIR`/`COPY`/`RUN` sequence directly on the CRC node with plain `podman build`, completely bypassing OpenShift's build machinery (`oc debug node/crc` → `chroot /host` → `podman build`), reproduced the identical failure: `mkdir: cannot create directory 'target': Permission denied`. Adding `USER 0` before that same sequence made it succeed.
+### A Quarkus build failure and its cause
 
-The root cause traces to one asymmetry between the two Containerfiles: the Python build stage explicitly runs `USER 0`, while the Quarkus build stage never sets a `USER` at all and inherits its UBI base image's own non-root default (`uid=185`). Combined with this particular CRC VM's node storage configuration (buildah logs `Not using native diff for overlay, this may cause degraded performance` on every build on this host, a signal that its overlay filesystem is running in a mode where a `RUN` step can't create a new directory under a path a prior `COPY` touched while running as a non-root UID), that asymmetry is enough to make the Python build succeed and the Quarkus build fail on the identical cluster, identical chart, identical SCC. A `STORAGE_DRIVER=vfs` override on the BuildConfig was tried and made no difference; the `openshift-builder` image's own runtime hit the same path regardless. A durable fix means adding `USER 0` to the Quarkus Containerfile's build stage, which would mean editing `examples/25-local-with-docker-compose/quarkus` (out of scope for an appendix whose entire premise is reusing the Chapter 25 apps unmodified), or changing the CRC node's own storage driver, which isn't a repeatable step a reader following this appendix could reasonably take.
+`quarkus-booking`'s in-cluster build fails every time, partway through Maven, with `Cannot create resource output directory: /build/target/classes`. It isn't SCC, RBAC, disk or quota:
 
-This is the kind of thing an in-cluster build tier is supposed to surface, and surfacing it here, with the root cause nailed down rather than hand-waved, is the point of running this appendix against a real cluster instead of only validating the chart statically. An in-cluster build removes a host container engine from the picture, but it trades that dependency for a new one: the build now runs on *the cluster's own* storage configuration, not the developer's, and a Containerfile that never needed to think about its build stage's UID on `docker compose` or `minikube image build` can hit a wall the moment the thing running `docker build` underneath it is a different host with different overlay semantics. `minikube image build` and `docker compose build` both ran this exact Containerfile without incident; only the in-cluster build, on this exact VM, didn't.
+- The build pod runs under the `privileged` SCC that OpenShift grants `openshift-builder` pods, per its `openshift.io/scc` annotation.
+- The node had 52 GB free and the project had no `ResourceQuota` or `LimitRange`.
+- The same `WORKDIR`, `COPY` and `RUN` sequence under plain `podman build` on the CRC node (`oc debug node/crc`, then `chroot /host`) fails the same way with `mkdir: cannot create directory 'target': Permission denied`. Adding `USER 0` before it makes the build succeed.
 
-{% include excalidraw.html file="appendix-a-openshift-crc" alt="OpenShift Local topology: a client reaching an edge-TLS Route served by the cluster's router, routing to a Service in front of app pods assigned a UID by the restricted-v2 SCC, with a BuildConfig streaming binary source into the cluster and pushing the built image to an ImageStream in the integrated registry that the Deployment pulls from." caption="Figure A.1: Edge-TLS Routes, an in-cluster BuildConfig/ImageStream build, and restricted-v2 SCC admission, replacing minikube's Ingress, host-engine image build, and permissive default pod security." %}
+The Python build stage runs `USER 0`. The Quarkus build stage sets no `USER` and inherits its UBI base image's non-root default, `uid=185`. On this VM, buildah logs `Not using native diff for overlay, this may cause degraded performance` on every build, which means a `RUN` step as a non-root UID can't create a directory under a path a prior `COPY` touched. That asymmetry makes the Python build pass and the Quarkus build fail on the same cluster, chart and SCC. A `STORAGE_DRIVER=vfs` override on the BuildConfig made no difference.
 
-## Decision
+A durable fix is `USER 0` in the Quarkus Containerfile's build stage, which edits the shared app, or a different storage driver on the CRC node, which no reader can repeat reliably.
 
-<div class="callout callout--safe"><p class="callout__title">Decision</p><p>Reach for OpenShift Local once the actual target is OpenShift, not Kubernetes in general: the moment a reader needs to validate how a manifest behaves against a Route instead of an Ingress, how a Security Context Constraint admits or rejects a pod before it ever reaches a kubelet, or how an in-cluster BuildConfig builds and pushes an image with no external registry and no host engine in the loop. None of those three things can be faithfully exercised on minikube, no matter how many addons are enabled: an Ingress controller is not a Route, a permissive default pod security profile is not an SCC, and `minikube image build` proves a host-engine build works, not an in-cluster one. What CRC costs in return is real: a heavier VM than minikube needs (`cpus=6`/`memory=20480` minimum for this appendix's two small services, far more for anything with a database or a message broker alongside them), a slower first boot, and, as this appendix's own Quarkus build shows, a build environment with its own storage and kernel quirks that a developer's local Docker Engine doesn't have and can't be assumed away. For a feature under active development, or a CI job that just needs both services reachable for a contract check, minikube or Compose stay the right default: nothing about routing, security admission, or image provenance was in question there. Reach for CRC once the open question is specifically "does this run, admit, and build the way OpenShift runs, admits, and builds things", and treat a result like this appendix's, one service fully proven and the other's failure fully root-caused rather than hidden, as what that question is actually supposed to produce.</p></div>
+An in-cluster build removes the host engine and adds a dependency on the cluster's own storage configuration. A Containerfile that never needed to think about its build stage's UID under `docker compose` or `minikube image build` can fail when the builder underneath is a different host with different overlay semantics. Both of those ran this exact Containerfile without incident.
+
+{% include excalidraw.html file="appendix-a-openshift-crc" alt="OpenShift Local topology: a client reaching an edge-TLS Route served by the cluster's router, routing to a Service in front of app pods assigned a UID by the restricted-v2 SCC, with a BuildConfig streaming binary source into the cluster and pushing the built image to an ImageStream in the integrated registry that the Deployment pulls from." caption="Figure A.1: Edge-TLS Routes, an in-cluster BuildConfig and ImageStream build, and restricted-v2 SCC admission, replacing minikube's Ingress, host-engine image build and permissive default pod security." %}
+
+## When to use CRC
+
+Use OpenShift Local when the target is OpenShift, not Kubernetes in general, and you need to validate:
+
+- how a manifest behaves against a Route instead of an Ingress;
+- how a Security Context Constraint admits or rejects a pod before it reaches a kubelet;
+- how an in-cluster BuildConfig builds and pushes with no external registry and no host engine.
+
+Minikube can't exercise any of these: an Ingress controller isn't a Route, a permissive default isn't an SCC, and `minikube image build` proves a host-engine build, not an in-cluster one.
+
+The costs are a heavier VM (`cpus=6` and `memory=20480` at minimum for these two small services, more with a database or broker), a slower first boot, and a build environment with its own storage and kernel behavior, as the Quarkus failure shows. For feature work or a CI job that needs both services reachable, minikube or Compose stays the default.
 
 ## Build, run, observe
 
@@ -129,11 +173,16 @@ This is the kind of thing an in-cluster build tier is supposed to surface, and s
 cd examples/99-appendix-a-openshift-crc && ./run-crc.sh
 ```
 
-`run-crc.sh` starts OpenShift Local, builds the Quarkus and FastAPI booking images in-cluster from Chapter 25's sources through the chart's BuildConfig and ImageStream pair, rolls out both deployments, and prints each service's edge-TLS Route URL along with a sample booking request. The full command output is in `examples/99-appendix-a-openshift-crc/README.md`.
+The script starts OpenShift Local, builds both images in-cluster through the chart's BuildConfig and ImageStream pair, rolls out both Deployments and prints each service's edge-TLS Route URL with a sample booking request. Expect the Python build and rollout to complete and the Quarkus build to fail as described above. The full output is in `examples/99-appendix-a-openshift-crc/README.md`.
+
+- Request the Python Route over plain HTTP: you get `302 Found` to the HTTPS URL.
+- Add `runAsUser: 1001` to the Python container's `securityContext`: the default SCC rejects the pod.
+- Run `oc exec deploy/python-booking -- id`: the UID is in the namespace's assigned range, not `1001`.
+- In `oc debug node/crc` with `chroot /host`, run the Quarkus build stage's `WORKDIR`, `COPY` and `RUN` sequence under `podman build`: it fails with `Permission denied` on `target`, and succeeds once `USER 0` precedes it.
 
 ## For deeper coverage
 
-- Cloud Native Design Patterns, "Appendix S: OpenShift Local": the same CRC bring-up conventions (`crc start`, Routes, SCCs) this chapter's `run-crc.sh` follows.
-- [OpenShift Local (CRC) documentation](https://crc.dev/crc/): the official reference for sizing, starting, and administering a CRC instance.
-- [Quarkus: Deploying to OpenShift guide](https://quarkus.io/guides/deploying-to-openshift): the `quarkus-openshift` binary-S2I path this chapter's Docker-strategy BuildConfig stands in for.
-- Bilgin Ibryam & Roland Huß, *Kubernetes Patterns* (O'Reilly, 2023): the Service/config patterns this appendix carries over from Chapter 26 onto OpenShift's Route and SCC model.
+- Cloud Native Design Patterns, "Appendix S: OpenShift Local": the CRC conventions (`crc start`, Routes, SCCs) that `run-crc.sh` follows.
+- [OpenShift Local (CRC) documentation](https://crc.dev/crc/): the official reference for sizing, starting and administering a CRC instance.
+- [Quarkus: Deploying to OpenShift guide](https://quarkus.io/guides/deploying-to-openshift): the `quarkus-openshift` binary S2I path that the Docker-strategy BuildConfig stands in for.
+- Bilgin Ibryam & Roland Huß, *Kubernetes Patterns* (O'Reilly, 2023): the Service and config patterns carried over onto OpenShift's Route and SCC model.

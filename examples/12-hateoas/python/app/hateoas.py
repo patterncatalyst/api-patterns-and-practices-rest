@@ -29,7 +29,7 @@ def links_for_booking(booking_id: str, status: BookingStatus) -> dict[str, Link]
         links["cancel"] = Link(href=f"/bookings/{booking_id}", method="DELETE", title="Cancel this booking")
     elif status == BookingStatus.CONFIRMED:
         links["cancel"] = Link(href=f"/bookings/{booking_id}", method="DELETE", title="Cancel this booking")
-    # IN_TRANSIT, DELIVERED, CANCELLED: self only — no further
+    # IN_TRANSIT, DELIVERED, CANCELLED: self only; no further
     # client-driven transition from here.
 
     return links

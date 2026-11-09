@@ -22,7 +22,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -70,7 +70,7 @@ run_stack_tests() {
   validate_body Booking "$body"
   local id
   id="$(jq -r '.id' "$body")"
-  echo "lib.sh: ok — $stack POST /bookings minted $id"
+  echo "lib.sh: ok, $stack POST /bookings minted $id"
 
   local headers_file="$TMP_DIR/${stack}-headers.txt"
   curl -sS -D "$headers_file" -o /dev/null \
@@ -82,34 +82,34 @@ run_stack_tests() {
     -X POST -H 'Content-Type: text/plain' -d "$CREATE_PAYLOAD" "$base/bookings")"
   assert_status 415 "$status" "$stack POST /bookings (Content-Type: text/plain)"
   validate_body Problem "$body"
-  echo "lib.sh: ok — $stack POST /bookings with an unsupported Content-Type -> 415 Problem"
+  echo "lib.sh: ok, $stack POST /bookings with an unsupported Content-Type -> 415 Problem"
 
   # -- (3) GET a booking with an Accept the endpoint can't satisfy -> 406, Problem body --
   status="$(curl -sS -o "$body" -w '%{http_code}' \
     -H 'Accept: application/xml' "$base/bookings/$id")"
   assert_status 406 "$status" "$stack GET /bookings/{id} (Accept: application/xml)"
   validate_body Problem "$body"
-  echo "lib.sh: ok — $stack GET /bookings/{id} with an unsatisfiable Accept -> 406 Problem"
+  echo "lib.sh: ok, $stack GET /bookings/{id} with an unsatisfiable Accept -> 406 Problem"
 
   # -- (4) GET the same booking with Accept: application/json -> 200, Booking body --
   status="$(curl -sS -o "$body" -w '%{http_code}' \
     -H 'Accept: application/json' "$base/bookings/$id")"
   assert_status 200 "$status" "$stack GET /bookings/{id} (Accept: application/json)"
   validate_body Booking "$body"
-  echo "lib.sh: ok — $stack GET /bookings/{id} with Accept: application/json -> 200 Booking"
+  echo "lib.sh: ok, $stack GET /bookings/{id} with Accept: application/json -> 200 Booking"
 
   # -- (5) GET a missing booking -> 404, Problem body --
   status="$(curl -sS -o "$body" -w '%{http_code}' "$base/bookings/bkg_00000000000000000000000000")"
   assert_status 404 "$status" "$stack GET /bookings/{id} (missing)"
   validate_body Problem "$body"
-  echo "lib.sh: ok — $stack GET /bookings/{id} (missing) -> 404 Problem"
+  echo "lib.sh: ok, $stack GET /bookings/{id} (missing) -> 404 Problem"
 
   # -- (6) 400: malformed booking request (missing required fields) --
   status="$(curl -sS -o "$body" -w '%{http_code}' \
     -X POST -H 'Content-Type: application/json' -d '{}' "$base/bookings")"
   assert_status 400 "$status" "$stack POST /bookings (malformed body)"
   validate_body Problem "$body"
-  echo "lib.sh: ok — $stack POST /bookings with a malformed body -> 400 Problem"
+  echo "lib.sh: ok, $stack POST /bookings with a malformed body -> 400 Problem"
 
   # -- (7) 409: confirming a booking is only valid from PENDING — confirm
   #        once (200), confirm again (409 — already CONFIRMED) ------------
@@ -120,7 +120,7 @@ run_stack_tests() {
   status="$(curl -sS -o "$body" -w '%{http_code}' -X POST "$base/bookings/$id/confirm")"
   assert_status 409 "$status" "$stack POST /bookings/{id}/confirm (2nd, already CONFIRMED)"
   validate_body Problem "$body"
-  echo "lib.sh: ok — $stack confirm is 200 from PENDING, 409 on an already-confirmed booking"
+  echo "lib.sh: ok, $stack confirm is 200 from PENDING, 409 on an already-confirmed booking"
 
   # -- (8) 404 on confirming a booking that doesn't exist -------------------
   status="$(curl -sS -o "$body" -w '%{http_code}' -X POST "$base/bookings/bkg_00000000000000000000000000/confirm")"
@@ -130,7 +130,7 @@ run_stack_tests() {
   # -- (9) 204 on DELETE ------------------------------------------------------
   status="$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE "$base/bookings/$id")"
   assert_status 204 "$status" "$stack DELETE /bookings/{id}"
-  echo "lib.sh: ok — $stack DELETE /bookings/{id} -> 204"
+  echo "lib.sh: ok, $stack DELETE /bookings/{id} -> 204"
 
   echo "=== $stack: all assertions passed ==="
 }

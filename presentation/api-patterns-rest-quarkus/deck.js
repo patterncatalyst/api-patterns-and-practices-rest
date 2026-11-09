@@ -20,8 +20,8 @@ const {
   addSectionDivider, addNotes,
 } = H;
 
-const OUT = path.resolve(__dirname, "api-patterns-rest-quarkus-r1.1.pptx");
-const REV = "r1.1";
+const OUT = path.resolve(__dirname, "api-patterns-rest-quarkus-r1.2.pptx");
+const REV = "r1.2";
 
 const pres = newDeck();
 pres.title = "API Patterns & Practices: REST · Quarkus Implementation";
@@ -50,7 +50,7 @@ function divider(code, title, subtitle, notes) {
   ], { x: 6.00, y: 5.75, w: 6.70, h: 0.80, fontFace: FONT.body, fontSize: 15, align: "left", valign: "top" });
   s.addText(REV, { x: 11.85, y: 6.40, w: 0.95, h: 0.30, fontFace: FONT.mono, fontSize: 11, color: COLOR.caption, align: "right", valign: "middle" });
   try { s.addImage({ path: `${ASSETS}/logo-candidate-2.png`, x: 11.10, y: 6.80, w: 1.55, h: 0.37 }); } catch (e) {}
-  addNotes(s, "Welcome to the Quarkus implementation deck. This is deck two of three in the API Patterns & Practices: REST series. The 100-level deck established the patterns and the reasoning, stack-agnostic; this deck shows how each of those patterns is actually built in Quarkus REST, the framework formerly called RESTEasy Reactive, against the same single OpenAPI contract and the same shipping and cargo domain. Everything you'll see is real code from the site's runnable examples under examples/*/quarkus, and from the Chapter 22 deep-dive. The through-line is Quarkus's defining choice: resolve as much as possible at build time rather than at request time, and lean on the reactive runtime for streaming and messaging. I'm Robert Sedor. By the end you'll have seen the resource classes, the records-as-DTOs with Bean Validation, the Problem-details exception mappers, keyset pagination, the async operation, HATEOAS link building, media-type versioning, reactive NDJSON streaming with its own message-body writer, and the CloudEvents-over-Kafka publisher, all the way to @QuarkusTest and native images.");
+  addNotes(s, "Welcome to the Quarkus implementation deck. This is deck two of three in the API Patterns & Practices: REST series. The 100-level deck established the patterns and the reasoning, stack-agnostic; this deck shows how each of those patterns is actually built in Quarkus REST, the framework formerly called RESTEasy Reactive, against the same single OpenAPI contract and the same shipping and cargo domain. Everything you'll see is code from the site's runnable examples under examples/*/quarkus, and from the Quarkus REST deep-dive. The through-line is Quarkus's defining choice: resolve as much as possible at build time rather than at request time, and lean on the reactive runtime for streaming and messaging. I'm Robert Sedor. By the end you'll have seen the resource classes, the records-as-DTOs with Bean Validation, the Problem-details exception mappers, keyset pagination, the async operation, HATEOAS link building, media-type versioning, reactive NDJSON streaming with its own message-body writer, and the CloudEvents-over-Kafka publisher, all the way to @QuarkusTest and native images.");
 }
 
 /* ======================= 2 · AGENDA ======================= */
@@ -75,7 +75,7 @@ function divider(code, title, subtitle, notes) {
       "Testing, running it · ecosystem · Q&A",
     ],
     { fontSize: 15 });
-  addNotes(s, "The arc follows the same pattern order as the 100-level deck, so the two map one to one, but every stop is Quarkus code. We open with the build-time binding model that defines Quarkus REST, then the contract-first resource class and the records-plus-Bean-Validation approach to DTOs, and the exception mappers that turn every failure into RFC 9457 Problem Details. The middle covers HTTP semantics in Quarkus: content negotiation and merge-patch, plus keyset pagination with @RestQuery. Then the harder patterns: the asynchronous operation across two resource classes, HATEOAS links driven by the lifecycle state machine, media-type versioning, and soft deletion. We finish with the reactive story: Multi-based NDJSON streaming and the dedicated message-body writer that keeps it honest, then the CloudEvents-over-Kafka publisher built on SmallRye Reactive Messaging, and then testing with @QuarkusTest, running across the three tiers, and the surrounding ecosystem. A short appendix carries extra code variants. Speaker notes on every slide, appendix included.");
+  addNotes(s, "The arc follows the same pattern order as the 100-level deck, so the two map one to one, but every stop is Quarkus code. We open with the build-time binding model that defines Quarkus REST, then the contract-first resource class and the records-plus-Bean-Validation approach to DTOs, and the exception mappers that turn every failure into RFC 9457 Problem Details. The middle covers HTTP semantics in Quarkus: content negotiation and merge-patch, plus keyset pagination with @RestQuery. Then the harder patterns: the asynchronous operation across two resource classes, HATEOAS links driven by the lifecycle state machine, media-type versioning, and soft deletion. We finish with the reactive story: Multi-based NDJSON streaming and the dedicated message-body writer that keeps it correct, then the CloudEvents-over-Kafka publisher built on SmallRye Reactive Messaging, and then testing with @QuarkusTest, running across the three tiers, and the surrounding ecosystem. A short appendix carries extra code variants. Speaker notes on every slide, appendix included.");
 }
 
 /* ======================= 3 · SERIES MAP ======================= */
@@ -86,10 +86,10 @@ function divider(code, title, subtitle, notes) {
     "Deck 1 (100-level) is the patterns and the why, stack-agnostic: start there for the reasoning.",
     "This deck is the Quarkus HOW: the same shipping/cargo contract realized in Quarkus REST, with real code.",
     "A sibling deck does the identical arc in Python/FastAPI: both are validated against the one OpenAPI contract in CI.",
-    "Code shown here is lifted from examples/*/quarkus/** and the Chapter 22 deep-dive; versions are pinned (Quarkus on JDK 25).",
+    "Code shown here is lifted from examples/*/quarkus/** and the Quarkus REST deep-dive; versions are pinned (Quarkus on JDK 25).",
   ], { fontSize: 17 });
   addCaption(s, "Same patterns, same domain, same contract: this deck is the Quarkus realization of them.");
-  addNotes(s, "A quick orientation so the three decks compose rather than repeat. Deck one, the 100-level, is where the patterns and the reasoning live: if a design question comes up today about why a pattern is shaped the way it is, that's the deck that answers it, and it does so without committing to a language. This deck is the Quarkus how: it takes each of those patterns and shows the actual Quarkus code that implements it, against the same shipping and cargo contract and domain. There's a sibling deck that walks the identical arc in Python and FastAPI, and the point of having both is that the two implementations are validated against the one OpenAPI contract in CI, so they stay interchangeable; a client can't tell which stack answered. Everything I show is lifted from the runnable examples under examples slash star slash quarkus and from the Chapter 22 deep-dive, and the versions are pinned, Quarkus on JDK 25, so what you see is what runs.");
+  addNotes(s, "A quick orientation so the three decks compose rather than repeat. Deck one, the 100-level, is where the patterns and the reasoning live: if a design question comes up today about why a pattern is shaped the way it is, that's the deck that answers it, and it does so without committing to a language. This deck is the Quarkus how: it takes each of those patterns and shows the actual Quarkus code that implements it, against the same shipping and cargo contract and domain. There's a sibling deck that walks the identical arc in Python and FastAPI, and the point of having both is that the two implementations are validated against the one OpenAPI contract in CI, so they stay interchangeable; a client can't tell which stack answered. Everything I show is lifted from the runnable examples under examples slash star slash quarkus and from the Quarkus REST deep-dive, and the versions are pinned, Quarkus on JDK 25, so what you see is what runs.");
 }
 
 /* ======================= DIVIDER 01 ======================= */
@@ -112,7 +112,7 @@ divider("01", "Build-time Quarkus REST",
   const s = S();
   addCodeSlide(s, "BUILD-TIME", "@RestHeader / @RestQuery / @RestPath", "java · Quarkus",
     [
-      "// Quarkus REST's own binding annotations — bound at build time,",
+      "// Quarkus REST's own binding annotations, bound at build time,",
       "// drop-in replacements for classic JAX-RS @HeaderParam/@QueryParam.",
       "@GET @Path(\"/tenant\") @Produces(MediaType.APPLICATION_JSON)",
       "public Map<String,Object> tenantInfo(@RestHeader(\"X-Tenant\") String tenant) {",
@@ -126,7 +126,7 @@ divider("01", "Build-time Quarkus REST",
     ],
     "Same contract as @HeaderParam/@PathParam: the binding just disappears into generated code before the first request.",
     { fontSize: 12 });
-  addNotes(s, "Here's the smallest demonstration, from the Chapter 22 example. org.jboss.resteasy.reactive.RestHeader is Quarkus REST's own annotation, a drop-in replacement for classic JAX-RS's @HeaderParam: same job, bound at build time instead of resolved by reflection per request. On an absent X-Tenant header it injects null, exactly as @HeaderParam would, which is why the fallback to the default tenant is written explicitly in the method body rather than delegated to @DefaultValue: @DefaultValue can only supply a fixed string literal baked in at the annotation site, which can't express 'fall back to a value computed or looked up elsewhere'. Send the header and the response echoes it with defaulted false; omit it and it reports the server default with defaulted true, a request-scoped observable that makes the binding checkable. @RestPath and @RestQuery are the same idea for path segments and query strings. The HTTP contract is unremarkable: a header read, a default, a JSON body. That's the point: you write one annotation on one parameter, and the framework makes it disappear into generated code before the first request lands.");
+  addNotes(s, "Here's the smallest demonstration, from the Quarkus REST deep-dive example. org.jboss.resteasy.reactive.RestHeader is Quarkus REST's own annotation, a drop-in replacement for classic JAX-RS's @HeaderParam: same job, bound at build time instead of resolved by reflection per request. On an absent X-Tenant header it injects null, exactly as @HeaderParam would, which is why the fallback to the default tenant is written explicitly in the method body rather than delegated to @DefaultValue: @DefaultValue can only supply a fixed string literal baked in at the annotation site, which can't express 'fall back to a value computed or looked up elsewhere'. Send the header and the response echoes it with defaulted false; omit it and it reports the server default with defaulted true, a request-scoped observable that makes the binding checkable. @RestPath and @RestQuery are the same idea for path segments and query strings. The HTTP contract is unremarkable: a header read, a default, a JSON body. That's the point: you write one annotation on one parameter, and the framework makes it disappear into generated code before the first request lands.");
 }
 
 /* --- payoff + decision --- */
@@ -148,7 +148,7 @@ divider("01", "Build-time Quarkus REST",
     ],
     { fontSize: 15 });
   addCaption(s, "A long-lived process on a fixed VM amortizes boot cost; there, classic JAX-RS is fine. The win scales with how often you start.");
-  addNotes(s, "The build-time model isn't a blanket 'Quarkus is faster' claim: it's a specific win under specific pressure, so it's worth being honest about where it pays off. The payoff, on the left, is the three observable effects: startup drops because there's no scan or reflective metadata to build at boot; memory and allocation improve because reflective dispatch costs bookkeeping the JIT can't fully optimize away; and native-image friendliness is close to existential, because GraalVM needs to know every reflectively-reachable method ahead of time and the build-time model leaves almost nothing to reflect on. On the right is the honest framing from the Chapter 22 Decision callout: these wins scale with how often you start a process. A service that restarts rarely and runs as one long-lived process on a fixed-size VM amortizes its boot cost over a long uptime and gets little practical benefit; a classic JAX-RS container is a perfectly reasonable choice there. The calculus flips the moment the target is serverless, autoscaled, or a native binary: a function scaling from zero, pods scaling with traffic, or anything compiled with GraalVM pays startup cost on every cold instance, and that's exactly what the build-time metadata erases. Match the tool to the pressure.");
+  addNotes(s, "The build-time model isn't a blanket 'Quarkus is faster' claim: it's a specific win under specific pressure, so the question is where it pays off. The payoff, on the left, is the three observable effects: startup drops because there's no scan or reflective metadata to build at boot; memory and allocation improve because reflective dispatch costs bookkeeping the JIT can't fully optimize away; and native-image friendliness is close to existential, because GraalVM needs to know every reflectively-reachable method ahead of time and the build-time model leaves almost nothing to reflect on. On the right is the framing from the Quarkus REST deep-dive's decision table: these wins scale with how often you start a process. A service that restarts rarely and runs as one long-lived process on a fixed-size VM amortizes its boot cost over a long uptime and gets little practical benefit; a classic JAX-RS container is a perfectly reasonable choice there. The calculus flips the moment the target is serverless, autoscaled, or a native binary: a function scaling from zero, pods scaling with traffic, or anything compiled with GraalVM pays startup cost on every cold instance, and that's exactly what the build-time metadata erases. Match the tool to the pressure.");
 }
 
 /* ======================= DIVIDER 02 ======================= */
@@ -180,7 +180,7 @@ divider("02", "Contract-first & the resource model",
     ],
     "One @Path class maps to the contract's booking operations; the server mints the id and returns 201 + a relative Location.",
     { fontSize: 11 });
-  addNotes(s, "This is the contract-first anchor: one @Path class, BookingResource, implementing the booking operations from shipping-api.yaml, backed by an injected store. createBooking takes a @Valid BookingRequest (we'll come back to that @Valid in two slides; it's what triggers Bean Validation), mints the server-assigned id with a bkg_ prefix and a ULID body, sets the initial status to PENDING, computes the quote, persists, and returns. Two details worth calling out. First, the server mints the URI, not the client, which is the REST rule for POST-to-a-collection. Second, look at how the Location header is set: it's a literal string, '/bookings/' plus the id, not Response.created(URI). That's intentional: per the JAX-RS spec, ResponseBuilder.location resolves a relative URI into an absolute one against the request base URI, which would make Quarkus's Location header diverge from the Python stack's relative /bookings/{id}. Setting the header directly keeps the two stacks byte-for-byte identical, which is exactly the kind of thing the shared contract tests check. Every response body in this class is schema-validated against the shared JSON Schema in CI; this class is the thing that has to stay honest.");
+  addNotes(s, "This is the contract-first anchor: one @Path class, BookingResource, implementing the booking operations from shipping-api.yaml, backed by an injected store. createBooking takes a @Valid BookingRequest (we'll come back to that @Valid in two slides; it's what triggers Bean Validation), mints the server-assigned id with a bkg_ prefix and a ULID body, sets the initial status to PENDING, computes the quote, persists, and returns. Two details matter. First, the server mints the URI, not the client, which is the REST rule for POST-to-a-collection. Second, look at how the Location header is set: it's a literal string, '/bookings/' plus the id, not Response.created(URI). That's intentional: per the JAX-RS spec, ResponseBuilder.location resolves a relative URI into an absolute one against the request base URI, which would make Quarkus's Location header diverge from the Python stack's relative /bookings/{id}. Setting the header directly keeps the two stacks byte-for-byte identical, which is exactly the kind of thing the shared contract tests check. Every response body in this class is schema-validated against the shared JSON Schema in CI; this class is the thing that has to stay in sync.");
 }
 
 /* --- records + Bean Validation --- */
@@ -225,11 +225,11 @@ divider("02", "Contract-first & the resource model",
       "  }",
       "}",
       "// Also mapped: NotSupportedException -> 415, NotAcceptableException -> 406,",
-      "// Throwable -> 500 — so runtime-raised errors are Problem too.",
+      "// Throwable -> 500, so runtime-raised errors are Problem too.",
     ],
     "The runtime rejects a wrong Content-Type before your method runs; mappers make those errors Problem-shaped as well.",
     { fontSize: 11 });
-  addNotes(s, "This is what makes the error contract honest. When Bean Validation fails on that @Valid parameter, the runtime throws a ConstraintViolationException before your method body ever runs. This @Provider ExceptionMapper catches it, flattens the violations into a sorted, readable detail string (property path plus message) and returns a 400 with Content-Type application/problem+json and an RFC 9457 Problem body. The sorting matters for determinism: the same bad request produces the same detail string every time, which the contract tests rely on. The reason there's a whole family of these mappers, not just one, is that the JAX-RS runtime raises some errors itself, before your resource method is reached. A PATCH sent with the wrong Content-Type never reaches patchBooking: RESTEasy Reactive rejects it with a NotSupportedException first, so there's a mapper that turns that into a 415 Problem. Likewise NotAcceptableException becomes a 406 Problem, and a last-resort Throwable mapper turns any unexpected bug into a 500 Problem instead of leaking a stack trace. The principle: every error a client can possibly see, whether we raised it ourselves or the framework raised it for us, comes back in the same application/problem+json shape, so a client only has to understand one error format.");
+  addNotes(s, "This is what makes the error contract reliable. When Bean Validation fails on that @Valid parameter, the runtime throws a ConstraintViolationException before your method body ever runs. This @Provider ExceptionMapper catches it, flattens the violations into a sorted, readable detail string (property path plus message) and returns a 400 with Content-Type application/problem+json and an RFC 9457 Problem body. The sorting matters for determinism: the same bad request produces the same detail string every time, which the contract tests rely on. The reason there's a whole family of these mappers, not just one, is that the JAX-RS runtime raises some errors itself, before your resource method is reached. A PATCH sent with the wrong Content-Type never reaches patchBooking: RESTEasy Reactive rejects it with a NotSupportedException first, so there's a mapper that turns that into a 415 Problem. Likewise NotAcceptableException becomes a 406 Problem, and a last-resort Throwable mapper turns any unexpected bug into a 500 Problem instead of leaking a stack trace. The principle: every error a client can possibly see, whether we raised it ourselves or the framework raised it for us, comes back in the same application/problem+json shape, so a client only has to understand one error format.");
 }
 
 /* ======================= DIVIDER 03 ======================= */
@@ -251,7 +251,7 @@ divider("03", "HTTP semantics in Quarkus",
       "  JsonNode target = mapper.valueToTree(existing);",
       "  JsonNode merged = applyMergePatch(target, mergePatchDoc);  // RFC 7396",
       "  Booking patched = mapper.treeToValue(merged, Booking.class);",
-      "  // id/createdAt are server-assigned (readOnly) — never overwritten",
+      "  // id/createdAt are server-assigned (readOnly), never overwritten",
       "  store.put(result); return Response.ok(result).build();",
       "}",
     ],
@@ -300,7 +300,7 @@ divider("04", "Collections at scale",
       "    @RestQuery Integer limit,          // page size, clamped to [1, 100]",
       "    @RestQuery Integer offset,         // offset pagination (comparison)",
       "    @RestQuery(\"after_id\") String afterId,  // seek pagination",
-      "    @RestQuery String cursor,          // keyset — the DEFAULT strategy",
+      "    @RestQuery String cursor,          // keyset: the DEFAULT strategy",
       "    @RestQuery String fields) {        // sparse fieldset projection",
       "  int effectiveLimit = clampLimit(limit);        // DoS guard: max 100",
       "  PageResult result = computePage(visible, offset, afterId, cursor, effectiveLimit);",
@@ -407,7 +407,7 @@ divider("06", "Lifecycle: HATEOAS, versioning, soft delete",
       "      links.put(\"cancel\",  new Link(\"/bookings/\" + id, \"DELETE\", ...));",
       "    }",
       "    case CONFIRMED -> links.put(\"cancel\", new Link(\"/bookings/\" + id, \"DELETE\", ...));",
-      "    case IN_TRANSIT, DELIVERED, CANCELLED -> { /* self only — terminal */ }",
+      "    case IN_TRANSIT, DELIVERED, CANCELLED -> { /* self only, terminal */ }",
       "  }",
       "  return links;",
       "}",
@@ -440,7 +440,7 @@ divider("06", "Lifecycle: HATEOAS, versioning, soft delete",
     ],
     "No v1 store and no v1 write path: v1 is a view derived from v2. Versioning is about the representation, not the resource.",
     { fontSize: 11 });
-  addNotes(s, "Media-type versioning in Quarkus, and it teaches the deepest point about versioning: it's about the representation a client gets back, not about forking the underlying resource. There are two vendor media types, v1 and v2. wantsV1 reads the Accept header: anything that isn't explicitly the v1 vendor type, including a bare application/json, a wildcard, or the v2 type, means 'give me the current representation', so 'no opinion' and 'current version' behave identically. The crucial design choice is in toV1: there is no separate v1 store and no v1 write path. The one booking is always stored in the current v2 shape, and v1 is a read-only projection computed on the way out. And that projection is lossy by design: v1's single cargoDescription string is built by joining the v2 cargo items' descriptions, and v1 has no way to recover the individual items, weights, or hazardous flags from that string. That lossiness is the honest cost of carrying an old representation forward: it can only describe what its shape had room for. On the unversioned endpoint, wantsV1 drives the choice; the response echoes the negotiated vendor type in Content-Type and sets Vary: Accept so a shared cache treats the URL as having more than one representation. That Vary header is the caching subtlety from the concept deck, made real.");
+  addNotes(s, "Media-type versioning in Quarkus, and it teaches the deepest point about versioning: it's about the representation a client gets back, not about forking the underlying resource. There are two vendor media types, v1 and v2. wantsV1 reads the Accept header: anything that isn't explicitly the v1 vendor type, including a bare application/json, a wildcard, or the v2 type, means 'give me the current representation', so 'no opinion' and 'current version' behave identically. The crucial design choice is in toV1: there is no separate v1 store and no v1 write path. The one booking is always stored in the current v2 shape, and v1 is a read-only projection computed on the way out. And that projection is lossy by design: v1's single cargoDescription string is built by joining the v2 cargo items' descriptions, and v1 has no way to recover the individual items, weights, or hazardous flags from that string. That lossiness is the cost of carrying an old representation forward: it can only describe what its shape had room for. On the unversioned endpoint, wantsV1 drives the choice; the response echoes the negotiated vendor type in Content-Type and sets Vary: Accept so a shared cache treats the URL as having more than one representation. That Vary header is the caching subtlety from the concept deck, made real.");
 }
 
 /* --- soft delete --- */
@@ -459,17 +459,17 @@ divider("06", "Lifecycle: HATEOAS, versioning, soft delete",
       "  store.put(cancelled);",
       "  return Response.noContent().build();   // 204; idempotent",
       "}",
-      "// store.listVisible() excludes CANCELLED — soft-deleted rows stay out",
+      "// store.listVisible() excludes CANCELLED, so soft-deleted rows stay out",
       "// of default queries; a separate, governed purge does hard-deletion (GDPR).",
     ],
     "DELETE is idempotent: cancelling an already-cancelled booking still returns 204, and the row persists for audit/undelete.",
     { fontSize: 11 });
-  addNotes(s, "Soft deletion, the Quarkus way, and it's exactly what the concept deck described. DELETE doesn't remove the row: it constructs a new Booking with status flipped to CANCELLED, preserving everything else and stamping updatedAt, persists it, and returns 204 No Content. Because the data survives, you get recovery from accidental deletes, audit history, and referential integrity for free, and because flipping an already-cancelled booking to cancelled lands the same state, DELETE is idempotent, which the matrix requires. The two comments carry the rest of the pattern. First, the store's listVisible method excludes CANCELLED bookings, so soft-deleted rows stay out of default query results; a cancelled booking must not show up in a normal list, which is both a correctness and a potential compliance issue. Second, soft-delete is not the whole story for GDPR: there's a separate, governed purge path for lawful hard-deletion, distinct from everyday cancel and auditable, because the right to erasure can require that data actually be gone, not merely hidden. Soft-delete is the default; purge is the governed exception.");
+  addNotes(s, "Soft deletion, the Quarkus way, and it's exactly what the concept deck described. DELETE doesn't remove the row: it constructs a new Booking with status flipped to CANCELLED, preserving everything else and stamping updatedAt, persists it, and returns 204 No Content. Because the data survives, you get recovery from accidental deletes, audit history, and referential integrity without extra code, and because flipping an already-cancelled booking to cancelled lands the same state, DELETE is idempotent, which the matrix requires. The two comments carry the rest of the pattern. First, the store's listVisible method excludes CANCELLED bookings, so soft-deleted rows stay out of default query results; a cancelled booking must not show up in a normal list, which is both a correctness and a potential compliance issue. Second, soft-delete is not the whole story for GDPR: there's a separate, governed purge path for lawful hard-deletion, distinct from everyday cancel and auditable, because the right to erasure can require that data actually be gone, not merely hidden. Soft-delete is the default; purge is the governed exception.");
 }
 
 /* ======================= DIVIDER 07 ======================= */
 divider("07", "Reactive streaming & large payloads",
-  "Multi-based NDJSON, the message-body writer that keeps it honest, and Range.",
+  "Multi-based NDJSON, the message-body writer that keeps it correct, and Range.",
   "Quarkus's reactive runtime is the idiomatic answer to a response that's large, slow, or open-ended. This section is NDJSON streamed from a Multi pipeline, the dedicated writer that stops Jackson from double-encoding it, and Range requests for large binaries.");
 
 /* --- reactive NDJSON diagram --- */
@@ -501,7 +501,7 @@ divider("07", "Reactive streaming & large payloads",
     ],
     "Each line is assembled only when its tick fires and flushed before the next, holding a connection ~limit × interval.",
     { fontSize: 11 });
-  addNotes(s, "The real export endpoint from Chapter 22. It returns Multi of String, not a List it built up first, and each item is a complete NDJSON line assembled only when its tick fires. The pipeline: createFrom().ticks() is a periodic source firing every STREAM_INTERVAL_MILLIS; select().first(effectiveLimit) caps how many; and each tick is transformed into the next BookingEvent's JSON line. The event loop running the HTTP connection drives it: each tick produces one line, that line flushes to the socket before the next tick is due, nothing buffers. Note the clampLimit again: it enforces 1 to 20, and the comment in the source spells out why this DoS guard matters, not a nicety: an NDJSON export built on a ticking stream holds the connection open for roughly limit times the interval, so at a 200-millisecond tick an unclamped limit of a million would keep the connection alive for over fifty hours. A query parameter that drives resource consumption directly needs an upper bound enforced in code, independent of what the client claims to want. And the example's verify script proves the streaming happens incrementally by timestamping each line as it arrives and asserting the spread, because a buffered implementation could produce byte-identical output all at once; only the timing distinguishes incremental delivery.");
+  addNotes(s, "The real export endpoint from the Quarkus REST deep-dive. It returns Multi of String, not a List it built up first, and each item is a complete NDJSON line assembled only when its tick fires. The pipeline: createFrom().ticks() is a periodic source firing every STREAM_INTERVAL_MILLIS; select().first(effectiveLimit) caps how many; and each tick is transformed into the next BookingEvent's JSON line. The event loop running the HTTP connection drives it: each tick produces one line, that line flushes to the socket before the next tick is due, nothing buffers. Note the clampLimit again: it enforces 1 to 20, and the comment in the source spells out why this DoS guard matters, not a nicety: an NDJSON export built on a ticking stream holds the connection open for roughly limit times the interval, so at a 200-millisecond tick an unclamped limit of a million would keep the connection alive for over fifty hours. A query parameter that drives resource consumption directly needs an upper bound enforced in code, independent of what the client claims to want. And the example's verify script proves the streaming happens incrementally by timestamping each line as it arrives and asserting the spread, because a buffered implementation could produce byte-identical output all at once; only the timing distinguishes incremental delivery.");
 }
 
 /* --- NDJSON writer code --- */
@@ -555,14 +555,14 @@ divider("08", "Events & multi-protocol contracts",
   const s = S();
   addCodeSlide(s, "CONTRACTS", "SmallRye Reactive Messaging: the channel", "properties · Quarkus",
     [
-      "# application.properties — wire the outgoing 'booking-events' channel to Kafka",
+      "# application.properties: wire the outgoing 'booking-events' channel to Kafka",
       "kafka.bootstrap.servers=kafka:9092",
       "mp.messaging.outgoing.booking-events.connector=smallrye-kafka",
       "mp.messaging.outgoing.booking-events.topic=shipping.bookings.lifecycle",
       "mp.messaging.outgoing.booking-events.value.serializer=\\",
       "    org.apache.kafka.common.serialization.StringSerializer",
       "",
-      "// Inject the channel as an Emitter — no hand-rolled KafkaProducer",
+      "// Inject the channel as an Emitter, no hand-rolled KafkaProducer",
       "@Inject @Channel(\"booking-events\") Emitter<String> emitter;",
     ],
     "Config names the channel; the topic is the exact one the AsyncAPI contract declares (shipping.bookings.lifecycle).",
@@ -633,7 +633,7 @@ divider("09", "Testing & running it",
     ],
     "RestAssured's given/when/then asserts the full HTTP contract (status, headers, and body) against the booted app.",
     { fontSize: 10 });
-  addNotes(s, "The @QuarkusTest layer in real code. The @QuarkusTest annotation boots the full Quarkus application (CDI, JAX-RS, Jackson) in the same JVM as the test, so this exercises the actual wiring, not mocks, but in-process rather than over a network. The tests use RestAssured's given-when-then fluent style, which reads almost like the HTTP it's asserting: given a JSON body, when you POST to /bookings, then expect 201, a Location header matching the booking-id pattern, a PENDING status, and the computed quote. The second test checks the 404 path returns a Problem body with the right content type. This asserts the full HTTP contract: status code, headers, and body shape, which is exactly what a client sees. One honest operational note from the example's README: this @QuarkusTest isn't run by the CI verify script, because a Maven and JVM boot per CI matrix leg is too heavy and slow for the bounded, deterministic CI path; it's the local and build-time test layer, while the live-container contract checks and the Newman collection are what run in CI. Both are real layers of the pyramid; they just run in different places.");
+  addNotes(s, "The @QuarkusTest layer in real code. The @QuarkusTest annotation boots the full Quarkus application (CDI, JAX-RS, Jackson) in the same JVM as the test, so this exercises the actual wiring, not mocks, but in-process rather than over a network. The tests use RestAssured's given-when-then fluent style, which reads almost like the HTTP it's asserting: given a JSON body, when you POST to /bookings, then expect 201, a Location header matching the booking-id pattern, a PENDING status, and the computed quote. The second test checks the 404 path returns a Problem body with the right content type. This asserts the full HTTP contract: status code, headers, and body shape, which is exactly what a client sees. One operational note from the example's README: this @QuarkusTest isn't run by the CI verify script, because a Maven and JVM boot per CI matrix leg is too heavy and slow for the bounded, deterministic CI path; it's the local and build-time test layer, while the live-container contract checks and the Newman collection are what run in CI. Both are layers of the pyramid; they just run in different places.");
 }
 
 /* --- running it --- */
@@ -671,11 +671,11 @@ divider("10", "Ecosystem & wrap-up",
   addBullets(s, [
     "Build-time binding: @RestHeader/@RestQuery resolved once, yielding fast start, low memory, native-ready builds.",
     "Records + Bean Validation + Problem mappers: declarative DTOs, every failure application/problem+json.",
-    "Reactive Multi + a scoped @Provider writer: honest streaming without double-encoding.",
+    "Reactive Multi + a scoped @Provider writer: correct streaming without double-encoding.",
     "SmallRye Reactive Messaging: CloudEvents to Kafka off the request thread, typed by the shared schema.",
     "Go deeper: examples/*/quarkus/**, Chapter 22, and the Python/FastAPI companion deck for the other stack.",
   ], { fontSize: 16 });
-  addNotes(s, "Pulling the Quarkus story together. The defining choice is build-time binding: @RestHeader, @RestQuery, @RestPath resolved once during the build instead of by reflection per request, which is what gives you fast startup, low memory, and tractable native images. The resource layer is records as DTOs with declarative Bean Validation, and a family of exception mappers that guarantee every failure, whether we raised it or the runtime did, comes back as application/problem+json. The reactive story is Mutiny's Multi for streaming, paired with a narrowly-scoped @Provider message-body writer so NDJSON isn't double-encoded by the general-purpose Jackson writer. And the event side is SmallRye Reactive Messaging, publishing a CloudEvents envelope to Kafka off the request thread, with the payload typed by the same shared schema as the REST Booking so the two protocols can't drift. All of it is real code in examples slash star slash quarkus, expanded in Chapter 22. To see the identical patterns in the other stack, the Python and FastAPI companion deck is the next one.");
+  addNotes(s, "Pulling the Quarkus story together. The defining choice is build-time binding: @RestHeader, @RestQuery, @RestPath resolved once during the build instead of by reflection per request, which is what gives you fast startup, low memory, and tractable native images. The resource layer is records as DTOs with declarative Bean Validation, and a family of exception mappers that guarantee every failure, whether we raised it or the runtime did, comes back as application/problem+json. The reactive story is Mutiny's Multi for streaming, paired with a narrowly-scoped @Provider message-body writer so NDJSON isn't double-encoded by the general-purpose Jackson writer. And the event side is SmallRye Reactive Messaging, publishing a CloudEvents envelope to Kafka off the request thread, with the payload typed by the same shared schema as the REST Booking so the two protocols can't drift. All of it is code in examples slash star slash quarkus, expanded in the Quarkus REST deep-dive. To see the identical patterns in the other stack, the Python and FastAPI companion deck is the next one.");
 }
 
 /* --- Q&A --- */
@@ -687,7 +687,7 @@ divider("10", "Ecosystem & wrap-up",
     "Code: examples/*/quarkus/** · deep-dive: _docs/22-quarkus-rest-in-depth.md · github.com/patterncatalyst/api-patterns-and-practices-rest",
   ], { fontSize: 16 });
   addCaption(s, "Red Hat is the world's leading provider of enterprise open source software solutions, trusted by the Fortune 500 for support, training, and consulting.");
-  addNotes(s, "Thank you. That's every pattern from the 100-level deck, built in Quarkus: the build-time binding model and what it buys you, the contract-first resource with records and Bean Validation, Problem-details mappers, content negotiation and merge-patch, keyset pagination, the async operation across two resource classes, HATEOAS links from the lifecycle state machine, media-type versioning, soft deletion, reactive NDJSON with its dedicated writer, Range for large binaries, and the CloudEvents-over-Kafka publisher on SmallRye Reactive Messaging, all tested with @QuarkusTest and runnable from a laptop to OpenShift, as a JVM or native image. I'm happy to take questions on any of it. All the code is under examples slash star slash quarkus, the deep-dive is Chapter 22, and the whole project is public on the Pattern Catalyst GitHub organization. And the standard Red Hat close: Red Hat is the world's leading provider of enterprise open source software solutions, trusted by the Fortune 500 for award-winning support, training, and consulting services.");
+  addNotes(s, "Thank you. That's every pattern from the 100-level deck, built in Quarkus: the build-time binding model and what it buys you, the contract-first resource with records and Bean Validation, Problem-details mappers, content negotiation and merge-patch, keyset pagination, the async operation across two resource classes, HATEOAS links from the lifecycle state machine, media-type versioning, soft deletion, reactive NDJSON with its dedicated writer, Range for large binaries, and the CloudEvents-over-Kafka publisher on SmallRye Reactive Messaging, all tested with @QuarkusTest and runnable from a laptop to OpenShift, as a JVM or native image. I'm happy to take questions on any of it. All the code is under examples slash star slash quarkus, the Quarkus REST deep-dive goes further, and the whole project is public on the Pattern Catalyst GitHub organization. And the standard Red Hat close: Red Hat is the world's leading provider of enterprise open source software solutions, trusted by the Fortune 500 for award-winning support, training, and consulting services.");
 }
 
 /* ======================= APPENDIX A ======================= */
@@ -716,7 +716,7 @@ divider("A", "Appendix: extra Quarkus code",
     ],
     "POST mints random cargo ids; PUT mints deterministic ones so a repeated identical PUT lands byte-identical state.",
     { fontSize: 10 });
-  addNotes(s, "An appendix detail that's easy to get wrong: making PUT fully idempotent. PUT is a full replacement and the idempotency matrix requires that replacing a booking with the same body twice lands the same state both times. The subtlety is cargo ids. POST correctly mints a fresh random ULID for each cargo item: a new booking gets new ids. But if PUT did the same, replacing a booking with an identical body twice would produce different cargo ids each time, which violates idempotency; the second response wouldn't byte-match the first. So replaceBooking uses toCargoItemsForReplace, which mints deterministic ids keyed on the booking id and the item's index, so the same body always yields the same ids. It also preserves the existing id, status, and createdAt; only the client-supplied fields and updatedAt change. This is the kind of correctness detail that the shared contract and idempotency tests actually catch, and it's why it's worth showing: 'PUT is idempotent' is a property you have to implement by design, not one you get for free.");
+  addNotes(s, "An appendix detail that's easy to get wrong: making PUT fully idempotent. PUT is a full replacement and the idempotency matrix requires that replacing a booking with the same body twice lands the same state both times. The subtlety is cargo ids. POST correctly mints a fresh random ULID for each cargo item: a new booking gets new ids. But if PUT did the same, replacing a booking with an identical body twice would produce different cargo ids each time, which violates idempotency; the second response wouldn't byte-match the first. So replaceBooking uses toCargoItemsForReplace, which mints deterministic ids keyed on the booking id and the item's index, so the same body always yields the same ids. It also preserves the existing id, status, and createdAt; only the client-supplied fields and updatedAt change. This is the kind of correctness detail that the shared contract and idempotency tests actually catch, and it's why it's worth showing: 'PUT is idempotent' is a property you have to implement by design, not one you get automatically.");
 }
 
 /* --- cargo sub-resource --- */

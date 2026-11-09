@@ -38,7 +38,7 @@ extract_header() {
 }
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -88,7 +88,7 @@ run_stack_tests() {
 
   local booking_id
   booking_id="$(jq -r '.id' "$body_file")"
-  echo "lib.sh: ok — $stack booking $booking_id created"
+  echo "lib.sh: ok, $stack booking $booking_id created"
 
   # -- HEAD /bookings/{id}/manifest -> 200, Accept-Ranges, Content-Length ---
   # `curl -I`/`--head`, NOT `-X HEAD`: libcurl only suppresses its
@@ -105,7 +105,7 @@ run_stack_tests() {
   local total
   total="$(extract_header Content-Length "$headers_file")"
   [[ "$total" =~ ^[0-9]+$ ]] || fail "$stack HEAD manifest: missing/invalid Content-Length (got '$total')"
-  echo "lib.sh: ok — $stack manifest TOTAL size = $total bytes"
+  echo "lib.sh: ok, $stack manifest TOTAL size = $total bytes"
 
   # -- GET /bookings/{id}/manifest (no Range) -> 200, full body -------------
   status="$(curl -sS -D "$headers_file" -o "$body_file" -w '%{http_code}' \
@@ -116,7 +116,7 @@ run_stack_tests() {
   local full_len
   full_len="$(wc -c < "$body_file" | tr -d ' ')"
   [[ "$full_len" == "$total" ]] || fail "$stack GET manifest (full): expected $total bytes, got $full_len"
-  echo "lib.sh: ok — $stack GET manifest (full) returned $full_len bytes"
+  echo "lib.sh: ok, $stack GET manifest (full) returned $full_len bytes"
 
   # -- GET with Range: bytes=0-1023 -> 206, Content-Range, 1024 bytes ------
   status="$(curl -sS -D "$headers_file" -o "$body_file" -w '%{http_code}' \
@@ -129,7 +129,7 @@ run_stack_tests() {
     || fail "$stack GET manifest (Range 0-1023): expected Content-Range 'bytes 0-1023/$total', got '$content_range'"
   range_len="$(wc -c < "$body_file" | tr -d ' ')"
   [[ "$range_len" == "1024" ]] || fail "$stack GET manifest (Range 0-1023): expected 1024 bytes, got $range_len"
-  echo "lib.sh: ok — $stack bounded Range 0-1023 -> 206, Content-Range '$content_range', 1024 bytes"
+  echo "lib.sh: ok, $stack bounded Range 0-1023 -> 206, Content-Range '$content_range', 1024 bytes"
 
   # -- GET with Range: bytes=1024- (open) -> 206, Content-Range to TOTAL-1 -
   status="$(curl -sS -D "$headers_file" -o "$body_file" -w '%{http_code}' \
@@ -145,7 +145,7 @@ run_stack_tests() {
   range_len="$(wc -c < "$body_file" | tr -d ' ')"
   [[ "$range_len" == "$expected_len" ]] \
     || fail "$stack GET manifest (open Range): expected $expected_len bytes, got $range_len"
-  echo "lib.sh: ok — $stack open Range 1024- -> 206, Content-Range '$content_range', $range_len bytes"
+  echo "lib.sh: ok, $stack open Range 1024- -> 206, Content-Range '$content_range', $range_len bytes"
 
   # -- GET with an unsatisfiable Range (start past EOF) -> 416 -------------
   local bad_start bad_end
@@ -158,7 +158,7 @@ run_stack_tests() {
   content_range="$(extract_header Content-Range "$headers_file")"
   [[ "$content_range" == "bytes */$total" ]] \
     || fail "$stack GET manifest (unsatisfiable Range): expected Content-Range 'bytes */$total', got '$content_range'"
-  echo "lib.sh: ok — $stack unsatisfiable Range -> 416, Content-Range '$content_range'"
+  echo "lib.sh: ok, $stack unsatisfiable Range -> 416, Content-Range '$content_range'"
 
   # -- HEAD/GET manifest for an UNKNOWN booking -> 404, Problem ------------
   # A 404 has no Content-Length surprise either way, but --head stays

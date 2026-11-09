@@ -30,7 +30,7 @@ def generate_ulid() -> str:
 
 
 def generate_deterministic_ulid(seed: str) -> str:
-    """A deterministic, non-random "ULID-shaped" id derived from `seed` —
+    """A deterministic, non-random "ULID-shaped" id derived from `seed`:
     same seed in, same 26-char Crockford string out, every time.
 
     Used by PUT (full replace), NOT by POST: an idempotent replace must

@@ -68,7 +68,7 @@ public class BookingEventPublisher {
             envelope.put("subject", confirmed.id());
             envelope.put("time", occurredAt);
             envelope.put("datacontenttype", "application/json");
-            envelope.put("data", data);
+            envelope.put("data", data); // data = #/$defs/BookingEvent
 
             String json = mapper.writeValueAsString(envelope);
             emitter.send(json).toCompletableFuture().get(10, TimeUnit.SECONDS);

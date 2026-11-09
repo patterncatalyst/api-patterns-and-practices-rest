@@ -35,7 +35,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -77,11 +77,11 @@ ARAZZO_FILE="$REPO_ROOT/contracts/arazzo/booking-workflow.yaml"
 
 grep -q "shipping.schema.json" "$OPENAPI_FILE" \
   || fail "contracts/openapi/shipping-api.yaml does not \$ref shipping.schema.json"
-echo "lib.sh: ok — OpenAPI \$refs shipping.schema.json"
+echo "lib.sh: ok, OpenAPI \$refs shipping.schema.json"
 
 grep -q "shipping.schema.json" "$ASYNCAPI_FILE" \
   || fail "contracts/asyncapi/shipping-events.yaml does not \$ref shipping.schema.json"
-echo "lib.sh: ok — AsyncAPI \$refs shipping.schema.json"
+echo "lib.sh: ok, AsyncAPI \$refs shipping.schema.json"
 
 "$LGTM_VERIFY_VENV_DIR/bin/python" -I "$SCRIPT_DIR/check_arazzo.py" "$ARAZZO_FILE"
 
@@ -145,12 +145,12 @@ check_event() {
     jq -e "has(\"$attr\")" "$event_file" >/dev/null \
       || fail "$stack: CloudEvents envelope missing required attribute '$attr'"
   done
-  echo "lib.sh: ok — $stack CloudEvents envelope has specversion/id/source/type"
+  echo "lib.sh: ok, $stack CloudEvents envelope has specversion/id/source/type"
 
   local data_file="$TMP_DIR/${stack}-event-data.json"
   jq -c '.data' "$event_file" > "$data_file"
   validate_body BookingEvent "$data_file"
-  echo "lib.sh: ok — $stack BookingEvent data conforms to #/\$defs/BookingEvent"
+  echo "lib.sh: ok, $stack BookingEvent data conforms to #/\$defs/BookingEvent"
 }
 
 run_stack_tests() {
@@ -174,7 +174,7 @@ run_stack_tests() {
   local location booking_id
   location="$(extract_header Location "$headers_file")"
   booking_id="$(jq -r '.id' "$body_file")"
-  echo "lib.sh: ok — $stack POST /bookings created $booking_id"
+  echo "lib.sh: ok, $stack POST /bookings created $booking_id"
 
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$(resolve_location "$base" "$location")")"
   assert_status 200 "$status" "$stack GET Location"

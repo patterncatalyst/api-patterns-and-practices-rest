@@ -243,7 +243,7 @@ def add_cargo(booking_id: str, payload: CargoRequest) -> JSONResponse:
 async def request_confirmation(booking_id: str) -> JSONResponse:
     # async def (not def, unlike this module's other handlers): FastAPI
     # runs a plain `def` endpoint in a worker thread via run_in_threadpool,
-    # which has no running asyncio event loop — asyncio.create_task() inside
+    # which has no running asyncio event loop: asyncio.create_task() inside
     # operations.start_confirmation() needs one. An `async def` endpoint
     # runs directly on the event loop that the background task is
     # scheduled onto.

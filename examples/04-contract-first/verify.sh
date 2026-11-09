@@ -50,7 +50,7 @@ resolve_location() {
 }
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -104,7 +104,7 @@ run_stack_tests() {
   booking_id="$(jq -r '.id' "$body_file")"
   quote_amount="$(jq -r '.quote.amount' "$body_file")"
   [[ "$quote_amount" == "3001.25" ]] || fail "$stack quote.amount: expected 3001.25 (1200.5kg * 2.50), got $quote_amount"
-  echo "lib.sh: ok — $stack quote formula produced $quote_amount"
+  echo "lib.sh: ok, $stack quote formula produced $quote_amount"
 
   # -- GET the Location -> 200, Booking ------------------------------------
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$(resolve_location "$base" "$location")")"
@@ -153,7 +153,7 @@ run_stack_tests() {
     diff -u "$put_1_stable" "$put_2_stable" >&2 || true
     fail "$stack two identical PUT /bookings/{id} calls produced DIFFERENT resource state — PUT must be idempotent"
   fi
-  echo "lib.sh: ok — $stack two identical PUTs produced byte-identical state (updatedAt excluded)"
+  echo "lib.sh: ok, $stack two identical PUTs produced byte-identical state (updatedAt excluded)"
 
   # -- PATCH /bookings/{id} with application/merge-patch+json -> 200 ------
   status="$(curl -sS -o "$body_file" -w '%{http_code}' \
@@ -188,7 +188,7 @@ run_stack_tests() {
   if jq -e --arg id "$booking_id" '.items[] | select(.id == $id)' "$body_file" >/dev/null; then
     fail "$stack cancelled booking $booking_id is still visible in the default GET /bookings list"
   fi
-  echo "lib.sh: ok — $stack cancelled booking hidden from default collection"
+  echo "lib.sh: ok, $stack cancelled booking hidden from default collection"
 
   echo "=== $stack: all assertions passed ==="
 }

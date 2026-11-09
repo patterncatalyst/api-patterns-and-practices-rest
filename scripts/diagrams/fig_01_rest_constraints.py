@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fig 01 — Ch1: RPC/verb-oriented vs Web API/resource-oriented, plus the five
+"""Fig 01: Ch1: RPC/verb-oriented vs Web API/resource-oriented, plus the five
 REST constraints with uniform interface emphasized."""
 import sys
 sys.path.insert(0, "scripts")
@@ -17,7 +17,7 @@ nodes = [
                "DELETE /bookings/{id}", "nouns + HTTP methods"], "style": "box"},
 
     {"x": 35, "y": 230, "w": 150, "h": 120,
-     "lines": ["Client–server", "UI decoupled from", "data storage"], "style": "box"},
+     "lines": ["Client-server", "UI decoupled from", "data storage"], "style": "box"},
     {"x": 210, "y": 230, "w": 150, "h": 120,
      "lines": ["Stateless", "no client session", "kept on the server"], "style": "box"},
     {"x": 385, "y": 230, "w": 150, "h": 120,
@@ -37,7 +37,7 @@ notes = [
     {"x": 480, "y": 95, "text": "vs", "size": 13, "color": "#555555", "anchor": "middle", "bold": True},
     {"x": 635, "y": 375, "text": "Most REST APIs are built on client-server + stateless,",
      "size": 11, "color": "#555555", "anchor": "middle"},
-    {"x": 635, "y": 390, "text": "but violate the uniform interface — the constraint that matters most.",
+    {"x": 635, "y": 390, "text": "but violate the uniform interface, the constraint that matters most.",
      "size": 11, "color": "#b8650a", "anchor": "middle"},
 ]
 

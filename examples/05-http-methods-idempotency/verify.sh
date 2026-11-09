@@ -36,7 +36,7 @@ extract_header() {
 }
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -94,7 +94,7 @@ run_stack_tests() {
   id_1="$(jq -r '.id' "$body_a")"
   id_2="$(jq -r '.id' "$body_b")"
   [[ "$id_1" != "$id_2" ]] || fail "$stack two identical POST /bookings calls produced the SAME id ($id_1) — POST must not be idempotent"
-  echo "lib.sh: ok — $stack two POSTs minted distinct bookings ($id_1 != $id_2)"
+  echo "lib.sh: ok, $stack two POSTs minted distinct bookings ($id_1 != $id_2)"
 
   # -- (2) PUT /bookings/{id_1} with the SAME body twice -> identical state
   #        (idempotent), modulo the volatile updatedAt timestamp -----------
@@ -119,7 +119,7 @@ run_stack_tests() {
     diff -u "$put_1_stable" "$put_2_stable" >&2 || true
     fail "$stack two identical PUT /bookings/{id} calls produced DIFFERENT resource state — PUT must be idempotent"
   fi
-  echo "lib.sh: ok — $stack two identical PUTs produced byte-identical state (updatedAt excluded)"
+  echo "lib.sh: ok, $stack two identical PUTs produced byte-identical state (updatedAt excluded)"
 
   # -- (3) HEAD /bookings/{id} — safe, same headers as GET, no body --------
   status="$(curl -sS -I -o "$headers_file" -w '%{http_code}' "$base/bookings/$id_1")"
@@ -135,7 +135,7 @@ run_stack_tests() {
   allow_collection="$(extract_header Allow "$headers_file")"
   [[ "$allow_collection" == *GET* && "$allow_collection" == *POST* ]] \
     || fail "$stack PUT /bookings Allow header ('$allow_collection') does not list GET and POST"
-  echo "lib.sh: ok — $stack PUT /bookings -> 405, Allow: $allow_collection"
+  echo "lib.sh: ok, $stack PUT /bookings -> 405, Allow: $allow_collection"
 
   # -- (5) 405 on methods an ITEM doesn't support (POST) --------------------
   status="$(curl -sS -D "$headers_file" -o "$body_a" -w '%{http_code}' \
@@ -147,7 +147,7 @@ run_stack_tests() {
   allow_item="$(extract_header Allow "$headers_file")"
   [[ "$allow_item" == *GET* && "$allow_item" == *PUT* && "$allow_item" == *DELETE* ]] \
     || fail "$stack POST /bookings/{id} Allow header ('$allow_item') does not list GET, PUT and DELETE"
-  echo "lib.sh: ok — $stack POST /bookings/{id} -> 405, Allow: $allow_item"
+  echo "lib.sh: ok, $stack POST /bookings/{id} -> 405, Allow: $allow_item"
 
   # -- (6) DELETE semantics: 204, then 404 on the same id, then GET 404 ----
   status="$(curl -sS -o /dev/null -w '%{http_code}' -X DELETE "$base/bookings/$id_2")"
@@ -160,7 +160,7 @@ run_stack_tests() {
   status="$(curl -sS -o "$body_a" -w '%{http_code}' "$base/bookings/$id_2")"
   assert_status 404 "$status" "$stack GET /bookings/{id} (after delete)"
   validate_body Problem "$body_a"
-  echo "lib.sh: ok — $stack DELETE is idempotent in END STATE: 204 then 404, GET then 404"
+  echo "lib.sh: ok, $stack DELETE is idempotent in END STATE: 204 then 404, GET then 404"
 
   echo "=== $stack: all assertions passed ==="
 }

@@ -2,7 +2,7 @@
 title: "Content negotiation & status codes"
 order: 6
 part: "HTTP semantics done right"
-description: "Serve the right representation for the client's Accept, reject the wrong Content-Type, and return status codes that mean exactly what the spec says: 406, 415, and the 2xx/4xx/409 set."
+description: "Serve the representation the client's Accept names, reject the wrong Content-Type, and return the status code the spec defines: 406, 415, and the 2xx, 4xx and 409 set."
 duration: "28 min"
 ---
 
@@ -11,45 +11,53 @@ duration: "28 min"
 By the end of this chapter you can:
 
 - Distinguish `Accept` (what the client will take back) from `Content-Type` (what the client is sending), and map each failure to its status code (`406` vs. `415`).
-- Enforce content negotiation declaratively with `@Produces`/`@Consumes` on Quarkus, versus by hand with `_check_accept()`/`_check_content_type()` on FastAPI.
-- Place `200`, `201` (with `Location`), `204`, `400`, `404`, and `409` precisely against the booking domain's state machine.
+- Enforce content negotiation declaratively with `@Produces`/`@Consumes` on Quarkus, and by hand with `_check_accept()`/`_check_content_type()` on FastAPI.
+- Place `200`, `201` (with `Location`), `204`, `400`, `404` and `409` against the booking domain's state machine.
 - Explain why `POST /bookings/{id}/confirm` against an already-`CONFIRMED` booking returns `409`, not `400` or `404`.
-- Return every error as a schema-conforming `application/problem+json` `Problem` body with `title`, `status`, and a `detail` that names the blocking state.
+- Return every error as an `application/problem+json` `Problem` body with `title`, `status` and a `detail` that names the blocking state.
 
 ## Why this matters
 
-Chapter 4 built the `bookings` and `cargo` surface against the contract and got the happy path right: a `POST` creates, a `GET` reads, a `PUT` replaces. What it left loose is the part of HTTP that decides what happens when a request asks for something the server was never going to give it: a representation it can't produce, a body format it won't parse, an operation that's well-formed but arrives at the wrong moment in a booking's life. Those are not edge cases to bolt on later; RFC 9110 defines them as the server's half of a negotiation, with precise status codes for each way the negotiation can fail. This chapter builds that half out: `Accept` and `Content-Type` as two different questions, `406` and `415` as the two different ways to answer "no," and the rest of the status-code set (`200`, `201` with `Location`, `204`, `400`, `404`, `409`) placed exactly where the booking domain's state machine says each one belongs.
+A request can fail without being wrong in any way the client controls casually: it asks for a representation the server can't produce, sends a body format the server won't parse, or names a valid operation at the wrong moment in a booking's life. RFC 9110 gives each failure its own status code. A client that gets the right code knows which header, field or precondition to change. A client that gets a vague one has to guess.
 
-## Two headers, two different questions
+## Two headers, two questions
 
-`Accept` and `Content-Type` get confused for the same thing often enough that the distinction comes first: `Accept` is the client asking "what representations will you give me back," and `Content-Type` is the client declaring "here is what this request body actually is." One governs the response, the other describes the request. A client can send `Accept: application/json` on a `GET` with no body at all (there's nothing to label) and it can send `Content-Type: application/json` on a `POST` while sending `Accept: */*`, perfectly happy to take whatever comes back. The two headers travel together on a write, but they're answering independent questions, and the server has an independent failure mode for each one.
+`Accept` is the client asking which representations it will take back. `Content-Type` declares what the request body is. One governs the response and the other describes the request, and each has its own failure.
 
-When a server can't produce anything the client's `Accept` header will take, RFC 9110 §12.5.1 says the response is `406 Not Acceptable`: the request was fine, the server has a perfectly good resource to return, it just can't express that resource in a form this particular client declared acceptable. When a server won't parse the `Content-Type` a request body arrived with, the response is `415 Unsupported Media Type`: again, nothing wrong with the request's intent, the server simply doesn't know how to read a body labeled that way. Both are 4xx client errors in the sense that the client is the one that needs to change something, but they sit on opposite sides of the request/response boundary, and conflating them produces exactly the kind of API where a client has to guess which header to fix.
+- **`406 Not Acceptable`** (RFC 9110 §12.5.1): the resource exists, but the server can't express it in any form the `Accept` header allows.
+- **`415 Unsupported Media Type`**: the server won't parse a body labeled with that `Content-Type`.
 
-The booking API in this chapter's example narrows both directions by design. Every endpoint that returns a body produces exactly two media types (`application/json` for success and `application/problem+json` for errors), never a wildcard, and every endpoint that accepts a body consumes exactly `application/json`, except `PATCH`, which (unchanged from Chapter 5) consumes `application/merge-patch+json`. That narrowness is what makes `406` and `415` meaningful signals instead of noise: they fire exactly when a client asks for, or sends, something this particular API was never going to produce or accept, not as a generic catch-all for anything unexpected.
+Conflating them leaves a client guessing which header to fix.
+
+The booking API keeps both directions narrow. Every endpoint that returns a body produces exactly `application/json` for success and `application/problem+json` for errors. Every endpoint that accepts a body consumes `application/json`, except `PATCH`, which consumes `application/merge-patch+json`. Narrow declarations make `406` and `415` signals that fire only when a client asks for or sends something the API never handles.
 
 | Header | Client sends | Server behavior |
 |---|---|---|
-| `Accept` | `application/json`, `*/*`, or absent | 200/201/204, body in the default shape |
-| `Accept` | `application/xml`, or anything neither JSON type satisfies | **406 Not Acceptable**, `Problem` body |
-| `Content-Type` (write) | `application/json` (or `application/merge-patch+json` on `PATCH`) | request accepted, body parsed and validated |
-| `Content-Type` (write) | `text/plain`, or anything the endpoint doesn't declare | **415 Unsupported Media Type**, `Problem` body |
+| `Accept` | `application/json`, `*/*`, or absent | 200, 201 or 204, body in the default shape |
+| `Accept` | `application/xml`, or anything neither JSON type satisfies | **406**, `Problem` body |
+| `Content-Type` (write) | `application/json` (`application/merge-patch+json` on `PATCH`) | Body parsed and validated |
+| `Content-Type` (write) | `text/plain`, or anything the endpoint doesn't declare | **415**, `Problem` body |
 
-An absent `Accept` header is not a 406 trigger: RFC 9110 §12.5.1 treats a missing header the same as `*/*`, "anything will do," so a client that never thinks about content negotiation at all gets the default representation rather than an error it never asked for. The failure mode is reserved for a client that *names* a type, and names only types the server has no way to produce.
+An absent `Accept` header is not a `406`. RFC 9110 §12.5.1 treats it as `*/*`, so a client that never thinks about negotiation gets the default representation. `406` is reserved for a client that names types and names only ones the server can't produce.
 
-## The status-code set, placed in the booking domain
+## The status codes in the booking domain
 
-Content negotiation is one axis of "did this request succeed." The other axis is the broader status-code vocabulary, and the booking domain is specific enough to place every member of it precisely rather than by rule of thumb.
+| Code | Use in the booking API |
+|---|---|
+| `200 OK` | A representation of an existing or just-modified resource: `GET`, `PUT`, a successful `confirm` |
+| `201 Created` | `POST /bookings`, with `Location: /bookings/{id}` **and** the full `Booking` body |
+| `204 No Content` | `DELETE /bookings/{id}`: the cancellation has nothing left to restate |
+| `400 Bad Request` | The request is malformed or fails validation: no cargo items, a cargo entry with no weight, invalid merge-patch JSON |
+| `404 Not Found` | The request is well formed but its target doesn't exist, or is cancelled and so treated as gone |
+| `409 Conflict` | The request is well formed and the resource exists, but its current state makes the operation impossible |
 
-`200 OK` is the default success code for anything that returns a representation of an existing or just-modified resource: a `GET` on a booking, a `PUT` replace, a successful `confirm` transition. `204 No Content` is for a successful operation that has nothing left to say: `DELETE /bookings/{id}` cancels the booking and returns an empty body, because there's no representation of a cancelled booking that the response needs to restate; the client already knows what it asked for. `201 Created` is the one that carries an obligation beyond the status line: RFC 9110 §15.3.2 requires that a `201` response, when the created resource has a URI, include a `Location` header pointing at it. `POST /bookings` returns `201` with `Location: /bookings/{id}` and the full `Booking` body: both the header and the body, not one or the other, because a client creating a resource needs to know both what got created and where to find it again without re-deriving the id from the body by convention.
+RFC 9110 §15.3.2 expects a `201` for a created resource with a URI to carry a `Location` header. The body tells the client what got created and `Location` tells it where, so it never derives the id by convention.
 
-`400 Bad Request` is for a request the server can't act on because the request itself is malformed or fails validation: a booking with no cargo items, a cargo entry missing a weight, a merge-patch document that isn't valid JSON. `404 Not Found` is for a request that's perfectly well-formed but names a resource that doesn't exist, or no longer exists in a form this operation can see: `GET /bookings/{id}` against an id nobody ever created, or against a booking that's been cancelled, which Chapter 5 already taught the store to treat as gone for every single-item read. The distinction between `400` and `404` is about *where* the problem lives: `400` says the request is broken, `404` says the request is fine but its target isn't there.
-
-`409 Conflict` is the status this chapter spends the most care on, because it's the one most often confused with the other two. `409` means the request is well-formed and the resource exists, but the resource's *current state* makes the requested operation impossible. `POST /bookings/{id}/confirm` is the clean example: confirming a booking is a state-machine transition valid from exactly one starting state, `PENDING`. Confirming a booking that's already `CONFIRMED`, or one that's been `CANCELLED`, isn't a bad request (the confirm operation itself is entirely valid syntax against a real resource), and it isn't a missing resource either. It's a conflict between what the client is asking for and the state the resource is actually in. Returning `400` here would blame the request for something the request didn't get wrong; returning `404` would claim a booking doesn't exist when it clearly does. `409` is the code that matches what happened.
+`400` and `404` differ in where the problem lives: the request is broken, or the request is fine and its target isn't there. `409` is the one most often confused with both. Confirming a booking is a transition valid from exactly one state, `PENDING`. Confirming one that is already `CONFIRMED` or `CANCELLED` is valid syntax against a real resource, so `400` would blame the request for nothing it got wrong and `404` would claim the booking doesn't exist. The request conflicts with the resource's state, and `409` says so.
 
 ## Negotiation as annotations, negotiation as code
 
-The two stacks implement the same negotiation rules at very different cost, and the two handlers below show that gap directly. On the Quarkus side, every resource method declares its `@Produces` and `@Consumes` media types, and RESTEasy Reactive enforces them per the JAX-RS 2.1 §3.8 content-negotiation algorithm before `BookingResource`'s code ever runs:
+Quarkus declares the types on each resource method with `@Produces` and `@Consumes`, and RESTEasy Reactive enforces them with the JAX-RS content-negotiation algorithm before resource code runs. An unsatisfiable `Accept` or `Content-Type` raises `NotAcceptableException` or `NotSupportedException`, and `ProblemMappers.java` turns either into a `Problem` body. The resource method needs no negotiation code. FastAPI has no equivalent: a pydantic body parameter is parsed as JSON whatever `Content-Type` arrived, and Starlette never inspects `Accept`. The FastAPI handler takes the raw `Request` and calls the guards itself, then parses and validates the body:
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
@@ -57,21 +65,27 @@ The two stacks implement the same negotiation rules at very different cost, and 
 @POST
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces({MediaType.APPLICATION_JSON, PROBLEM_JSON})
-public Response createBooking(BookingRequest request) {
-    Response invalid = validateBookingRequest(request);
-    if (invalid != null) {
-        return invalid;
-    }
+public Response createBooking(@Valid BookingRequest request) {
     List<Cargo> cargoItems = toCargoItems(request.cargo());
     String now = nowUtc();
     Booking booking = new Booking(
             "bkg_" + Ulid.generate(),
             BookingStatus.PENDING,
-            request.origin(), request.destination(),
-            cargoItems, QuoteCalculator.compute(cargoItems),
-            request.requestedPickup(), now, null);
+            request.origin(),
+            request.destination(),
+            cargoItems,
+            QuoteCalculator.compute(cargoItems),
+            request.requestedPickup(),
+            now,
+            null);
     store.put(booking);
 
+    // A literal header string, NOT Response.created(URI): per the
+    // JAX-RS spec, ResponseBuilder.location(URI) resolves a relative
+    // URI into an absolute one against the base URI, which would make
+    // Quarkus's Location header shape diverge from the Python stack's
+    // relative `/bookings/{id}`. Setting the header directly keeps the
+    // two stacks byte-for-byte identical.
     return Response.status(Response.Status.CREATED)
             .header("Location", "/bookings/" + booking.id())
             .entity(booking)
@@ -80,16 +94,6 @@ public Response createBooking(BookingRequest request) {
 ```
 
 ```python
-async def _parse_json_body(request: Request) -> tuple[Any, JSONResponse | None]:
-    """Parse the raw request body as JSON, returning a 400 Problem on
-    failure instead of letting an unhandled JSONDecodeError 500.
-    """
-    try:
-        return await request.json(), None
-    except Exception:
-        return None, _problem(400, "Invalid request body", "request body is not valid JSON")
-
-
 @app.post("/bookings")
 async def create_booking(request: Request) -> JSONResponse:
     if (problem := _check_content_type(request)) is not None:
@@ -104,16 +108,28 @@ async def create_booking(request: Request) -> JSONResponse:
         payload = BookingRequest.model_validate(raw)
     except ValidationError as exc:
         return _problem(400, "Invalid booking request", str(exc.errors()))
-    # ... build and store the booking, unchanged from Ch4/Ch5 ...
+
+    cargo_items = [
+        Cargo(id=f"crg_{generate_ulid()}", **item.model_dump())
+        for item in payload.cargo
+    ]
+    booking = Booking(
+        id=f"bkg_{generate_ulid()}",
+        status=BookingStatus.PENDING,
+        origin=payload.origin,
+        destination=payload.destination,
+        cargo=cargo_items,
+        quote=compute_quote(cargo_items),
+        requestedPickup=payload.requestedPickup,
+        createdAt=_now_utc(),
+    )
+    store.put(booking)
     return _json(201, booking, headers={"Location": f"/bookings/{booking.id}"})
 ```
 
-If a request's `Accept` or `Content-Type` can't be satisfied by `createBooking`'s declared types, RESTEasy Reactive raises `NotAcceptableException` or `NotSupportedException` itself, and `ProblemMappers.java` turns either one into a schema-conforming `Problem` body: the negotiation logic needed no new code in the resource method, only the right annotations. FastAPI has no equivalent mechanism: a pydantic body parameter is parsed as JSON regardless of what `Content-Type` the request actually carried, and nothing in Starlette ever inspects `Accept`. `app/main.py` implements both checks by hand, `_check_accept()` and `_check_content_type()`, and calls them explicitly at the top of every handler that needs them:
+The two guards in `app/main.py`:
 
 ```python
-_PRODUCIBLE_MEDIA_TYPES = ("application/json", "application/problem+json")
-
-
 def _check_accept(request: Request) -> JSONResponse | None:
     """406 guard: an absent/empty Accept header means "anything" (RFC 9110
     §12.5.1), so only a header that NAMES types and excludes every type this
@@ -126,7 +142,8 @@ def _check_accept(request: Request) -> JSONResponse | None:
         if media_type in ("*/*", "application/*") or media_type in _PRODUCIBLE_MEDIA_TYPES:
             return None
     return _problem(
-        406, "Not Acceptable",
+        406,
+        "Not Acceptable",
         "The Accept header does not match a media type this endpoint can produce "
         f"(application/json, application/problem+json); got Accept: {request.headers.get('accept', '')}",
     )
@@ -134,33 +151,52 @@ def _check_accept(request: Request) -> JSONResponse | None:
 
 def _check_content_type(request: Request, expected: str = "application/json") -> JSONResponse | None:
     """415 guard: the request body's Content-Type must match `expected`
-    exactly (ignoring any `; charset=...` parameter).
+    exactly (ignoring any ``; charset=...`` parameter); a body sent with
+    the wrong media type never reaches the pydantic parser.
     """
     content_type = _parse_media_types(request.headers.get("content-type", ""))
     if content_type and content_type[0] == expected:
         return None
     return _problem(
-        415, "Unsupported Media Type",
+        415,
+        "Unsupported Media Type",
         f"The request's Content-Type is not one this endpoint accepts (expected {expected}); "
         f"got Content-Type: {request.headers.get('content-type') or '(none)'}",
     )
 ```
 
-Same observable behavior on the wire, radically different cost on each side. Quarkus pays once, in a declaration, and the framework enforces it everywhere that declaration appears. FastAPI pays per handler, in a function call that has to be remembered at every call site. And the chapter's example README documents exactly what happens when that call gets forgotten: comment out `_check_accept(request)` in `get_booking` and the endpoint quietly starts returning `200` for an `Accept: application/xml` request that should have failed. The same mistake on the Quarkus side requires deleting an annotation element *and* removing the `NotAcceptableException` case from `ProblemMappers.java`: more code to delete, which is itself a kind of guardrail: annotation-driven negotiation fails loud (something has to be actively dismantled), hand-rolled negotiation fails quiet (a single missing function call, easy to lose in a diff).
+Quarkus pays once, in a declaration the framework enforces wherever it appears. FastAPI pays per handler, with a call that must be remembered at every site. Comment out `_check_accept(request)` in `get_booking` and the endpoint quietly returns `200` to `Accept: application/xml`. Breaking the Quarkus side means deleting an annotation element and removing the `NotAcceptableException` case from `ProblemMappers.java`. Annotation-driven negotiation fails loudly because something must be dismantled. Hand-rolled negotiation fails quietly because one missing call is easy to lose in a diff.
+
+{% include excalidraw.html file="06-content-negotiation" alt="A request's Accept and Content-Type headers are checked against what the matched endpoint can produce and consume, branching to a 200/201/204 success response when both are satisfied or to a 406/415 Problem response when either is not, alongside a separate status-code map showing 400 for a malformed request, 404 for a missing resource, and 409 for a well-formed request against a resource in the wrong state." caption="Figure 6.1: Negotiation outcomes and the status-code map." %}
 
 ## `application/problem+json` as the one error shape
 
-Every error response in this chapter (`400`, `404`, `406`, `409`, `415`) comes back as `application/problem+json`, never a bare string, an empty body, or a framework's default HTML error page. RFC 9457 defines the shape: `title` (a short, human-readable summary), `status` (the same numeric code already on the status line, restated in the body so a client reading only the payload still knows what happened), and `detail` (the specifics, such as which field failed, which id was missing, or which state made the transition impossible). The contract's shared `Problem` type in `contracts/schemas/shipping.schema.json` requires only `title` and `status`, kept to that minimum: a client can always get the summary and the code, and `detail` is there when there's something more specific to say, like the exact state a `409` was raised against.
+Every error (`400`, `404`, `406`, `409`, `415`) comes back as `application/problem+json`, never a bare string, an empty body or a framework's HTML error page. RFC 9457 defines the shape:
 
-The payoff of a single error shape is uniform client code. A caller that unmarshals `Problem` once can handle `400`, `404`, `406`, `409`, and `415` with the same deserialization path, branching only on the `status` field it already has: no special-casing one endpoint's error body against another's, no distinguishing "this failure came back as JSON" from "this failure came back as an HTML stack trace because something upstream never set `Content-Type` on its 500." The `409` conflict path shows the shape doing real work, and it's the clearest side-by-side of the chapter because the state check itself is nearly identical code in both languages; only the error-construction idiom differs:
+- `title`: a short summary.
+- `status`: the numeric code from the status line, restated so a client reading only the payload still has it.
+- `detail`: the specifics, such as which field failed, which id was missing or which state blocked the transition.
+
+The shared `Problem` type in `contracts/schemas/shipping.schema.json` requires only `title` and `status`. A caller that unmarshals `Problem` once handles every error through the same path and branches on `status`.
+
+The `409` path shows the shape at work. The state check is nearly identical in both languages and only the error-construction idiom differs:
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
 ```java
+/**
+ * 409 Conflict path: confirming a booking is only valid from
+ * {@code PENDING}: confirming it twice, or confirming one that's
+ * already cancelled/in transit/delivered, is a state conflict, not a
+ * validation error (the request is well-formed; the resource just
+ * isn't in a state that allows it). This rounds out the status-code
+ * table: 200 on success, 404 if the booking doesn't exist, 409 if it
+ * exists but is in the wrong state.
+ */
 @POST
 @Path("/{id}/confirm")
 @Produces({MediaType.APPLICATION_JSON, PROBLEM_JSON})
-public Response confirmBooking(@PathParam("id") String id) {
+public Response confirmBooking(@RestPath String id) {
     Booking existing = store.get(id);
     if (existing == null) {
         return notFound(id);
@@ -181,6 +217,14 @@ public Response confirmBooking(@PathParam("id") String id) {
 ```python
 @app.post("/bookings/{booking_id}/confirm")
 def confirm_booking(booking_id: str, request: Request) -> JSONResponse:
+    """409 Conflict path: confirming a booking is only valid from PENDING:
+    confirming it twice, or confirming one that's already
+    cancelled/in-transit/delivered, is a state conflict, not a validation
+    error (the request is well-formed; the resource just isn't in a state
+    that allows it). This rounds out the status-code table: 200 on success,
+    404 if the booking doesn't exist, 409 if it exists but is in the wrong
+    state. Mirrors Quarkus's confirmBooking.
+    """
     if (problem := _check_accept(request)) is not None:
         return problem
     existing = store.get(booking_id)
@@ -188,7 +232,8 @@ def confirm_booking(booking_id: str, request: Request) -> JSONResponse:
         return _problem(404, "Booking not found", f"No booking with id {booking_id}")
     if existing.status != BookingStatus.PENDING:
         return _problem(
-            409, "Conflict",
+            409,
+            "Conflict",
             f"Booking {booking_id} cannot be confirmed from status {existing.status.value}; "
             "only a PENDING booking can be confirmed",
         )
@@ -197,19 +242,22 @@ def confirm_booking(booking_id: str, request: Request) -> JSONResponse:
     return _json(200, confirmed)
 ```
 
-Both handlers check existence before state (a missing booking is always `404`, even if the `id` happens to look like it could never have been `PENDING`), and both build the `409` `Problem` with the same three facts: what was asked, what state blocked it, and what state would have allowed it. That last detail isn't decoration. A client (or a person reading a log) that only gets `409 Conflict` with no `detail` has to go fetch the booking separately just to find out why; putting the current and required states in `detail` turns the error into something actionable on its own.
+Both handlers check existence before state, so a missing booking is always `404`. Both build the `409` `detail` from the same facts: what was asked, what state blocked it and what state would allow it. Without that, a client with only `409 Conflict` has to fetch the booking to learn why.
 
-## Proof, not assertion
+## Choosing the code
 
-This chapter's example runs on ports `8086` (Quarkus) and `8006` (FastAPI) rather than the `8080`/`8000` every other chapter uses, so it can sit alongside the Chapter 4 and Chapter 5 stacks without a port collision.
+| Situation | Return |
+|---|---|
+| A resource can be served in several shapes | Declare each one explicitly; a wildcard makes `406` and `415` unreachable |
+| A write creates a resource | `201` with `Location`, never a bare `200` |
+| Failure comes from the resource's current state | `409`, with the current and required states in `detail` |
+| Negotiation is hand-rolled | The same status as the annotated stack; confirm it with a behavioral check |
 
-`verify.sh` brings both services up with `docker compose`, waits for health, then drives the full negotiation and status-code table against both: a `201` with `Location` and a schema-valid `Booking` body on create; `415` against a `text/plain` body on the same endpoint; `406` against `Accept: application/xml` on a read; a `confirm` → `200`, then the identical `confirm` call again → `409`, checking both the status and that the `Problem` body's `detail` names the blocking state; and a `DELETE` → `404`-on-retry sequence carried over from Chapter 5. It schema-validates every response against `contracts/schemas/shipping.schema.json` and prints `PASS` only when every assertion holds on **both** stacks: a `200` where a `406` belongs fails the run immediately, with the exact expected-versus-actual status printed, the same way a contract-drift probe failed loud in Chapter 4.
-
-The README's drift probe makes the point concrete: disable `_check_accept()` in `get_booking` and the FastAPI service starts returning `200` for an unsatisfiable `Accept` header, which `verify.sh` catches as `FAIL — python GET /bookings/{id} (Accept: application/xml): expected HTTP 406, got 200`. Revert it and the run goes back to green. That failure mode is exactly what a code review easily misses and a schema-aware integration test never does: a status code is a one-line change to get wrong, and this chapter's whole claim is that getting it right is worth verifying, not assuming.
-
-{% include excalidraw.html file="06-content-negotiation" alt="A request's Accept and Content-Type headers are checked against what the matched endpoint can produce and consume, branching to a 200/201/204 success response when both are satisfied or to a 406/415 Problem response when either is not, alongside a separate status-code map showing 400 for a malformed request, 404 for a missing resource, and 409 for a well-formed request against a resource in the wrong state." caption="Figure 6.1: Negotiation outcomes and the status-code map." %}
-
-<div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to representation and status-code choices. When a resource can truly be served in more than one shape, declare every shape explicitly in <code>Accept</code>/<code>Content-Type</code> handling rather than defaulting to a wildcard that silently accepts anything: a narrow declaration is what makes <code>406</code> and <code>415</code> meaningful signals instead of dead code nobody can trigger. When a write succeeds and creates a new resource, return <code>201</code> with <code>Location</code>, never a bare <code>200</code>: a client that has to re-derive the new resource's URI from convention is a client the contract failed to serve. When an operation fails because of the resource's current state rather than a bad request or a missing target, reach for <code>409</code> specifically, and put the current and required states in the <code>Problem</code> body's <code>detail</code>: a conflict a caller can't diagnose from the response alone is barely better than a bare <code>500</code>. And treat a framework's automatic negotiation (Quarkus's <code>@Produces</code>/<code>@Consumes</code>) and a hand-rolled equivalent (FastAPI's explicit guards) as carrying the same obligation despite the cost difference: the status code a client receives has to be identical either way, and only a behavioral <code>verify.sh</code> (not a glance at the annotations) proves that it is.</p></div>
+> **🤖 Explore with your agent**
+>
+> "In `examples/06-content-negotiation/`, add `POST /bookings/{id}/load` on both the Quarkus and FastAPI stacks, following `confirmBooking` and `confirm_booking`. It moves a `CONFIRMED` booking to `IN_TRANSIT` and returns `200`, returns `409` with a `Problem` whose `detail` names the current and required states from any other state, `404` for an unknown id, and `406` to `Accept: application/xml`."
+>
+> Check: confirm a booking, then call `load` twice with `curl -i`. The first returns `200` and the second returns `409` with `Content-Type: application/problem+json`.
 
 ## Build, run, observe
 
@@ -217,12 +265,17 @@ The README's drift probe makes the point concrete: disable `_check_accept()` in 
 cd examples/06-content-negotiation && ./verify.sh
 ```
 
-`verify.sh` brings both stacks up, then checks `Accept`/`Content-Type` negotiation (`406` and `415`), the `200`/`201`/`204`/`400`/`404`/`409` status-code set across the booking operations, and that every error body is `application/problem+json`. It prints `PASS` once every assertion holds on both stacks; see `examples/06-content-negotiation/README.md` for the full run output.
+These stacks run on ports `8086` (Quarkus) and `8006` (FastAPI), so they can sit beside the other examples. The script drives the negotiation and status-code table against both stacks, schema-validates every body and prints `PASS` when both agree. `examples/06-content-negotiation/README.md` has the full output.
+
+Experiments:
+
+- Disable `_check_accept()` in `get_booking`. The FastAPI service returns `200` for an unsatisfiable `Accept`, and the run fails with `expected HTTP 406, got 200`.
+- Return `400` instead of `409` from a repeated `confirm` in either stack. The run fails on that stack's second `confirm`.
 
 ## For deeper coverage
 
-- [RFC 9110 §12, HTTP Semantics: Content Negotiation](https://www.rfc-editor.org/rfc/rfc9110.html#section-12): `Accept`, `Content-Type`, and the `406`/`415` status codes this chapter builds on.
-- [RFC 9457, Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc9457.html): the `application/problem+json` shape every error response in this chapter returns.
-- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022): status-code selection patterns, including the `409`-versus-`400`-versus-`404` distinction this chapter works through.
-- Cloud Native Design Patterns, [Appendix E: Errors](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/18-appendix-e-errors.md): the companion book's dedicated treatment of error representation across API styles.
+- [RFC 9110 §12, HTTP Semantics: Content Negotiation](https://www.rfc-editor.org/rfc/rfc9110.html#section-12): `Accept`, `Content-Type` and the `406` and `415` status codes.
+- [RFC 9457, Problem Details for HTTP APIs](https://www.rfc-editor.org/rfc/rfc9457.html): the `application/problem+json` shape every error returns.
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022): status-code selection patterns, including `409` versus `400` versus `404`.
+- Cloud Native Design Patterns, [Appendix E: Errors](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/18-appendix-e-errors.md): error representation across API styles.
 - Cloud Native Design Patterns, [Appendix A: Protocols](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/14-appendix-a-protocols.md): HTTP status-code semantics as a protocol-level reference.

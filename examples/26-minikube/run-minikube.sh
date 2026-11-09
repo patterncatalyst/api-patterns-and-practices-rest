@@ -55,13 +55,13 @@ log() { echo "run-minikube.sh: $*" >&2; }
 
 for bin in minikube kubectl; do
   if ! command -v "$bin" >/dev/null 2>&1; then
-    log "FAIL — required binary '$bin' not found on PATH"
+    log "FAIL, required binary '$bin' not found on PATH"
     exit 1
   fi
 done
 
 if [[ ! -d "$CH25_DIR/quarkus" || ! -d "$CH25_DIR/python" ]]; then
-  log "FAIL — expected Ch25 app sources at $CH25_DIR/{quarkus,python}"
+  log "FAIL, expected Ch25 app sources at $CH25_DIR/{quarkus,python}"
   exit 1
 fi
 

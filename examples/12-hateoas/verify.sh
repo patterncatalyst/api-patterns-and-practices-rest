@@ -34,7 +34,7 @@ trap cleanup_tmp EXIT
 NONEXISTENT_ID="bkg_$(printf '0%.0s' $(seq 1 26))"
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -51,7 +51,7 @@ assert_links() {
   if [[ "$actual" != "$expected" ]]; then
     fail "$context: expected _links keys [$expected], got [$actual]"
   fi
-  echo "lib.sh: ok — $context: _links keys = [$actual]"
+  echo "lib.sh: ok, $context: _links keys = [$actual]"
 }
 
 CREATE_PAYLOAD='{"origin":{"unLocode":"USNYC","name":"New York","country":"US"},"destination":{"unLocode":"NLRTM","name":"Rotterdam","country":"NL"},"cargo":[{"description":"Palletized electronics","type":"GENERAL","dimensions":{"weightKg":1200.5,"volumeM3":4.2},"hazardous":false}],"requestedPickup":"2026-02-01"}'

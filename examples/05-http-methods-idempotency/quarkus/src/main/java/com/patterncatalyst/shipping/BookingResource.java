@@ -103,7 +103,7 @@ public class BookingResource {
 
     /**
      * The collection resource doesn't support PUT (there's no single
-     * "whole collection" state to replace) — 405 with an {@code Allow}
+     * "whole collection" state to replace): 405 with an {@code Allow}
      * header naming what it DOES support, and a {@code Problem} body
      * instead of an empty one, so a caller script doesn't have to special-
      * case this resource's error shape.
@@ -154,7 +154,7 @@ public class BookingResource {
 
         // Deterministic (not random) cargo ids: PUT must be idempotent, so
         // replacing a booking with the SAME body twice has to produce the
-        // SAME Cargo.id for each item both times — toCargoItems() below
+        // SAME Cargo.id for each item both times; toCargoItems() below
         // mints a fresh random id every call, which POST correctly wants
         // but PUT must not.
         List<Cargo> cargoItems = toCargoItemsForReplace(id, request.cargo());

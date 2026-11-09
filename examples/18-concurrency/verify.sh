@@ -91,14 +91,14 @@ run_concurrency_test() {
   for ((i = 0; i < K; i++)); do
     code="$(cat "$codes_dir/$i" 2>/dev/null || echo "MISSING")"
     if [[ "$code" != "200" ]]; then
-      echo "lib.sh: FAIL — $stack request #$i returned '$code', expected 200" >&2
+      echo "lib.sh: FAIL, $stack request #$i returned '$code', expected 200" >&2
       fail_count=$((fail_count + 1))
     fi
   done
   if (( fail_count > 0 )); then
     fail "$stack: $fail_count of $K concurrent requests did not return 200"
   fi
-  echo "lib.sh: ok — $stack all $K concurrent requests returned 200"
+  echo "lib.sh: ok, $stack all $K concurrent requests returned 200"
 
   # -- total wall-clock time is well under the serial floor ----------------
   echo "lib.sh: $stack batch of $K requests completed in ${elapsed}s" \
@@ -107,13 +107,13 @@ run_concurrency_test() {
     fail "$stack: $K concurrent requests took ${elapsed}s — expected under ${MAX_CONCURRENT_SECONDS}s." \
          "This looks SERIALIZED (one request handled at a time), not concurrent."
   fi
-  echo "lib.sh: ok — $stack ${elapsed}s < ${MAX_CONCURRENT_SECONDS}s bound — requests ran CONCURRENTLY, not serialized"
+  echo "lib.sh: ok, $stack ${elapsed}s < ${MAX_CONCURRENT_SECONDS}s bound — requests ran CONCURRENTLY, not serialized"
 
   echo "=== $stack: concurrency assertions passed ==="
 }
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 

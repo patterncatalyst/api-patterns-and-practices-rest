@@ -27,7 +27,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -43,7 +43,7 @@ assert_contains() {
   if [[ "$haystack" != *"$needle"* ]]; then
     fail "$context: expected '$haystack' to contain '$needle'"
   fi
-  echo "lib.sh: ok — $context: '$haystack' contains '$needle'" >&2
+  echo "lib.sh: ok, $context: '$haystack' contains '$needle'" >&2
 }
 
 CREATE_PAYLOAD='{"origin":{"unLocode":"USNYC","name":"New York","country":"US"},"destination":{"unLocode":"NLRTM","name":"Rotterdam","country":"NL"},"cargo":[{"description":"Palletized electronics","type":"GENERAL","dimensions":{"weightKg":1200.5,"volumeM3":4.2},"hazardous":false}],"requestedPickup":"2026-02-01"}'
@@ -98,7 +98,7 @@ run_stack_tests() {
   validate_body Booking "$body_file"
   jq -e '(.quote != null) and (.cargo | type == "array")' "$body_file" >/dev/null \
     || fail "$stack GET /v2/bookings/{id}: expected quote + cargo[], got $(cat "$body_file")"
-  echo "lib.sh: ok — $stack GET /v2/bookings/{id}: quote + cargo[] present" >&2
+  echo "lib.sh: ok, $stack GET /v2/bookings/{id}: quote + cargo[] present" >&2
 
   # -- URI versioning: GET /v1/bookings/{id} -> BookingV1 (price +
   #    cargoDescription, NO quote/cargo). v1 isn't in the shared schema's
@@ -111,7 +111,7 @@ run_stack_tests() {
       and (has("quote") | not) and (has("cargo") | not)
     ' "$body_file" >/dev/null \
     || fail "$stack GET /v1/bookings/{id}: expected price + cargoDescription and NO quote/cargo, got $(cat "$body_file")"
-  echo "lib.sh: ok — $stack GET /v1/bookings/{id}: price + cargoDescription present, quote/cargo absent" >&2
+  echo "lib.sh: ok, $stack GET /v1/bookings/{id}: price + cargoDescription present, quote/cargo absent" >&2
 
   # -- Media-type versioning: GET /bookings/{id}, Accept: v1 vendor type --
   status="$(curl -sS -D "$headers_file" -o "$body_file" -w '%{http_code}' \
@@ -124,7 +124,7 @@ run_stack_tests() {
   assert_contains "$vary" "Accept" "$stack GET /bookings/{id} (Accept: v1) Vary"
   jq -e '(has("price")) and (has("cargoDescription")) and (has("quote") | not) and (has("cargo") | not)' "$body_file" >/dev/null \
     || fail "$stack GET /bookings/{id} (Accept: v1): expected price + cargoDescription, got $(cat "$body_file")"
-  echo "lib.sh: ok — $stack GET /bookings/{id} (Accept: v1): negotiated v1 body + headers" >&2
+  echo "lib.sh: ok, $stack GET /bookings/{id} (Accept: v1): negotiated v1 body + headers" >&2
 
   # -- Media-type versioning: GET /bookings/{id}, Accept: v2 vendor type --
   status="$(curl -sS -D "$headers_file" -o "$body_file" -w '%{http_code}' \
@@ -135,7 +135,7 @@ run_stack_tests() {
   vary="$(extract_header Vary "$headers_file")"
   assert_contains "$vary" "Accept" "$stack GET /bookings/{id} (Accept: v2) Vary"
   validate_body Booking "$body_file"
-  echo "lib.sh: ok — $stack GET /bookings/{id} (Accept: v2): negotiated v2 body + headers" >&2
+  echo "lib.sh: ok, $stack GET /bookings/{id} (Accept: v2): negotiated v2 body + headers" >&2
 
   echo "=== $stack: all assertions passed ==="
 }

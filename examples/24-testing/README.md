@@ -1,9 +1,9 @@
-# Ch24 — Testing REST APIs
+# Chapter 24: Testing REST APIs
 
 A REST API is only as trustworthy as the tests wrapped around it. This
 chapter builds the **test pyramid** for the booking create/read surface
 (the same shape as `examples/04-contract-first`, trimmed to just
-`POST`/`GET` — the subject here is the testing layers, not the resource
+`POST`/`GET`, the subject here is the testing layers, not the resource
 model) and vendors/adapts the Newman/load harness from
 `cloud-native-design-patterns/examples/28-newman` to drive it end to end
 against **both** the Quarkus and FastAPI stacks.
@@ -27,39 +27,39 @@ against **both** the Quarkus and FastAPI stacks.
 
 ## The four layers
 
-1. **Contract tests** — every live response from both stacks is validated
+1. **Contract tests**, every live response from both stacks is validated
    against `contracts/schemas/shipping.schema.json`'s `$defs` using
    `examples/_lib/validate_response.py` (the same gate `examples/
    04-contract-first` uses). This is the strict check: `additionalProperties:
    false`, full required-field and pattern enforcement.
-2. **Integration tests** — a real `@QuarkusTest` class
+2. **Integration tests**, a real `@QuarkusTest` class
    (`quarkus/src/test/java/com/patterncatalyst/shipping/BookingResourceTest.java`)
    and a real `pytest` suite (`python/tests/test_bookings.py`), both
    exercising the booking create/read endpoints in-process (RestAssured
    against the booted Quarkus app; FastAPI's `TestClient` against the ASGI
-   app directly — no network, no container). These are genuine,
+   app directly: no network, no container). These are
    runnable test files, not stubs.
-3. **End-to-end API tests** — `collections/shipping.postman_collection.json`,
+3. **End-to-end API tests**, `collections/shipping.postman_collection.json`,
    a Postman collection (vendored/adapted from CNDP's `28-newman` example)
    with a `Functional` folder: create → 201 + `Location` + schema, get →
    200 + schema, a negative create (missing `cargo`) → 400 + `Problem`
    shape, and a negative get (nonexistent id) → 404 + `Problem` shape.
    Run with Newman against **both** live stacks.
-4. **Load test** — the same collection's `Load` folder (a single `POST
+4. **Load test**, the same collection's `Load` folder (a single `POST
    /bookings`), run with `newman -n 30` against one stack. Tiny, bounded,
    and deterministic: it asserts every one of the 30 iterations returns
-   `201` with a schema-conforming body — **never** an absolute latency
+   `201` with a schema-conforming body, **never** an absolute latency
    number, so it stays fast and non-flaky in CI.
 
 ## What runs where
 
 | Layer | Where | Why |
 |---|---|---|
-| Contract tests | `verify.sh` (CI) | Fast, no extra toolchain — reuses the shared venv `lib.sh` already builds. |
+| Contract tests | `verify.sh` (CI) | Fast, no extra toolchain, reuses the shared venv `lib.sh` already builds. |
 | `@QuarkusTest` | Local / `mvn test` only | Booting the JVM + Quarkus test harness per CI matrix leg is too heavy for this script's bounded, fast path. Demonstrated and runnable, not CI-gated. |
 | `pytest` | Local / `uv run pytest` only | Symmetric with the Quarkus side: both integration layers are build-time/local, while `verify.sh`'s job is the live-container contract + Newman + load layers. |
-| Newman functional | `verify.sh` (CI) | The E2E gate — 0 failures required on both stacks. |
-| Newman load | `verify.sh` (CI) | Bounded (`n=30`), deterministic, asserts success/schema — not timing. |
+| Newman functional | `verify.sh` (CI) | The E2E gate, 0 failures required on both stacks. |
+| Newman load | `verify.sh` (CI) | Bounded (`n=30`), deterministic, asserts success/schema, not timing. |
 
 ## Run it
 
@@ -135,14 +135,14 @@ this chapter's test pyramid exercises:
 Errors are always `Problem` (`application/problem+json`): 400 for an
 invalid create request (e.g. missing `cargo`), 404 for a missing booking.
 The quote formula (`quote.amount = sum(cargo[].dimensions.weightKg) * 2.50`,
-formatted as a decimal string) is identical to Ch4 — see that chapter's
+formatted as a decimal string) is identical to Chapter 4, see that chapter's
 README for the full explanation of why `amount` must be a string, never a
 JSON number.
 
 ## The drift probe
 
-To see the contract gate actually reject a response — not just a response
-that's wrong in some other way — introduce this edit and re-run
+To see the contract gate actually reject a response (not just a response
+that's wrong in some other way), introduce this edit and re-run
 `./verify.sh`:
 
 In `python/app/quote.py`, change:
@@ -161,14 +161,14 @@ amount = total_weight_kg * _RATE_PER_KG  # BUG: number, not string
 
 Re-run `./verify.sh`. Pydantic's own `Money.amount: str` field rejects the
 float at response-construction time, so the FastAPI stack now returns a
-bare `500` instead of a schema-conforming `201` — and `verify.sh`'s Step 3
+bare `500` instead of a schema-conforming `201`, and `verify.sh`'s Step 3
 live contract check fails immediately:
 
 ```
-lib.sh: FAIL — python POST /bookings: expected HTTP 201, got 500
+lib.sh: FAIL, python POST /bookings: expected HTTP 201, got 500
 ```
 
-Revert the edit and re-run — it goes back to `PASS`. (This repo's own
+Revert the edit and re-run: it goes back to `PASS`. (This repo's own
 `validate_response.py`/pydantic strictness catches the bug even before a
 response body reaches the schema validator or the Newman collection; the
 equivalent bug in `examples/04-contract-first`, which uses a looser

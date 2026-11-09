@@ -88,7 +88,7 @@ awk_le() {
 }
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -130,7 +130,7 @@ assert_status 201 "$status" "POST /bookings"
 validate_body Booking "$body_file"
 
 booking_id="$(jq -r '.id' "$body_file")"
-echo "lib.sh: ok — booking $booking_id created"
+echo "lib.sh: ok, booking $booking_id created"
 
 # ---------------------------------------------------------------------------
 # Step 4: StreamingResponse/SSE — incremental delivery, schema-valid frames.
@@ -155,7 +155,7 @@ assert_status 200 "$status" "GET /bookings/{id}/events"
 content_type="$(extract_header Content-Type "$headers_file")"
 [[ "$content_type" == *"text/event-stream"* ]] \
   || fail "SSE: expected Content-Type text/event-stream, got '$content_type'"
-echo "lib.sh: ok — SSE Content-Type '$content_type'"
+echo "lib.sh: ok, SSE Content-Type '$content_type'"
 
 timed_file="$TMP_DIR/sse-timed.txt"
 : > "$timed_file"
@@ -166,7 +166,7 @@ done < <(curl -sS -N --max-time 8 "$BASE/bookings/$booking_id/events")
 mapfile -t data_rows < <(grep '|data:' "$timed_file")
 [[ "${#data_rows[@]}" -eq "$SSE_EVENT_COUNT" ]] \
   || fail "SSE: expected $SSE_EVENT_COUNT 'data:' frames, got ${#data_rows[@]}"
-echo "lib.sh: ok — SSE emitted ${#data_rows[@]} frames"
+echo "lib.sh: ok, SSE emitted ${#data_rows[@]} frames"
 
 i=0 first_ts="" last_ts=""
 for row in "${data_rows[@]}"; do
@@ -179,20 +179,20 @@ for row in "${data_rows[@]}"; do
   last_ts="$ts"
   i=$((i + 1))
 done
-echo "lib.sh: ok — all $i SSE frames validate as BookingEvent"
+echo "lib.sh: ok, all $i SSE frames validate as BookingEvent"
 
 spread="$(awk -v a="$last_ts" -v b="$first_ts" 'BEGIN { printf "%.3f", a - b }')"
 echo "lib.sh: SSE timing — first frame read at ${first_ts}, last frame read at ${last_ts}, spread ${spread}s" >&2
 if ! awk_ge "$spread" "$SSE_MIN_SPREAD_SECONDS"; then
   fail "SSE: frame-to-frame spread ${spread}s is below the ${SSE_MIN_SPREAD_SECONDS}s floor — these frames look BUFFERED (all arrived in one burst), not delivered incrementally"
 fi
-echo "lib.sh: ok — SSE spread ${spread}s >= ${SSE_MIN_SPREAD_SECONDS}s floor — delivery is genuinely incremental"
+echo "lib.sh: ok, SSE spread ${spread}s >= ${SSE_MIN_SPREAD_SECONDS}s floor — delivery is genuinely incremental"
 
 # -- SSE for an unknown booking -> 404, Problem ------------------------------
 status="$(curl -sS -o "$body_file" -w '%{http_code}' "$BASE/bookings/$NONEXISTENT_ID/events")"
 assert_status 404 "$status" "GET /bookings/{nonexistent}/events"
 validate_body Problem "$body_file"
-echo "lib.sh: ok — SSE on an unknown booking id returns 404 Problem"
+echo "lib.sh: ok, SSE on an unknown booking id returns 404 Problem"
 
 # ---------------------------------------------------------------------------
 # Step 5: BackgroundTasks — prompt response, deferred-but-observable effect.
@@ -215,7 +215,7 @@ echo "lib.sh: POST /notify responded in ${response_time}s (budget ${NOTIFY_MAX_R
 if ! awk_le "$response_time" "$NOTIFY_MAX_RESPONSE_SECONDS"; then
   fail "POST /notify took ${response_time}s, exceeding the ${NOTIFY_MAX_RESPONSE_SECONDS}s prompt-response budget — looks like the notification ran SYNCHRONOUSLY before the response was sent, not as a background task"
 fi
-echo "lib.sh: ok — POST /notify returned promptly (${response_time}s < ${NOTIFY_MAX_RESPONSE_SECONDS}s), well before the ${NOTIFY_DELAY_SECONDS}s background delay"
+echo "lib.sh: ok, POST /notify returned promptly (${response_time}s < ${NOTIFY_MAX_RESPONSE_SECONDS}s), well before the ${NOTIFY_DELAY_SECONDS}s background delay"
 
 queued_status="$(jq -r '.status' "$body_file")"
 [[ "$queued_status" == "queued" ]] \
@@ -227,7 +227,7 @@ assert_status 200 "$status" "GET /bookings/{id}/notifications (immediately after
 immediate_count="$(jq '.notifications | length' "$body_file")"
 [[ "$immediate_count" -eq 0 ]] \
   || fail "GET /notifications immediately after POST: expected 0 notifications (background task hasn't run yet), got $immediate_count — looks like the work ran synchronously, not in the background"
-echo "lib.sh: ok — immediately after POST, notification is NOT yet observable (background task hasn't run) — 0 notifications"
+echo "lib.sh: ok, immediately after POST, notification is NOT yet observable (background task hasn't run) — 0 notifications"
 
 # -- Poll (bounded timeout) until the side effect becomes observable --------
 waited=0
@@ -245,12 +245,12 @@ done
 
 [[ "$observed_count" -ge 1 ]] \
   || fail "notification side effect never became observable within ${NOTIFY_POLL_TIMEOUT_SECONDS}s — background task did not run (or didn't persist its effect)"
-echo "lib.sh: ok — notification side effect became observable after ~${waited}s (bounded poll, timeout ${NOTIFY_POLL_TIMEOUT_SECONDS}s)"
+echo "lib.sh: ok, notification side effect became observable after ~${waited}s (bounded poll, timeout ${NOTIFY_POLL_TIMEOUT_SECONDS}s)"
 
 observed_message="$(jq -r '.notifications[0].message' "$body_file")"
 [[ "$observed_message" == "Your shipment has cleared customs." ]] \
   || fail "notification message mismatch: expected the posted message, got '$observed_message'"
-echo "lib.sh: ok — observed notification carries the posted message"
+echo "lib.sh: ok, observed notification carries the posted message"
 
 # -- notify on an unknown booking -> 404, Problem ----------------------------
 status="$(curl -sS -o "$body_file" -w '%{http_code}' \
@@ -258,7 +258,7 @@ status="$(curl -sS -o "$body_file" -w '%{http_code}' \
   "$BASE/bookings/$NONEXISTENT_ID/notify")"
 assert_status 404 "$status" "POST /bookings/{nonexistent}/notify"
 validate_body Problem "$body_file"
-echo "lib.sh: ok — notify on an unknown booking id returns 404 Problem"
+echo "lib.sh: ok, notify on an unknown booking id returns 404 Problem"
 
 # ---------------------------------------------------------------------------
 # Step 6: async vs. threadpool — different execution contexts, same process.
@@ -273,7 +273,7 @@ async_is_main="$(jq -r '.isMainThread' "$body_file")"
 async_thread_name="$(jq -r '.threadName' "$body_file")"
 [[ "$async_is_main" == "true" ]] \
   || fail "GET /thread/async: expected isMainThread=true (event loop runs on the main thread), got '$async_is_main' (thread '$async_thread_name')"
-echo "lib.sh: ok — /thread/async ran on the main thread (event loop), thread name '$async_thread_name'"
+echo "lib.sh: ok, /thread/async ran on the main thread (event loop), thread name '$async_thread_name'"
 
 status="$(curl -sS -o "$body_file" -w '%{http_code}' "$BASE/thread/sync")"
 assert_status 200 "$status" "GET /thread/sync"
@@ -281,11 +281,11 @@ sync_is_main="$(jq -r '.isMainThread' "$body_file")"
 sync_thread_name="$(jq -r '.threadName' "$body_file")"
 [[ "$sync_is_main" == "false" ]] \
   || fail "GET /thread/sync: expected isMainThread=false (Starlette offloads plain 'def' handlers to a threadpool), got '$sync_is_main' (thread '$sync_thread_name')"
-echo "lib.sh: ok — /thread/sync ran OFF the main thread (threadpool worker), thread name '$sync_thread_name'"
+echo "lib.sh: ok, /thread/sync ran OFF the main thread (threadpool worker), thread name '$sync_thread_name'"
 
 [[ "$async_thread_name" != "$sync_thread_name" ]] \
   || fail "expected /thread/async and /thread/sync to report DIFFERENT thread names, both reported '$async_thread_name'"
-echo "lib.sh: ok — async ('$async_thread_name') and sync ('$sync_thread_name') handlers ran on distinct execution contexts"
+echo "lib.sh: ok, async ('$async_thread_name') and sync ('$sync_thread_name') handlers ran on distinct execution contexts"
 
 # Repeat once more to confirm determinism (not a fluke of request ordering).
 status="$(curl -sS -o "$body_file" -w '%{http_code}' "$BASE/thread/async")"
@@ -297,7 +297,7 @@ status="$(curl -sS -o "$body_file" -w '%{http_code}' "$BASE/thread/sync")"
 assert_status 200 "$status" "GET /thread/sync (2nd call)"
 [[ "$(jq -r '.isMainThread' "$body_file")" == "false" ]] \
   || fail "GET /thread/sync (2nd call): expected isMainThread=false again"
-echo "lib.sh: ok — repeated calls are deterministic: async always main-thread, sync never main-thread"
+echo "lib.sh: ok, repeated calls are deterministic: async always main-thread, sync never main-thread"
 
 echo
 echo "PASS — Ch23 FastAPI in depth: StreamingResponse/SSE delivers" \

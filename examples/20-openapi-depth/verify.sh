@@ -36,7 +36,7 @@ cleanup_tmp() {
 trap cleanup_tmp EXIT
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -81,7 +81,7 @@ run_stack_tests() {
   assert_status 200 "$status" "$stack GET $openapi_url"
   python3 -I -c "import json,sys; json.load(open(sys.argv[1]))" "$openapi_file" \
     || fail "$stack OpenAPI document at $openapi_url is not valid JSON"
-  echo "lib.sh: ok — $stack OpenAPI document parses as JSON"
+  echo "lib.sh: ok, $stack OpenAPI document parses as JSON"
 
   # -- Structural checks: nullable construct, webhooks, required-set drift
   python3 -I "$CHECK_OPENAPI_PY" "$stack" "$openapi_file" "$CONTRACT_SCHEMA"

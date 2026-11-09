@@ -87,9 +87,7 @@ def custom_openapi() -> dict:
         "description": (
             "Null until the booking is cancelled. Declared as an OpenAPI "
             "3.1 JSON Schema `type` ARRAY ([\"string\", \"null\"]) rather "
-            "than an OAS-3.0 `nullable: true` flag — full JSON Schema "
-            "alignment is one of this chapter's two headline OpenAPI-3.1 "
-            "capabilities."
+            "than an OAS-3.0 `nullable: true` flag."
         ),
         "type": ["string", "null"],
     }

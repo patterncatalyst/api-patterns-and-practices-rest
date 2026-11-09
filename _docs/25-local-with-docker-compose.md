@@ -2,7 +2,7 @@
 title: "Local with Docker/Podman Compose"
 order: 25
 part: "Running it: Docker → minikube → CRC"
-description: "Bringing up both stacks, Postgres, and a single-container Grafana LGTM stack by default, then proving one booking's trace is continuous from the client's traceparent header to Tempo."
+description: "Both stacks, Postgres and a single-container Grafana LGTM stack under Compose, with one booking's trace followed from the client's traceparent header to Tempo."
 duration: "24 min"
 ---
 
@@ -11,40 +11,49 @@ duration: "24 min"
 By the end of this chapter you can:
 
 - Wire `quarkus-opentelemetry` and a manual OpenTelemetry Python SDK pipeline to export spans over OTLP/gRPC and OTLP/HTTP to a shared collector.
-- Promote `grafana/otel-lgtm` from an opt-in `profiles: ["observability"]` service to a default Compose dependency once tracing is the subject under test.
-- Propagate a fixed W3C `traceparent` header across a request and assert the resulting trace lands in Tempo under that exact id.
+- Promote `grafana/otel-lgtm` from an opt-in `profiles: ["observability"]` service to a default Compose dependency once tracing is the subject.
+- Propagate a fixed W3C `traceparent` header across a request and confirm the trace lands in Tempo under that exact id.
 - Write a bounded sleep-poll against Tempo's trace API instead of a single-shot or open-ended wait.
-- Decide when a chapter's or project's subject justifies running the full LGTM stack locally by default versus keeping it behind an opt-in profile.
+- Decide when to run the full LGTM stack locally by default and when to keep it behind an opt-in profile.
 
 ## Why this matters
 
-Chapter 0 stood up a Compose lab with two application containers and a shared Postgres, and put a fourth service (`lgtm`, Grafana's all-in-one observability image) behind a `profiles: ["observability"]` flag that kept it out of every `docker compose up` since, because nothing in this book emitted telemetry worth watching yet. That changes here. `examples/25-local-with-docker-compose/` takes the booking create/read surface Chapter 24 already trimmed down and tested, wires `quarkus-opentelemetry` into the Quarkus side and a manual OpenTelemetry SDK into the Python side, and promotes `lgtm` from opt-in to default: `docker compose up` now brings up four containers, not three, because this chapter's entire subject is tracing and there is no version of that subject where the collector stays switched off. The claim this chapter makes isn't "both services now emit spans," which is the kind of thing a reader could take on faith and never check. It's narrower and more falsifiable: one specific request, carrying one specific trace id a reader chooses in advance, produces one specific trace that Tempo can be asked for by that exact id and will hand back. `verify.sh` makes that the gate, not a side note, and the same pipeline that proves the gate also opens up the first of three tiers this book will run the booking service on, with Kubernetes on minikube and OpenShift Local behind it.
+A booking endpoint returns `201 Created` whether or not its spans ever leave the process. A wrong OTLP port, a typo in a scheme or a broken collector leaves the happy path green and the traces missing. Saying "both services emit spans" proves nothing.
+
+The check that can fail is narrower: one request carries a trace id chosen in advance, and Tempo returns a trace under that exact id. That passes only if the application created the span, the exporter shipped it, the collector accepted it and Tempo stored it. The same Compose file is the first of three tiers for the booking service, followed by Kubernetes on minikube and OpenShift Local.
 
 ## The Compose topology
 
-`compose.yaml` runs four services under the project name `ch25-compose`: `quarkus` (built from `examples/25-local-with-docker-compose/quarkus`, published on host port 8105), `python` (built the same way, on host port 8024), `postgres` (a stock `postgres:17-alpine`, on 5432), and `lgtm` (`docker.io/grafana/otel-lgtm:0.36.0`, publishing 3000, 4317, 4318, 9090, 3100, and 3200). Postgres sits in that topology for the same reason Chapter 0 put it there: the convention this book has kept since the first lab is that the datastore belongs in the compose file from day one, even in a chapter where neither application touches it. Chapter 24 didn't persist bookings to Postgres either; Chapter 25 doesn't change that. The subject here is tracing, not storage, so adding real persistence alongside new instrumentation would mix two unrelated changes into one example and make a failing assertion harder to attribute to either one.
+`compose.yaml` runs four services under one project name:
 
-The interesting service is `lgtm`, and the interesting thing about it is what it is *not*: four separate containers wired together with a shared network and a collector config file, which is what "Grafana LGTM stack" usually means in a production deployment. `grafana/otel-lgtm` packages Grafana, Tempo, Loki, Mimir, and an OpenTelemetry Collector into one image, pre-wired so that Grafana's data sources for traces, logs, and metrics already point at the right internal ports the moment the container is healthy. That collapsing is a deliberate trade this book makes for local development and teaching, not a claim about how a team would run this in production: a single container with no inter-service networking to debug, one healthcheck to wait on, one `docker compose down -v` to tear down cleanly, in exchange for giving up the operational independence (separate scaling, separate upgrade cadence, separate failure domains) that splitting Tempo, Loki, Mimir, and the collector into their own containers would buy a real deployment. For proving a pipeline works end to end against a booking service two people are also trying to read and learn from, the collapsed image is the right default; Chapter 26's minikube tier is where those pieces start separating back out onto real Kubernetes primitives.
+| Service | Image or build | Host ports |
+|---|---|---|
+| `quarkus` | built from `quarkus/` | 8105 |
+| `python` | built from `python/` | 8024 |
+| `postgres` | `postgres:17-alpine` | 5432 |
+| `lgtm` | `docker.io/grafana/otel-lgtm:0.36.0` | 3000, 4317, 4318, 9090, 3100, 3200 |
 
-Both Docker and Podman handle this compose file without changes. Every command in this chapter and its README is written as `docker compose`, but `podman compose up --build` against the same `compose.yaml` brings up the identical four services: the file has no Docker-specific extension fields, build context quirks, or `depends_on` conditions that only one engine understands, which matters for a book that has kept its compose examples engine-agnostic since Chapter 0.
+Postgres is in the file because the datastore belongs in Compose from day one, but neither application persists bookings here. Adding persistence next to new instrumentation would mix two changes into one example.
 
-The last piece here is the *reversal* this chapter makes to the `observability` profile convention every earlier chapter followed. Chapter 0 established the pattern: `lgtm` stays behind a profile flag, opted into with `docker compose --profile observability up`, because standing up a four-container stack to watch two services that emit nothing would slow down every chapter's first boot for zero signal. That reasoning holds everywhere a chapter's subject isn't observability itself. It stops holding here: `lgtm` in this chapter's `compose.yaml` carries no `profiles:` key at all, both application services declare `depends_on: lgtm: condition: service_healthy`, and a plain `docker compose up` brings up all four containers without any extra flag. A reader who has internalized "LGTM is opt-in" from the first twenty-four chapters should notice the absence of that flag here and read it as a signal, not an inconsistency: this is the one chapter in the book where the observability stack *is* the subject, so it starts on by default, the same way a chapter about Postgres would make Postgres a mandatory service rather than an optional add-on.
+`grafana/otel-lgtm` packages Grafana, Tempo, Loki, Mimir and an OpenTelemetry Collector in one image, with the Grafana data sources already pointing at the right internal ports. One container means no inter-service networking to debug, one healthcheck to wait on and one `docker compose down -v` to clean up. It gives up what separate containers buy a real deployment: independent scaling, upgrade cadence and failure domains. For local development and teaching that's the right trade.
+
+Docker and Podman both run this file unchanged. It uses no extension fields or `depends_on` conditions that only one engine understands, so `podman compose up --build` brings up the same four services.
+
+### Why `lgtm` is on by default here
+
+Earlier examples keep `lgtm` behind `profiles: ["observability"]`, started with `docker compose --profile observability up`, because a four-container stack watching two services that emit nothing slows every first boot for no signal. Here the observability stack is the subject. `lgtm` has no `profiles:` key, both applications declare `depends_on: lgtm: condition: service_healthy`, and a plain `docker compose up` starts everything.
 
 ## OpenTelemetry instrumentation
 
-Each stack reaches the `lgtm` collector over OTLP, and each one gets there a different way, because the two frameworks instrument themselves at different altitudes. Quarkus's path is almost entirely declarative. `quarkus/src/main/resources/application.properties` sets four properties: `quarkus.application.name=shipping-quarkus` (the value `quarkus-opentelemetry` maps to the exported span's `service.name` resource attribute whenever no explicit OTel resource attribute overrides it), `quarkus.otel.exporter.otlp.endpoint=http://lgtm:4317`, `quarkus.otel.exporter.otlp.protocol=grpc`, and `quarkus.otel.traces.sampler=always_on`. Once those properties are set, `quarkus-opentelemetry` auto-instruments every JAX-RS endpoint without a single line of application code: it generates an HTTP server span for each inbound request, tags it with `http.route` and `http.request.method`, and exports it over OTLP/gRPC to port 4317 on the schedule its `BatchSpanProcessor` runs.
+Both stacks export to the `lgtm` collector over OTLP, instrumented at different altitudes.
 
-Python's path is explicit rather than declarative, because there's no framework-level auto-configuration layer sitting underneath FastAPI the way Quarkus's extension model sits underneath JAX-RS. `python/app/telemetry.py` builds the pipeline by hand: a `Resource.create({"service.name": _SERVICE_NAME})` (defaulting to `shipping-python`, overridable by `OTEL_SERVICE_NAME`), a `TracerProvider` constructed with that resource and `ALWAYS_ON` sampling, an `OTLPSpanExporter` pointed at `http://lgtm:4318/v1/traces` (OTLP/HTTP, not gRPC: a different wire protocol on a different port than the Quarkus side uses, which is why the compose file publishes both 4317 and 4318), a `BatchSpanProcessor` wrapping that exporter, and `trace.set_tracer_provider(provider)` to install it globally before anything else in the app imports the tracer. The last line, `FastAPIInstrumentor.instrument_app(app)`, is what actually generates the HTTP server spans: it wraps the ASGI application with middleware that starts a span per request and stamps `http.route`/`http.method`-shaped attributes onto it, mirroring what `quarkus-opentelemetry` does automatically. `app/main.py` calls `configure_tracing(app)` before anything else runs, so instrumentation is live before the first request can possibly arrive.
+Quarkus is declarative. `quarkus.application.name=shipping-quarkus` in `application.properties` becomes the exported `service.name` when no explicit OTel resource attribute overrides it, and three more properties set the endpoint, the protocol and the sampler. `quarkus-opentelemetry` then instruments every JAX-RS endpoint with no application code: an HTTP server span per request, tagged `http.route` and `http.request.method`, exported over OTLP/gRPC to port 4317.
 
-Both stacks hardcode `ALWAYS_ON` sampling rather than reading a sampling ratio from configuration, and that choice is deliberate in exactly the same way on both sides: this chapter's `verify.sh` asserts that one specific, hand-picked trace id lands in Tempo, and a probabilistic sampler that happens to drop that one request on a given run would turn a real pipeline bug and a sampling coin-flip into indistinguishable failures. Production systems tune sampling to control cost and collector volume; a teaching example whose entire argument rests on one deterministic trace id cannot afford to let a sampler make that id's presence a matter of chance.
-
-What makes the two exporters part of one continuous trace rather than two unrelated ones is the W3C `traceparent` header, and neither stack needs any extra code to honor it. `quarkus-opentelemetry` installs the default `tracecontext` propagator, which treats an inbound `traceparent` header as the parent of the new server span it's about to create: the exported span inherits the caller's trace id instead of minting a fresh one. `FastAPIInstrumentor`'s ASGI middleware does the identical thing on the Python side, extracting `traceparent` via the same default propagator before the server span starts. That's the entire mechanism behind "a request continues a trace instead of starting a new one": nothing bespoke, just the standard W3C Trace Context header being read by the standard propagator both OpenTelemetry implementations ship with.
+Python is explicit, because nothing underneath FastAPI auto-configures tracing. `python/app/telemetry.py` builds the pipeline by hand: a `Resource` carrying `service.name` (default `shipping-python`, overridable with `OTEL_SERVICE_NAME`), a `TracerProvider` with `ALWAYS_ON` sampling, an `OTLPSpanExporter` to `http://lgtm:4318/v1/traces`, a `BatchSpanProcessor`, and a global `set_tracer_provider`. `FastAPIInstrumentor.instrument_app(app)` wraps the ASGI app with middleware that starts a span per request. `configure_tracing(app)` runs first in `app/main.py`, so instrumentation is live before the first request. Python uses OTLP/HTTP on 4318 and Quarkus uses gRPC on 4317, which is why Compose publishes both.
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
 ```properties
-quarkus.application.name=shipping-quarkus
-
 quarkus.otel.exporter.otlp.endpoint=http://lgtm:4317
 quarkus.otel.exporter.otlp.protocol=grpc
 quarkus.otel.traces.sampler=always_on
@@ -53,6 +62,7 @@ quarkus.otel.traces.sampler=always_on
 ```python
 _SERVICE_NAME = os.environ.get("OTEL_SERVICE_NAME", "shipping-python")
 _OTLP_ENDPOINT = os.environ.get("OTEL_EXPORTER_OTLP_ENDPOINT", "http://lgtm:4318")
+
 
 def configure_tracing(app: FastAPI) -> None:
     resource = Resource.create({"service.name": _SERVICE_NAME})
@@ -64,27 +74,50 @@ def configure_tracing(app: FastAPI) -> None:
     FastAPIInstrumentor.instrument_app(app)
 ```
 
+Both stacks hardcode `ALWAYS_ON` sampling. The check depends on one hand-picked trace id arriving, and a probabilistic sampler that dropped that request would make a pipeline bug and a coin flip indistinguishable. Production systems tune sampling to control cost and collector volume.
+
+### Propagation
+
+The W3C `traceparent` header is what makes a request continue a trace instead of starting one. `quarkus-opentelemetry` installs the default `tracecontext` propagator, which treats an inbound `traceparent` as the parent of the new server span, so the exported span inherits the caller's trace id. `FastAPIInstrumentor`'s ASGI middleware extracts the header the same way. Neither needs extra code.
+
 ## One request traced end to end
 
-A trace-based check that searches Tempo for "something recent that looks about right" would be a weak gate: it could match the wrong request entirely, or sit polling forever if nothing relevant ever shows up, and either failure mode would make a red result ambiguous about what actually broke. `verify.sh` avoids both by making the lookup deterministic and bounded at the same time. For each stack it sends a single `POST /bookings` carrying a hand-picked, fixed 32-hex-character W3C trace id in its `traceparent` header (`1111111111111111aaaaaaaaaaaaaaaa` for Quarkus, `2222222222222222bbbbbbbbbbbbbbbb` for Python, never randomly generated), then asserts the response is `201` with a `Location` header and a body that validates against `#/$defs/Booking`, the same contract check every chapter since Chapter 4 has run. Only after that response comes back does the script turn to Tempo, issuing `GET http://localhost:3200/api/traces/<that-exact-id>`. There is no ambiguity about which trace the assertion means: it's the id already sitting in the URL, chosen before the request was ever sent, not inferred afterward from whatever happened to show up.
+Searching Tempo for "something recent that looks right" could match the wrong request or poll forever. The lookup is deterministic and bounded instead.
 
-The lookup itself is a bounded sleep-poll rather than a single shot, because both stacks' `BatchSpanProcessor`s flush on their own schedule (roughly every five seconds) rather than synchronously as part of handling the response, and Tempo answers `404` for a trace it hasn't ingested yet. `verify.sh` polls on that `404` every two seconds up to a hard 30-second ceiling (`TRACE_POLL_TIMEOUT`/`TRACE_POLL_INTERVAL`), succeeding the moment a `200` comes back and failing loudly the instant the ceiling is reached rather than hanging the run indefinitely. That thirty-second cap is generous enough to absorb a slow flush cycle on a loaded CI runner, but it's still a hard stop: a missing trace is a failure within seconds of the real flush interval elapsing, not an open-ended wait that could tie up a pipeline.
+For each stack, one `POST /bookings` carries a fixed 32-hex trace id in `traceparent`: `1111111111111111aaaaaaaaaaaaaaaa` for Quarkus and `2222222222222222bbbbbbbbbbbbbbbb` for Python. The response must be `201` with a `Location` header and a body valid against `#/$defs/Booking`. Then the script asks Tempo for `GET http://localhost:3200/api/traces/<that-exact-id>`. The id is in the URL before the request is sent, so there's no ambiguity about which trace is meant.
 
-Getting a `200` back from Tempo only proves *a* trace exists under that id; it says nothing yet about whether it's the right trace with the right shape. `verify.sh` parses the returned JSON with `jq` and walks the whole document (resilient to whether spans are nested under `batches` or `resourceSpans`, since the exact shape varies by exporter version), checking three independent, structural facts: some resource attribute named `service.name` matches the stack's expected name (`shipping-quarkus` or `shipping-python`), some span attribute among `http.route`/`url.path`/`http.target` equals `/bookings`, and some span attribute among `http.request.method`/`http.method` equals `POST`. All three come from a span Tempo actually stored, not from a stub or a short-circuited check: the trace returned has to carry evidence that it's the booking POST from the stack it claims to be from, not just any trace that happens to share the requested id. Before any of that traffic is sent, `verify.sh` also waits on `http://localhost:3200/ready`, separately from the `lgtm` container's own Docker healthcheck against Grafana's `/api/health`. That distinction matters: Grafana's health endpoint only proves the container's HTTP frontend answers, not that Tempo has finished its own startup inside the same image, and sending traced traffic before Tempo is ready would produce a spurious, timing-dependent failure that has nothing to do with the instrumentation being tested.
+### A bounded poll
 
-Why this is the deterministic proof the pipeline works, rather than "trust me, it's instrumented": every other claim this book makes about observability so far has been architectural: a property is wired, a propagator is installed, a sampler is set. None of those statements, taken alone, proves a span actually reaches a collector and gets stored somewhere queryable. A reader (or a CI job) could misconfigure the OTLP endpoint, point it at the wrong port, typo a scheme, or break the collector's own ingestion path, and every one of those failures would still leave the application serving `201 Created` on the happy path: the booking endpoint doesn't know or care whether its spans ever left the process. The fixed-trace-id-and-poll-Tempo check is the one assertion in this chapter that can only pass if the full chain held: the application generated a span under the exact id the test chose, the exporter shipped it over the wire, the collector accepted it, and Tempo stored it queryably by that id. Nothing short of that whole chain being intact produces a `200` on that specific lookup, which is exactly what makes a broken link in it fail loudly instead of silently.
+Both `BatchSpanProcessor`s flush on their own schedule, roughly every five seconds, and Tempo answers `404` for a trace it hasn't ingested. The script polls every two seconds (`TRACE_POLL_INTERVAL`) to a hard 30-second ceiling (`TRACE_POLL_TIMEOUT`). It succeeds on the first `200` and fails at the ceiling. The cap absorbs a slow flush on a loaded runner and never leaves a pipeline waiting indefinitely.
+
+### Checking the trace
+
+A `200` shows only that some trace exists under that id. The script walks the returned JSON with `jq`, handling both the `batches` and `resourceSpans` shapes that vary by exporter version, and requires three facts:
+
+- a resource attribute `service.name` equals `shipping-quarkus` or `shipping-python`;
+- a span attribute among `http.route`, `url.path` and `http.target` equals `/bookings`;
+- a span attribute among `http.request.method` and `http.method` equals `POST`.
+
+Before sending traffic, the script waits on `http://localhost:3200/ready`, separately from the container's Docker healthcheck against Grafana's `/api/health`. Grafana answering says nothing about Tempo having finished starting inside the same image, and early traffic would produce a timing-dependent failure unrelated to the instrumentation.
 
 ## Reading it in Grafana
 
-The automated check stays narrow (three structural facts about one trace) but a developer debugging locally wants the full picture, and `grafana/otel-lgtm` makes that available with no setup beyond `docker compose up --build`. Grafana listens on `http://localhost:3000` with anonymous admin access enabled (`GF_AUTH_ANONYMOUS_ENABLED=true`), so there's no login step between starting the stack and looking at a trace. From the **Explore** view (the compass icon in the left rail), picking the **Tempo** data source (already provisioned by the image, with no manual datasource configuration required) and searching by trace id with either `1111111111111111aaaaaaaaaaaaaaaa` or `2222222222222222bbbbbbbbbbbbbbbb` pulls up the exact trace `verify.sh` asserted against: the `POST /bookings` server span, carrying `http.route` and `http.request.method` (the two attributes the script checks), alongside `http.response.status_code` and the rest of the span's attributes, plus (on the Python side) the extra ASGI-level `http send`/`http receive` spans `FastAPIInstrumentor` nests underneath the server span, which Quarkus's instrumentation doesn't produce because its server span sits one layer closer to the socket.
+Grafana is at `http://localhost:3000` with anonymous admin access (`GF_AUTH_ANONYMOUS_ENABLED=true`), so there's no login. In **Explore**, pick the **Tempo** data source, already provisioned by the image, and search by either trace id. The result is the `POST /bookings` server span with `http.route`, `http.request.method` and `http.response.status_code`. The Python trace also has `http send` and `http receive` spans that `FastAPIInstrumentor` nests under the server span; Quarkus produces none, because its server span sits closer to the socket.
 
-That same `otel-lgtm` image is also where logs and metrics would correlate with this trace if either stack emitted them: Loki for logs and Mimir for a Prometheus-compatible metrics backend both live in the same container, provisioned as Grafana data sources alongside Tempo, which is the point of running the bundled image rather than Tempo alone. Neither application in this chapter ships structured logs or custom metrics over OTLP yet, so there's nothing to correlate today, but the same Explore pane that found this trace is where a reader would pivot from a trace id to related log lines or a metrics dashboard once a later chapter or a reader's own service adds that instrumentation. The infrastructure for that correlation is already running; this chapter only exercises the trace leg of it.
+Loki and Mimir run in the same image and are provisioned as Grafana data sources next to Tempo. Neither application emits structured logs or custom metrics over OTLP yet, so only the trace leg is exercised, but the same Explore pane is where a trace id would pivot to related log lines or a metrics dashboard.
 
-{% include excalidraw.html file="25-local-with-docker-compose" alt="A Docker Compose topology with Quarkus and FastAPI containers both exporting OTLP traces to a single grafana/otel-lgtm container bundling Grafana, Tempo, Loki, and Mimir behind one OpenTelemetry Collector, Postgres present but unused, and verify.sh sending a traced POST with a fixed W3C traceparent header then polling Tempo's trace API by that exact id before asserting service name and route attributes on the returned span." caption="Figure 25.1: Both stacks exporting OTLP to one default LGTM container; a fixed trace id ties the POST to a bounded Tempo lookup." %}
+{% include excalidraw.html file="25-local-with-docker-compose" alt="A Docker Compose topology with Quarkus and FastAPI containers both exporting OTLP traces to a single grafana/otel-lgtm container bundling Grafana, Tempo, Loki, and Mimir behind one OpenTelemetry Collector, Postgres present but unused, and verify.sh sending a traced POST with a fixed W3C traceparent header then polling Tempo's trace API by that exact id before asserting service name and route attributes on the returned span." caption="Figure 25.1: Both stacks export OTLP to one default LGTM container, and a fixed trace id ties the POST to a bounded Tempo lookup." %}
 
-## Decision
+## When to run LGTM by default
 
-<div class="callout callout--safe"><p class="callout__title">Decision</p><p>Run the full LGTM stack locally, by default, the moment a chapter's or a project's actual subject is observability rather than a feature that happens to touch a service also emitting telemetry. Everywhere else, keep `lgtm` behind an opt-in profile the way Chapter 0 set it up: a four-container stack with no consumer watching it slows down every boot and buys nothing for a reader working on a resource model, a pagination scheme, or a schema evolution rule that has nothing to do with tracing. The deciding question isn't "does this service have OpenTelemetry wired in," it's "is the thing a reader needs to verify, right now, something only a trace, a log, or a metric can show." A booking's shape is provable with a contract check against `#/$defs/Booking`; a booking's journey through two instrumented stacks and a collector is provable only by querying the pipeline that carries it, which is why this chapter flips the default and Chapter 24 didn't need to. Compose is also the right place to start this verification habit at all (a single `docker compose up`, one collapsed `otel-lgtm` container, one bounded Tempo poll) because it keeps the whole loop (build, run, trace, assert, tear down) on one machine with no cluster to provision first. That's the first of three tiers this book runs the same booking service on, by design: Chapter 26 moves the same contract onto Kubernetes on minikube, where Tempo, Loki, and Mimir stop being one convenient container and start being separate workloads a cluster schedules, and the OpenShift Local appendix moves it again onto a platform with its own operators and security defaults layered on top. Each tier keeps the same deterministic trace-id assertion this chapter establishes; what changes underneath it is how much of the platform a reader is now responsible for standing up themselves.</p></div>
+Run the full stack by default when the thing you need to verify can only be shown by a trace, a log or a metric. Otherwise keep `lgtm` behind the opt-in profile.
+
+| Subject | `lgtm` | Why |
+|---|---|---|
+| Resource model, pagination, schema evolution | Opt-in profile | A contract check proves it; a four-container stack slows every boot |
+| A booking's path through two instrumented stacks and a collector | Default | Only querying the pipeline proves it |
+
+Compose is the right place to start because the whole loop (build, run, trace, assert, tear down) stays on one machine with no cluster to provision. The same two images then move to minikube, onto Kubernetes primitives, and to OpenShift Local, which adds operators and its own security defaults. What changes is how much of the platform you stand up yourself.
 
 ## Build, run, observe
 
@@ -92,11 +125,15 @@ That same `otel-lgtm` image is also where logs and metrics would correlate with 
 cd examples/25-local-with-docker-compose && ./verify.sh
 ```
 
-`verify.sh` brings up both stacks along with Postgres and the local LGTM stack via `docker compose`, posts a booking to each stack carrying a fixed W3C `traceparent` header, and polls Tempo for that exact trace id until it returns a span with the right service name and the `POST /bookings` route. Expect `PASS` once every assertion holds; the full run output is in `examples/25-local-with-docker-compose/README.md`.
+The script starts both stacks, Postgres and `lgtm` with `docker compose`, posts a booking to each with a fixed `traceparent`, and polls Tempo until the trace shows the right service name and the `POST /bookings` route. It ends in `PASS`. Quarkus is on 8105, FastAPI on 8024 and Grafana on 3000.
+
+- Add `OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:9999` to the `python` service's environment in `compose.yaml`: Quarkus still passes, the Python `POST` still returns a valid `201`, and the Tempo poll for `2222222222222222bbbbbbbbbbbbbbbb` fails at the 30-second ceiling with a last code of `404`.
+- Set `quarkus.otel.traces.sampler` to a ratio below 1: the fixed id is dropped on some runs and the check turns flaky.
+- Remove `FastAPIInstrumentor.instrument_app(app)`: the Python service keeps serving and the trace never arrives.
 
 ## For deeper coverage
 
-- Charity Majors, Liz Fong-Jones & George Miranda, *Observability Engineering* (O'Reilly, 2022): the reasoning behind tracing as a first-class verification tool, not just a debugging aid.
-- Cloud Native Design Patterns, "Observability" chapter: the broader pattern this chapter's single-trace proof is one instance of.
-- [Quarkus OpenTelemetry guide](https://quarkus.io/guides/opentelemetry): the official reference for `quarkus-opentelemetry`'s configuration properties.
+- Charity Majors, Liz Fong-Jones & George Miranda, *Observability Engineering* (O'Reilly, 2022): tracing as a first-class verification tool, not just a debugging aid.
+- Cloud Native Design Patterns, "Observability" chapter: the broader pattern behind this single-trace check.
+- [Quarkus OpenTelemetry guide](https://quarkus.io/guides/opentelemetry): the official reference for `quarkus-opentelemetry` configuration properties.
 - [W3C Trace Context specification](https://www.w3.org/TR/trace-context/): the `traceparent` header format both stacks' default propagators read.

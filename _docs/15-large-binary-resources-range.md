@@ -11,28 +11,38 @@ duration: "26 min"
 By the end of this chapter you can:
 
 - Implement `HEAD` to expose `Content-Length` and `Accept-Ranges: bytes` without paying for the body.
-- Parse bounded, open (`bytes=1024-`), and suffix (`bytes=-500`) `Range` grammars and compute the correct byte slice.
-- Answer a satisfiable range with `206 Partial Content` and an exact `Content-Range` header.
+- Parse bounded, open (`bytes=1024-`) and suffix (`bytes=-500`) `Range` forms and compute the byte slice.
+- Answer a satisfiable range with `206 Partial Content` and an exact `Content-Range`.
 - Answer an out-of-bounds range with `416 Range Not Satisfiable` and `Content-Range: bytes */total`.
-- Decide, from the Chapter 2 axes, when a resource is large enough to justify Range support at all.
+- Decide when a resource is large enough to justify Range support.
 
 ## Why this matters
 
-Every resource this site has built so far has been a JSON document small enough that "fetch it" and "fetch all of it" mean the same thing. A booking's manifest breaks that assumption: it is the consolidated listing of every cargo item on a shipment, and in this chapter's example it is a deterministic 2 MiB binary blob: comfortably past the point where "just `GET` the whole thing every time" is a reasonable default. A client checking whether a manifest has even been generated yet shouldn't have to pull 2 MiB to find out. A client resuming a download that died at byte 1,400,000 shouldn't have to restart from zero. A PDF viewer jumping to page 40 shouldn't have to materialize pages 1–39 first. All three needs point at the same HTTP mechanism: let a client ask for less than the whole resource, and tell it up front whether that's even on the table.
+A booking's manifest lists every cargo item on a shipment, and here it is a deterministic 2 MiB binary blob. A client checking whether a manifest exists shouldn't pull 2 MiB to find out. A client resuming a download that died at byte 1,400,000 shouldn't restart from zero. A PDF viewer jumping to page 40 shouldn't fetch pages 1 to 39 first. All three need the same thing: ask for less than the whole resource, and learn up front whether that's possible.
 
-This is a different shape of "too much data" than Chapter 8's pagination. Pagination slices a *collection* (a list of `Booking` resources) into pages a client walks one at a time, each page a complete, independently addressable JSON document. A manifest is a single resource, not a collection, and there's no natural item boundary to paginate by; "page 3 of the manifest" means nothing on its own. What a client wants instead is an arbitrary byte window into one opaque blob, which is exactly what `Range` is built for. The two mechanisms solve adjacent problems (too many items, and too many bytes) with different vocabulary for that reason, and a system that tried to paginate a binary document with `limit`/`cursor` parameters would be reinventing `Range` badly.
+Pagination slices a collection into pages, each a complete JSON document. A manifest is one resource with no item boundary, and "page 3 of the manifest" means nothing. The client wants an arbitrary byte window into an opaque blob, which is what `Range` is for. Paginating a binary document with `limit` and `cursor` would reinvent `Range` badly.
 
-`/bookings/{bookingId}/manifest` in this chapter's example (`examples/15-range-requests/`) answers three different requests against the same URI: `HEAD` for metadata, a plain `GET` for the full body, and a `GET` carrying a `Range` header for a slice of it. RFC 9110 §14 is the governing spec: it predates this particular API by decades, because range requests are the same mechanism HTTP has always used for resumable downloads and media seeking, not something invented for this chapter's manifest.
+`/bookings/{bookingId}/manifest` answers three requests on one URI: `HEAD` for metadata, `GET` for the full body, and `GET` with a `Range` header for a slice. RFC 9110 section 14 governs. Range requests are the mechanism HTTP has always used for resumable downloads and media seeking.
 
-## HEAD: metadata without the cost
+## Pattern: Range request
 
-A client that wants to know how big a manifest is, or whether the server supports range requests on it at all, has no reason to pay for the bytes to find out. `HEAD` answers exactly that question: same URI, same routing, same 404 behavior as `GET`, but no body on the wire. Both stacks' `HEAD` handlers look up the booking, generate (or fetch from cache) the manifest bytes to learn the total size, and return headers only:
+### The problem
+
+A large resource served only as a full `200` forces every client to download all of it: to learn its size, to resume after a failure, or to read one window.
+
+### The solution
+
+**Advertise byte-range support with `Accept-Ranges`, answer a `Range` header with `206` and the exact slice, and reject an impossible range with `416`.**
+
+### How Quarkus and FastAPI model it
+
+`HEAD` returns the headers `GET` would, without the body. `Content-Length` is the total that every later `Range` and `Content-Range` is checked against. `Accept-Ranges: bytes` tells a client that resuming or seeking is worth attempting. A resource without range support omits it or sends `none`.
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
 ```java
 @HEAD
-public Response head(@PathParam("bookingId") String bookingId) {
+public Response head(@RestPath String bookingId) {
     if (store.get(bookingId) == null) {
         return notFound(bookingId);
     }
@@ -58,13 +68,11 @@ def head_manifest(booking_id: str) -> Response:
     )
 ```
 
-Two headers carry the entire contract. `Content-Length` is the manifest's exact size in bytes: the `TOTAL` that every subsequent `Range` request and `Content-Range` response gets checked against. `Accept-Ranges: bytes` is the capability advertisement: it tells a client that this resource understands byte-unit `Range` headers, so a download manager or video player probing an unfamiliar server knows whether resuming or seeking is worth attempting before it tries. A resource that doesn't support ranges either omits the header or sends `Accept-Ranges: none`; either way, a client that respects the advertisement won't waste a round trip asking for `bytes=0-1023` against something that's going to ignore the request and hand back the full body anyway. `HEAD`'s response here is, by construction, exactly what `GET`'s headers would be (same `Content-Length`, same `Accept-Ranges`) minus the body that made `GET` expensive.
+<div class="callout callout--warn"><p class="callout__title">Gotcha</p><p><code>curl -X HEAD</code> only swaps the method string, so curl waits for a body that a correct HEAD response never sends and hangs. Use <code>curl -I</code> (or <code>--head</code>), which tells libcurl to stop after the headers.</p></div>
 
-<div class="callout callout--warn"><p class="callout__title">Gotcha</p><p>The example's README documents a curl trap worth knowing before you reach for it on a real server: <code>curl -X HEAD</code> is not the same request as <code>curl -I</code> (or <code>curl --head</code>). <code>-X HEAD</code> just swaps the method string on an otherwise ordinary GET-shaped request: curl still expects a body matching the response's <code>Content-Length</code> and will hang waiting for bytes a correct HEAD response never sends. Only <code>-I</code>/<code>--head</code> tells libcurl the request really is a HEAD, so it stops reading after the headers. <code>verify.sh</code> uses <code>--head</code> for exactly this reason.</p></div>
+### 206 Partial Content
 
-## Range requests and 206 Partial Content
-
-A plain `GET` with no `Range` header behaves the way `GET` always has: the full manifest, `200`, `Content-Length` set to the total size. The interesting branch starts when a `Range` header shows up. `Range: bytes=0-1023` asks for the first 1,024 bytes: byte offsets, inclusive on both ends, so `0-1023` is 1,024 bytes, not 1,023. A server that honors it answers `206 Partial Content`, not `200`, and attaches `Content-Range: bytes 0-1023/2097152` so the client can see exactly which slice it got and how large the whole resource is, even though it only asked for a piece of it. The body is exactly those 1,024 bytes: nothing padded, nothing truncated at a block boundary the server found convenient.
+A `GET` without `Range` returns the full manifest with `200`. `Range: bytes=0-1023` asks for the first 1,024 bytes: offsets are inclusive on both ends. The server answers `206 Partial Content` with `Content-Range: bytes 0-1023/2097152`, so the client sees which slice it got and the total, and the body is exactly those bytes.
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
@@ -104,17 +112,21 @@ return Response(
 )
 ```
 
-`bytes=START-END` is the bounded form, but the grammar in RFC 9110 §14.1.2 allows two shorter forms that both stacks parse off the same regex (`^bytes=(\d*)-(\d*)$`, matching an optional start and an optional end around the dash). An **open range**, `bytes=1024-`, means "from byte 1024 to the end": the end group is empty, so both implementations fill it in as `total - 1` before computing the slice. A **suffix range**, `bytes=-500`, means "the last 500 bytes": here the *start* group is empty, so the server computes `start = max(0, total - suffixLength)` and serves from there to the end. That `max(0, …)` matters: a suffix range larger than the resource itself (`bytes=-999999999` against a 2 MiB manifest) should clamp to the whole resource, not underflow into a negative offset.
+Both stacks parse the header with `^bytes=(\d*)-(\d*)$`, which allows three forms:
 
-Clamping shows up again at the top end: `end = min(end, total - 1)`. A client is allowed to ask for `bytes=0-99999999` against a resource it doesn't know the exact size of yet ("give me up to 100 MB, however much there is"), and a correct server serves what it has rather than erroring on a request that merely overshoots. The end of the range is advisory past the resource's real length; only the *start* being past the end is a hard failure, because there's nothing at all to serve from there.
+| Form | Meaning | Slice |
+|---|---|---|
+| `bytes=0-1023` | Bounded | Bytes 0 to 1023 |
+| `bytes=1024-` | Open | From 1024 to `total - 1` |
+| `bytes=-500` | Suffix | `start = max(0, total - 500)` to the end |
 
-That hard failure path matters just as much as the happy one. If a `Range` header doesn't match the grammar (anything that isn't `bytes=` followed by the two-group pattern), both implementations treat it as if no `Range` header had been sent at all, falling straight through to the full `200` response. That's what RFC 9110 §14.2 specifies: a server receiving a `Range` header it can't parse ignores it rather than rejecting the request outright. A client sending a slightly malformed range still gets a usable response, the whole resource, instead of an error for a header it probably generated incorrectly.
+The `max(0, ...)` clamps a suffix longer than the resource to the whole resource instead of a negative offset. The end clamps too, with `end = min(end, total - 1)`: `bytes=0-99999999` against a smaller resource serves what exists. Only a start past the end is a hard failure.
 
-Both stacks' regex also fixes the ceiling on what this chapter's implementation supports: one range per request. RFC 9110 §14.1.2 permits a comma-separated list of ranges in a single `Range` header (`bytes=0-99,200-299`), answered with a `multipart/byteranges` body, one part per range, each with its own nested `Content-Range`. Neither implementation here parses that form; a multi-range `Range` header fails the single-range regex and falls back to a full `200`, the same as any other malformed header. That's a chosen scope boundary, not an oversight: multipart ranges exist for clients that want several disjoint windows in one round trip, and a real manifest-serving API would need to decide whether that case is common enough to earn the extra response-encoding complexity. This chapter's point is the single-range mechanism every resumable-download and media-seeking client relies on; multipart ranges are a documented extension past it, not a requirement to prove the pattern.
+A `Range` header that doesn't match the grammar is ignored and the full `200` returns, as RFC 9110 section 14.2 specifies. Multi-range requests (`bytes=0-99,200-299`, answered with `multipart/byteranges`) fail the single-range pattern and fall back to the full `200`. That's a scope choice: multipart ranges earn their encoding complexity only when clients want several disjoint windows in one round trip.
 
-## 416 Range Not Satisfiable
+### 416 Range Not Satisfiable
 
-A syntactically valid range can still be impossible to satisfy: `start >= total` means the client is asking for bytes past the end of a resource that doesn't have them. The response for that is `416 Range Not Satisfiable`, and its one required piece of information is `Content-Range: bytes */total`: the asterisk standing in for "no range," paired with the actual size so the client can recompute a valid request. A client retrying `bytes=99999999-199999999` against a 2 MiB manifest sees `bytes */2097152` and immediately knows the resource is smaller than it assumed, without needing a separate `HEAD` call to find out.
+A valid range can still be impossible: `start >= total` asks for bytes past the end. The response is `416` with `Content-Range: bytes */total`, which gives the client the real size so it can retry without a separate `HEAD`:
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
@@ -131,23 +143,29 @@ if start >= total or start > end:
     return Response(status_code=416, headers={"Content-Range": f"bytes */{total}"})
 ```
 
-Both stacks keep the `416` body minimal: no `Problem` entity, just the status and the one header. RFC 9110 permits a body on `416` but doesn't require one, and `Content-Range: bytes */total` alone is already enough for a well-behaved client to self-correct, so there's nothing a JSON body would add except an extra content-type negotiation the manifest's binary media type doesn't otherwise need. An unknown `bookingId`, by contrast, does get a full `Problem` body on `404`: that failure happens before there's a manifest to have a size at all, so `application/problem+json`'s structured `title`/`status`/`detail` is the right shape there, same as every other 404 on this site since Chapter 6.
-
-## Why this is worth the extra branches
-
-The payoff for all of this branching is behavior a plain `200`-only `GET` endpoint can't offer at any price. A download interrupted at 60% doesn't restart from zero: the client reissues the request with `Range: bytes=1258292-`, picking up exactly where it left off, because `Accept-Ranges: bytes` told it that was possible before it tried. A video player seeking to the middle of a file requests the byte range covering that timestamp's frames instead of streaming everything before it first. A download manager splitting one large file across several parallel connections requests disjoint ranges concurrently and reassembles them locally, turning one slow stream into several faster ones. None of these are exotic use cases bolted onto HTTP: they're the reason `Range` exists, and a manifest, PDF, video, or disk image that supports it transparently gets all three for the cost of implementing one parsing branch correctly.
-
-There's a real cost here too. Every additional response shape (`200` full, `206` partial, `416` unsatisfiable, plus the fallback-to-`200` on a malformed header) is a branch a test suite has to cover independently, because each one has its own status code and header contract a client might depend on. A server that gets the boundary conditions wrong (an off-by-one on `end`, a `start` that isn't checked against `total` before slicing) doesn't usually crash; it serves a byte or two short of what it claimed in `Content-Range`, or it throws an array-bounds exception a client experiences as a dropped connection mid-download. That failure mode is quiet by nature: a `206` that's merely an off-by-one on its byte count looks, to a client not checking the exact length, exactly like a correct `206`.
+The `416` has no body, since the header is enough to self-correct. An unknown `bookingId` gets a full `application/problem+json` `404`, because that failure happens before there is a manifest to size.
 
 {% include excalidraw.html file="15-range-request-sequence" alt="A sequence diagram showing a client first sending HEAD to a manifest endpoint and receiving 200 with Accept-Ranges and Content-Length metadata but no body, then sending GET with a Range header and receiving 206 Partial Content with a Content-Range header and exactly the requested byte slice as the body, then sending GET with an out-of-bounds Range header and receiving 416 Range Not Satisfiable with a Content-Range header of bytes */total and no body." caption="Figure 15.1: HEAD, a 206 Range response, and a 416." %}
 
-## Proof
+## What it buys, and what it costs
 
-The script brings up Quarkus on port 8095 and FastAPI on port 8015, creates a booking on each stack to mint an id, then drives the full sequence against that booking's manifest: `HEAD` (checking `Accept-Ranges` and capturing `Content-Length` as `TOTAL`), a full `GET` (checking the body is exactly `TOTAL` bytes), a bounded `Range: bytes=0-1023` (checking `206`, the exact `Content-Range` string, and exactly 1,024 bytes of body), an open `Range: bytes=1024-` (checking the range runs to `TOTAL-1`), an unsatisfiable range past `TOTAL` (checking `416` and `Content-Range: bytes */TOTAL`), and `HEAD`/`GET` against an unknown booking id (checking `404` with a schema-valid `Problem`). It checks exact byte counts and exact header values throughout, not just status codes.
+An interrupted download resumes with `Range: bytes=1258292-` instead of restarting. A video player seeks by requesting the bytes for that timestamp. A download manager fetches disjoint ranges over parallel connections and reassembles them.
 
-The README documents two regressions worth triggering by hand to see that discipline pay off. The first swaps the `206` for a `200` in the bounded-range branch: the handler still slices the right bytes and still sets `Content-Range`, but reports the wrong status. Re-running `verify.sh` fails immediately: `expected HTTP 206, got 200`, because `assert_status` checks the exact code the spec requires for a partial response, not just "some 2xx came back". The second is subtler: drop the `-1` off the end offset in the `Content-Range` header, so a correct `206` response advertises `bytes 0-1024/2097152` for a request that actually returned bytes `0-1023`. The status code is right, the byte count in the body is even right, and a test that only checked those two things would pass. `verify.sh` catches it anyway, because it parses `Content-Range` and compares the literal string against what the request implies: `expected Content-Range 'bytes 0-1023/2097152', got 'bytes 0-1024/2097152'`. Revert either edit and the run goes back to `PASS` for both stacks. The lesson in both cases is the same one Chapter 13's purge example made about soft delete: a response that looks plausible from the outside (right status, right-ish headers) can still disagree with itself in a way only an assertion that checks the *relationship* between fields, not each field in isolation, will ever catch.
+Each response shape (`200`, `206`, `416`, and the fallback to `200`) has its own status and header contract, so each needs its own coverage. Boundary errors rarely crash. An off-by-one on `end` serves a byte short of what `Content-Range` claimed, or an array-bounds exception shows up as a dropped connection mid-download. A `206` that is one byte off looks like a correct `206` to a client that doesn't check the length.
 
-<div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to whether a resource needs Range support at all. Reach for it when the payload is large enough that "download the whole thing" is itself a cost worth avoiding (media files, PDFs, disk images, any document measured in megabytes rather than kilobytes) and when the evolution axis includes resumability or seeking as a real client need, not a hypothetical one. Operational constraints tip the decision further: a manifest served to a mobile client on an unreliable connection, or to many clients fetching overlapping byte windows from a CDN edge, benefits from Range support in proportion to how often a full download would otherwise fail partway through. Skip it for small, uniformly-sized JSON resources (the same documents this site has served since Chapter 3) where the entire body is cheaper to transfer than the extra round trip a <code>HEAD</code> probe would cost, and where there is no meaningful "partial" view of a 2&nbsp;KB payload worth constructing. Client diversity matters too: Range support is only worth building once a realistic client population includes something that will actually use it (a browser's native video element, a download manager, a PDF viewer with lazy page loading) rather than JSON API consumers that always want the whole representation anyway.</p></div>
+## When not to use it
+
+| Add Range support | Skip it |
+|---|---|
+| Payload is megabytes: media, PDFs, disk images | Small JSON documents where the whole body costs less than a `HEAD` round trip |
+| Clients resume or seek: mobile on unreliable links, CDN edges serving overlapping windows | Clients that always want the whole representation |
+| A realistic client will use it: a video element, a download manager, a lazy PDF viewer | No consumer that sends `Range` |
+
+> **🤖 Explore with your agent**
+>
+> "In examples/15-range-requests, extend the `Range` handling for `GET /bookings/{bookingId}/manifest` in the Quarkus `ManifestResource` and the FastAPI `app/main.py` to accept two comma-separated ranges (`bytes=0-99,200-299`) and answer `206` with a `multipart/byteranges` body, one part per range, each with its own `Content-Range`. Keep single ranges, the `416` path and the fall-back to a full `200` for a malformed header unchanged."
+>
+> Check: `curl -s -D - -o /dev/null -H 'Range: bytes=0-99,200-299' localhost:8095/bookings/<id>/manifest` shows `206` and a `multipart/byteranges` content type, and `./verify.sh` still prints `PASS`.
 
 ## Build, run, observe
 
@@ -155,11 +173,14 @@ The README documents two regressions worth triggering by hand to see that discip
 cd examples/15-range-requests && ./verify.sh
 ```
 
-`verify.sh` brings up Quarkus and FastAPI with `docker compose`, then drives `HEAD`, a full `GET`, a bounded `Range`, an open-ended `Range`, and an unsatisfiable `Range` against each stack's manifest, checking exact byte counts and `Content-Range` values rather than just status codes. It prints `PASS` once every assertion holds for both stacks; the full run output is in `examples/15-range-requests/README.md`.
+The script starts Quarkus on port 8095 and FastAPI on port 8015, creates a booking on each, and runs `HEAD`, a full `GET`, a bounded range, an open range, an unsatisfiable range and an unknown booking against the manifest. It checks exact byte counts and exact `Content-Range` strings, and prints `PASS` when both stacks agree.
+
+- Return `200` instead of `206` in the bounded-range branch. The slice and `Content-Range` are right and the run fails: `expected HTTP 206, got 200`.
+- Drop the `-1` from the end offset in `Content-Range`, so the header says `bytes 0-1024/2097152` for a body that is bytes 0 to 1023. Status and byte count are right, and the run fails on the literal header string.
 
 ## For deeper coverage
 
-- [RFC 9110 §14: HTTP Semantics: Range Requests](https://www.rfc-editor.org/rfc/rfc9110#name-range-requests): the governing spec for `Range`, `Accept-Ranges`, `Content-Range`, and `416`.
+- [RFC 9110 section 14: HTTP Semantics, Range Requests](https://www.rfc-editor.org/rfc/rfc9110#name-range-requests): the governing spec for `Range`, `Accept-Ranges`, `Content-Range` and `416`.
 - *Cloud Native Design Patterns*, appendix-a-protocols (same series, protocol fundamentals appendix).
 - Gough, Bryant & Auburn, *Mastering API Architecture* (O'Reilly, 2022).
 - Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022).

@@ -2,7 +2,7 @@
 title: "HTTP methods & the idempotency matrix"
 order: 5
 part: "Designing resources with a contract"
-description: "Which methods are safe, which are idempotent, and why it matters: an idempotent PUT and a correct DELETE built and verified in both stacks."
+description: "Which methods are safe, which are idempotent and why it matters, with an idempotent PUT and a correct DELETE built in both stacks."
 duration: "28 min"
 ---
 
@@ -10,57 +10,60 @@ duration: "28 min"
 
 By the end of this chapter you can:
 
-- Define "safe" and "idempotent" precisely per RFC 9110 §9.2, and explain why they're independent axes rather than two names for the same idea.
+- Define "safe" and "idempotent" per RFC 9110 §9.2, and explain why they are independent axes.
 - Place every `/bookings` and `/bookings/{bookingId}` operation on the safe/idempotent matrix, including the two `405` "not applicable" cells.
-- Spot a `PUT` that looks idempotent but isn't (one that mints a fresh random `Cargo.id` on every call) and fix it with a deterministic id derived from a seed (`Ulid.deterministic(seed)` / `generate_deterministic_ulid(seed)`).
-- Return a correct `405` with an `Allow` header and a `Problem` body for an unsupported method/path combination.
-- Explain why `DELETE /bookings/{id}` is idempotent even though its response status code changes across repeated calls (`204`, then `404`, then `404`).
+- Spot a `PUT` that looks idempotent but isn't (one that mints a fresh random `Cargo.id` on every call) and fix it with a deterministic id derived from a seed.
+- Return a correct `405` with an `Allow` header and a `Problem` body for an unsupported method and path.
+- Explain why `DELETE /bookings/{id}` is idempotent even though its status code changes across repeated calls (`204`, then `404`, then `404`).
 
 ## Why this matters
 
-Chapter 1 used the word "idempotent" once, in passing, about `PUT`, and promised the precise definition for later. Chapter 4 built the full `bookings` and `cargo` surface against the contract (every method the OpenAPI document declares, running in both stacks), but it built the surface with a bug in exactly that promise: a `PUT` that looked like an idempotent full replace was not, in fact, idempotent, because it reminted the ids of every `Cargo` item on every call. This chapter is where "later" arrives. It defines **safe** and **idempotent** precisely, places every method from the contract's `bookings` surface into the matrix those two properties form, and fixes the Chapter 4 bug as the chapter's centerpiece: not as a hypothetical, but as a real defect in a real example, caught by a real assertion in `verify.sh`.
+A client that times out doesn't know whether the server acted. Whether it can safely retry depends on the method, and that is what safe and idempotent describe. The booking API as first built has a bug in exactly this promise: its `PUT` looks like an idempotent full replace but reminted the id of every `Cargo` item on every call. Safe and idempotent are defined below, each method is placed on the matrix they form, and the bug is fixed.
 
 ## Two properties, not one
 
-RFC 9110 §9.2 defines both terms in the same section, and the site's booking API is the clearest way to see why they're separate axes rather than two names for the same idea.
+**Safe** means a method's defined semantics don't change server state. `GET /bookings/{id}` is safe: however often a client fetches a booking, the booking is untouched. Safety lets a browser prefetch a link, a crawler walk a collection unattended, and a proxy retry after a timeout without asking permission.
 
-**Safe** means a method's defined semantics don't change server state when a client issues it. `GET /bookings/{id}` is safe: however many times a client fetches a booking, the booking itself is untouched. Safety is what lets a browser prefetch a link, a crawler walk a collection unattended, and a cache or proxy retry a request after a timeout without asking permission. None of that is defensible unless the method's contract promises nothing changes as a side effect of merely asking. Safety says nothing about idempotency, and idempotency says nothing about safety; they answer different questions about a method, and a method can land on any of the four combinations the matrix below lays out.
+**Idempotent** means *N* identical requests leave the resource in the same state as one request. The state converges, not the responses. `DELETE /bookings/{id}` shows the difference. The first call returns `204` and cancels the booking. The second returns `404`, because a cancelled booking now reads as missing. The status codes and bodies differ, yet the state after both calls is the same: gone. RFC 9110 §9.2.2 ties idempotency to "the intended effect on the server," not to the response.
 
-**Idempotent** means that *N* identical requests leave the resource in the same state as one request would: the state converges, not the responses. This is the clause worth reading twice: idempotency is a claim about the server's state after the fact, not about the wire-level content of what came back. `DELETE /bookings/{id}` is the sharpest illustration the booking API has. The first call returns `204` and cancels the booking. The second call, against the same id, returns `404`, because `getActive(id)` now treats a cancelled booking the same as a missing one. Two different status codes, two different response bodies. And yet `DELETE` is idempotent, because the booking's *state* is identical after both calls: gone. RFC 9110 §9.2.2 is explicit that idempotency is about "the intended effect on the server," not the response, and the DELETE row is where that distinction stops being a technicality and starts being the thing you have to internalize before the rest of the matrix makes sense.
+Every safe method is idempotent, since nothing changes to repeat. That leaves three populated cells:
 
-Put the two properties together and four cells fall out. Safe methods are a subset of idempotent ones: if nothing changes, repeating the call trivially leaves the same state. So the only methods that can be safe-but-not-idempotent are none; that cell is empty by construction. The interesting cells are idempotent-but-not-safe (`PUT`, `DELETE`: they change state, but repeating them doesn't change it further) and neither (`POST`, and `PATCH` in the general case): every call is free to produce a new effect, and a client that retries blind can make things worse.
+| | Safe | Not safe |
+|---|---|---|
+| **Idempotent** | `GET`, `HEAD` | `PUT`, `DELETE` |
+| **Not idempotent** | none | `POST`, and `PATCH` in general |
 
-## The method matrix, with the booking operations placed
+A client that retries a `POST` or a relative `PATCH` blind can make things worse.
 
-The contract's `/bookings` and `/bookings/{bookingId}` paths carry nine operations once the collection- and item-level 405s are counted. Placing each one on the safe/idempotent grid is the whole exercise:
+## The method matrix
 
-| Method | Path | Safe? | Idempotent? | This example's behavior |
-|--------|------|:-----:|:-----------:|--------------------------|
+The contract's two booking paths carry nine operations once the two `405` cases are counted:
+
+| Method | Path | Safe | Idempotent | Behavior |
+|--------|------|:----:|:----------:|----------|
 | GET | `/bookings` | yes | yes | 200, `BookingCollection` (cancelled hidden) |
-| POST | `/bookings` | no | **no** | 201; two identical calls mint **two distinct** bookings (different `id`) |
+| POST | `/bookings` | no | **no** | 201; two identical calls mint **two distinct** bookings |
 | PUT | `/bookings` | no | n/a | **405**: no "whole collection" state to replace; `Allow: GET, POST` |
-| GET | `/bookings/{id}` | yes | yes | 200 `Booking` / 404 `Problem` |
+| GET | `/bookings/{id}` | yes | yes | 200 `Booking` or 404 `Problem` |
 | HEAD | `/bookings/{id}` | yes | yes | Same status as GET, no body |
-| PUT | `/bookings/{id}` | no | **yes** | 200; two identical calls converge on the **same** resource state |
-| PATCH | `/bookings/{id}` | no | no* | 200; merge-patch (RFC 7396): not idempotent in general |
-| DELETE | `/bookings/{id}` | no | **yes**† | 204 then 404: same end state every call, different status code |
+| PUT | `/bookings/{id}` | no | **yes** | 200; two identical calls converge on the **same** state |
+| PATCH | `/bookings/{id}` | no | no* | 200; merge-patch (RFC 7396) |
+| DELETE | `/bookings/{id}` | no | **yes** | 204 then 404: same end state, different status |
 | POST | `/bookings/{id}` | no | n/a | **405**: create belongs on the collection; `Allow: GET, PUT, PATCH, DELETE, HEAD` |
 
-\* A merge-patch that sets a field to a literal value is idempotent on its own; one written to be relative to current state (easy to build in a custom `PATCH` handler, not representable in merge-patch itself) is not. The full JSON Patch story, including its own idempotency caveats, is Chapter 7's job. This chapter only needs that `PATCH` makes no blanket promise either way.
+\* A merge-patch that sets a field to a literal value is idempotent. A custom `PATCH` written relative to current state, such as "add 5 kg", is not. `PATCH` makes no blanket promise either way.
 
-† Covered above: DELETE's status code moves (204, then 404, then 404...) while its resource state holds (gone, then still gone). That's what makes it idempotent despite looking, from the response alone, like it changes behavior on every call.
-
-The two `n/a` cells matter as much as the filled ones. `PUT /bookings` has no sensible "whole collection, replaced" semantics (there's no single document a client could submit that means "make the entire set of bookings equal to this"), so the right answer isn't an idempotent no-op or a silent 200, it's a `405` that says so. `POST /bookings/{id}` fails for a different reason: creation is a collection-level concept, because only the collection can decide whether a new identity is even warranted, so a `POST` aimed at a specific id has nothing coherent to do. Both land in the same cell, "this verb has no business on this resource," and the example handles both the same way, which the 405 section below walks through.
+`PUT /bookings` has no sensible semantics, because no single document means "make the whole set of bookings equal to this". `POST /bookings/{id}` fails because only the collection can decide whether a new identity is warranted. Both are "this verb has no business on this resource", and both get a `405`.
 
 {% include excalidraw.html file="05-idempotency-matrix" alt="A two-axis matrix with safe and idempotent as the dimensions, placing GET as safe and idempotent, PUT and DELETE as idempotent but not safe, POST and the item-level PATCH as neither safe nor idempotent, and the two 405 cases marked not-applicable because the method has no supported semantics on that resource." caption="Figure 5.1: The idempotency matrix, with the booking operations placed." %}
 
-## The trap: a PUT that looks idempotent and isn't
+## A PUT that looks idempotent and isn't
 
-Chapter 4's `replaceBooking` / `replace_booking` did everything a full-replace handler is supposed to do: it took the entire request body, discarded nothing from the existing booking except what the request legitimately overwrites, and returned `200` with the new state. It also called the same cargo-item builder the create path uses (`toCargoItems` / the list comprehension around `generate_ulid()`), which mints a fresh random ULID for every `Cargo` on every invocation. That's exactly correct for `POST`: a create must never reuse an id. It's silently wrong for `PUT`, because it means two byte-for-byte identical `PUT` requests against the same booking produce two different sets of `Cargo.id` values. The booking's `origin`, `destination`, and `quote` converge across repeated calls; its cargo items don't. The contract's own operation summary, `"Replace a booking (idempotent full update)"`, was a promise the implementation wasn't keeping, and nothing in the status code or the top-level shape of the response would have revealed that.
+The first `replaceBooking` took the whole request body, kept what the request doesn't overwrite, and returned `200` with the new state. It also called the cargo-item builder that `POST` uses, which mints a random ULID for every `Cargo`. That is right for a create, which must never reuse an id, and wrong for a `PUT`. Two byte-identical `PUT` requests produced two different sets of `Cargo.id` values. `origin`, `destination` and `quote` converged; the cargo items didn't. The operation's own summary, "Replace a booking (idempotent full update)", promised something the code didn't deliver, and neither the status code nor the top-level shape would reveal it.
 
-This is worth sitting with, because "full replace" and "idempotent" feel synonymous and aren't automatically the same thing. A replace is idempotent only if *every* piece of state it touches (including state the handler generates rather than copies from the request, like a child resource's id) is a deterministic function of the input, not of when or how many times the call happens to run. A naive implementation almost always gets the top-level fields right (they come straight from the request body) and gets exactly this kind of generated child-identity wrong, because nothing about "read the request, write the response" forces you to notice that an id generator has its own hidden state: the clock and the random-number generator it reads from.
+A replace is idempotent only if every piece of state it touches is a deterministic function of the input, including state the handler generates, such as a child's id. The id generator carries hidden state: the clock and a random source.
 
-The fix is `Ulid.deterministic(seed)` / `generate_deterministic_ulid(seed)`: instead of mixing a timestamp with cryptographically random bytes, it hashes a `seed` string with SHA-256 and encodes the first 17 bytes of the digest as 26 Crockford-Base32 characters: the same alphabet and length a random ULID uses, so the shared schema's `^[0-9A-HJKMNP-TV-Z]{26}$` pattern can't tell the two apart. `replaceBooking` / `replace_booking` seed each cargo item on `"{bookingId}:{index}"`:
+The fix hashes a seed with SHA-256 and encodes the first 17 bytes of the digest as 26 Crockford-Base32 characters. That is the same alphabet and length a random ULID uses, so the schema's `^[0-9A-HJKMNP-TV-Z]{26}$` pattern can't tell them apart. Each cargo item is seeded on `"{bookingId}:{index}"`:
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
@@ -69,26 +72,28 @@ The fix is `Ulid.deterministic(seed)` / `generate_deterministic_ulid(seed)`: ins
 @Path("/{id}")
 @Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
-public Response replaceBooking(@PathParam("id") String id, BookingRequest request) {
+public Response replaceBooking(@RestPath String id, @Valid BookingRequest request) {
     Booking existing = store.getActive(id);
     if (existing == null) {
         return notFound(id);
     }
-    Response invalid = validateBookingRequest(request);
-    if (invalid != null) {
-        return invalid;
-    }
 
     // Deterministic (not random) cargo ids: PUT must be idempotent, so
     // replacing a booking with the SAME body twice has to produce the
-    // SAME Cargo.id for each item both times — toCargoItems() mints a
-    // fresh random id every call, which POST correctly wants but PUT
-    // must not.
+    // SAME Cargo.id for each item both times; toCargoItems() below
+    // mints a fresh random id every call, which POST correctly wants
+    // but PUT must not.
     List<Cargo> cargoItems = toCargoItemsForReplace(id, request.cargo());
     Booking replaced = new Booking(
-            existing.id(), existing.status(), request.origin(), request.destination(),
-            cargoItems, QuoteCalculator.compute(cargoItems), request.requestedPickup(),
-            existing.createdAt(), nowUtc());
+            existing.id(),
+            existing.status(),
+            request.origin(),
+            request.destination(),
+            cargoItems,
+            QuoteCalculator.compute(cargoItems),
+            request.requestedPickup(),
+            existing.createdAt(),
+            nowUtc());
     store.put(replaced);
     return Response.ok(replaced).build();
 }
@@ -103,34 +108,43 @@ def replace_booking(booking_id: str, payload: BookingRequest) -> JSONResponse:
 
     # Deterministic (not random) cargo ids: PUT must be idempotent, so
     # replacing a booking with the SAME body twice has to produce the SAME
-    # Cargo.id for each item both times — generate_ulid() mints a fresh
-    # random id every call, which POST correctly wants but PUT must not.
+    # Cargo.id for each item both times; generate_ulid() below mints a
+    # fresh random id every call, which POST correctly wants but PUT must
+    # not.
     cargo_items = [
         Cargo(id=f"crg_{generate_deterministic_ulid(f'{booking_id}:{i}')}", **item.model_dump())
         for i, item in enumerate(payload.cargo)
     ]
     updated = Booking(
-        id=existing.id, status=existing.status, origin=payload.origin,
-        destination=payload.destination, cargo=cargo_items,
-        quote=compute_quote(cargo_items), requestedPickup=payload.requestedPickup,
-        createdAt=existing.createdAt, updatedAt=_now_utc(),
+        id=existing.id,
+        status=existing.status,
+        origin=payload.origin,
+        destination=payload.destination,
+        cargo=cargo_items,
+        quote=compute_quote(cargo_items),
+        requestedPickup=payload.requestedPickup,
+        createdAt=existing.createdAt,
+        updatedAt=_now_utc(),
     )
     store.put(updated)
     return _json(200, updated)
 ```
 
-The id generator itself is the part that does the real work, shown here next to the random generator it sits beside:
+The generator is `Ulid.deterministic(seed)` on Quarkus and `generate_deterministic_ulid(seed)` on FastAPI:
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
 ```java
 /**
- * A deterministic, non-random "ULID-shaped" id derived from {@code seed}
- * — same seed in, same 26-char Crockford string out, every time. Used by
- * PUT (full replace), NOT by POST: an idempotent replace must converge on
- * the SAME resource state (including sub-resource ids like Cargo.id) when
- * called twice with the same body, whereas a create must mint a genuinely
- * new id every call.
+ * A deterministic, non-random "ULID-shaped" id derived from {@code seed}:
+ * same seed in, same 26-char Crockford string out, every time.
+ *
+ * Used by PUT (full replace), NOT by POST: an idempotent replace must
+ * converge on the SAME resource state (including sub-resource ids like
+ * Cargo.id) when called twice with the same body, whereas a create must
+ * mint a genuinely new id every call. Seeding on "{bookingId}:{index}"
+ * gives each cargo slot in a given booking's replace a stable identity
+ * across repeated identical PUTs, without needing real persistence.
  */
 public static String deterministic(String seed) {
     try {
@@ -149,32 +163,36 @@ public static String deterministic(String seed) {
 
 ```python
 def generate_deterministic_ulid(seed: str) -> str:
-    """A deterministic, non-random "ULID-shaped" id derived from `seed` —
-    same seed in, same 26-char Crockford string out, every time. Used by
-    PUT (full replace), NOT by POST: an idempotent replace must converge on
-    the SAME resource state (including sub-resource ids like Cargo.id)
-    when called twice with the same body, whereas a create must mint a
-    genuinely new id every call.
+    """A deterministic, non-random "ULID-shaped" id derived from `seed`:
+    same seed in, same 26-char Crockford string out, every time.
+
+    Used by PUT (full replace), NOT by POST: an idempotent replace must
+    converge on the SAME resource state (including sub-resource ids like
+    Cargo.id) when called twice with the same body, whereas a create must
+    mint a genuinely new id every call. Mirrors
+    ../quarkus/.../Ulid.java#deterministic bit for bit (SHA-256, first 17
+    hash bytes -> 26 Crockford chars).
     """
     digest = hashlib.sha256(seed.encode("utf-8")).digest()
     value = int.from_bytes(digest[:17], "big")
     return _encode(value, 26)
 ```
 
-Same seed, same hash, same 26 characters, every time: `replaceBooking` calling `toCargoItemsForReplace` with `bookingId + ":" + i` and `replace_booking` building `f"{booking_id}:{i}"` are the same derivation in two languages, which is why `verify.sh`'s byte-equality assertion holds for both stacks rather than passing by coincidence on one of them. `createBooking` / `create_booking` and `addCargo` / `add_cargo` are untouched: they keep calling the random generator, because minting a fresh id on every call is exactly what a create is supposed to do. Same two functions, opposite requirement, decided by which HTTP method is asking.
+Same seed, same hash, same 26 characters. `bookingId + ":" + i` and `f"{booking_id}:{i}"` are one derivation in two languages, so both stacks converge on byte-identical state rather than one passing by coincidence. `POST /bookings` and the add-cargo operation keep the random generator, because a create must mint a new id every call. The same two functions serve opposite requirements, chosen by the method.
 
-## 405, with a body and an Allow header
+## 405 with a body and an Allow header
 
-A resource that doesn't support a method has three ways to say so, and two of them are worse than they look. Returning the framework's bare default 405 leaves the shape of that response up to whichever HTTP library is underneath, which is a problem the moment a client has to parse it the same way it parses every other error. And RESTEasy Reactive's default 405 and Starlette's default 405 don't produce the same body. Silently accepting the method and doing nothing sensible is worse: it hides a caller's mistake behind a `200` instead of surfacing it. The example picks the third option: an explicit handler, for every (method, path) combination the contract doesn't support, returning a real `Problem` body and an `Allow` header naming what *is* supported:
+A resource has three ways to refuse a method. The framework default leaves the response shape to the HTTP library, and RESTEasy Reactive's 405 and Starlette's differ. Silently accepting the method hides the caller's mistake behind a `200`. The third option is an explicit handler for every unsupported method and path pair, returning a `Problem` body and an `Allow` header naming what is supported. That keeps the error shape uniform across the API and tells the client what to do instead.
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
 ```java
 /**
- * The collection resource doesn't support PUT (there's no single "whole
- * collection" state to replace) — 405 with an Allow header naming what it
- * DOES support, and a Problem body instead of an empty one, so a caller
- * script doesn't have to special-case this resource's error shape.
+ * The collection resource doesn't support PUT (there's no single
+ * "whole collection" state to replace): 405 with an {@code Allow}
+ * header naming what it DOES support, and a {@code Problem} body
+ * instead of an empty one, so a caller script doesn't have to special-
+ * case this resource's error shape.
  */
 @PUT
 public Response replaceCollectionNotAllowed() {
@@ -187,7 +205,7 @@ public Response replaceCollectionNotAllowed() {
 @app.put("/bookings")
 def replace_collection_not_allowed() -> JSONResponse:
     """The collection resource doesn't support PUT (there's no single
-    "whole collection" state to replace) — 405 with an Allow header naming
+    "whole collection" state to replace): 405 with an Allow header naming
     what it DOES support, and a Problem body instead of an empty one, so a
     caller script doesn't have to special-case this resource's error shape.
     """
@@ -199,21 +217,31 @@ def replace_collection_not_allowed() -> JSONResponse:
     )
 ```
 
-`POST /bookings/{id}` gets the mirror-image handler with `Allow: GET, PUT, PATCH, DELETE, HEAD`, for the same reason: creation belongs on the collection, not on an id a client picked itself. `verify.sh` checks both the status code and the exact contents of the `Allow` header, so a 405 that forgot to list `POST` alongside `GET` on the collection row would fail the same way a wrong status code would.
+`PUT /bookings` answers `405` with `Allow: GET, POST`. `POST /bookings/{id}` gets the mirror-image handler with `Allow: GET, PUT, PATCH, DELETE, HEAD`, because creation belongs on the collection, not on an id the client picked. The `Allow` value is part of the contract: a collection 405 that forgets `POST` is as wrong as a wrong status code.
 
-HEAD is the one row where the two stacks needed different amounts of code, a useful check before assuming a framework "just handles" a method because another framework does. JAX-RS's method-matching algorithm falls back from an unmatched `HEAD` to the matching `@GET` method and strips the body, so RESTEasy Reactive needed zero extra code for `HEAD /bookings/{id}`: `getBooking` already covers it. FastAPI doesn't do the equivalent: bare Starlette's `Route.__init__` auto-adds `HEAD` next to a registered `GET`, but FastAPI's `APIRoute` builds its method set directly, bypassing that code path, so an un-routed `HEAD` against this app returns `405` rather than `200`. The fix is an explicit `@app.head("/bookings/{booking_id}")` handler in `python/app/main.py` that mirrors the GET's status code with an empty body: a few lines, but not zero, and a trap specifically for anyone porting a Quarkus habit to FastAPI without re-checking it.
+`HEAD` needed different amounts of code. JAX-RS falls back from an unmatched `HEAD` to the matching `@GET` method and strips the body, so Quarkus needed none. FastAPI doesn't: its routes build their method set directly, bypassing the code in bare Starlette that adds `HEAD` next to `GET`, so an unrouted `HEAD` returns `405`. FastAPI needs an explicit `@app.head("/bookings/{booking_id}")` handler that mirrors the GET status with an empty body.
 
-## DELETE: 204, then 404, same resource both times
+## DELETE: 204, then 404
 
-The contract marks `DELETE /bookings/{id}` as a soft-delete: the booking's `status` flips to `CANCELLED`, the record stays for audit, and it disappears from the default `GET /bookings` listing. Chapter 4 left a cancelled booking still visible through `GET /bookings/{id}`: a `200` for a resource the client had just been told was gone. This chapter tightens that: `BookingStore.getActive(id)` / `store.get_active(booking_id)` treat a cancelled booking exactly like a missing one for every single-item operation. `GET`, `PUT`, `PATCH`, `DELETE`, and the cargo sub-resource all return `404 Problem` the moment a booking is cancelled; only the raw, unused-by-any-route `get()` can still see it, which is where a real audit or undo feature would eventually reach in.
+`DELETE /bookings/{id}` is a soft delete. The booking's `status` flips to `CANCELLED`, the record stays for audit, and it leaves the default `GET /bookings` listing. A cancelled booking would otherwise still answer `GET /bookings/{id}` with `200`, a resource the client had just been told was gone. So `getActive(id)` and `get_active(booking_id)` treat a cancelled booking as missing for every single-item operation. `GET`, `PUT`, `PATCH`, `DELETE` and the cargo sub-resource all return `404 Problem` once a booking is cancelled.
 
-That one change is what makes the DELETE row of the matrix hold without a special case. `DELETE` on a live booking returns `204` and cancels it. `DELETE` on the same id a second time now correctly returns `404`, because `getActive` can no longer see a cancelled record as present. `GET` on that id after either `DELETE` call also returns `404`. The client's view converges on "the resource is gone" from the second call onward, which is the only sense in which `DELETE`'s idempotency claim was ever meant to hold; RFC 9110 ties idempotency to intended effect on state, and "gone" is a perfectly good state to converge on even though the HTTP status code that announces it changes from `204` to `404` along the way.
+That makes the `DELETE` row hold without a special case. The first call returns `204` and cancels. The second returns `404`, and so does a `GET` after either call. The client's view converges on "gone", the state RFC 9110 means by intended effect, even though the announcing status moves from `204` to `404`.
 
-## Proof, not assertion
+## Choosing a method
 
-`verify.sh` runs the sequence that makes every claim above checkable rather than asserted: two identical `POST /bookings` calls, confirmed to mint distinct ids; two identical `PUT /bookings/{id}` calls against the same booking, diffed byte-for-byte (`updatedAt` excluded) to confirm the state converges; a `HEAD` against a live booking; a `PUT` on the collection and a `POST` on an item, each checked for `405`, a `Problem` body, and the exact `Allow` header value; and a `DELETE` → `DELETE` → `GET` sequence confirmed to land on `204`, `404`, `404`. The README documents two deliberate regressions worth running once: reverting the deterministic generator back to the random one fails the PUT-diff assertion with a visible id mismatch in the diff output, and giving `createBooking` a fixed id instead of a fresh ULID fails the very first POST-distinctness check. Both failures print the exact assertion that caught them, the same way Chapter 4's schema-drift probe did: a passing `verify.sh` here is not "the status codes looked right," it's "the state transitions this chapter defines actually hold."
+| Interaction | Use | Why |
+|---|---|---|
+| Reads only | `GET` or `HEAD` | Caches, proxies and crawlers can retry freely |
+| Writes, and the client may retry | `PUT`, or a merge-patch that sets absolute values | Retry is a safe default |
+| Every call must produce a new effect | `POST`, or a relative `PATCH` | Pair with an idempotency key if retries matter |
 
-<div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to method choice. When an interaction only reads, reach for a safe method (<code>GET</code> or <code>HEAD</code>) so caches, proxies, and crawlers can treat it as free to retry without asking. When an interaction writes and the client might ever retry it (a flaky connection, a timeout with an unknown outcome, a mobile client resending on reconnect), prefer an idempotent one: a full <code>PUT</code> over a creating <code>POST</code>, or a merge-patch written to set absolute values rather than apply a relative delta, because idempotency is what makes "just retry it" a safe default instead of a risk of duplicate state. Reserve <code>POST</code> and a relative <code>PATCH</code> for the cases where every call is meant to produce a new effect, and treat an implementation that merely looks idempotent (same status code, same top-level fields) as unverified until a test proves the full state, generated child ids included, actually converges across repeated calls.</p></div>
+An implementation that only looks idempotent (same status, same top-level fields) is unverified until the full state, generated child ids included, is compared across repeated calls.
+
+> **🤖 Explore with your agent**
+>
+> "In `examples/05-http-methods-idempotency/`, add `PUT /bookings/{id}/cargo/{cargoId}` on both the Quarkus and FastAPI stacks so that sending the same body twice returns identical bodies. Derive any generated id from a seed, not the clock or a random source, and answer `405` with an `Allow` header for `POST` on that path."
+>
+> Check: send the same `PUT` twice with `curl` and run `diff` on the two response bodies, ignoring `updatedAt`. The diff is empty.
 
 ## Build, run, observe
 
@@ -221,11 +249,16 @@ That one change is what makes the DELETE row of the matrix hold without a specia
 cd examples/05-http-methods-idempotency && ./verify.sh
 ```
 
-`verify.sh` brings both stacks up, then checks that two identical `POST` calls mint distinct ids, two identical `PUT` calls converge on byte-identical state, a `HEAD` call matches a live booking, unsupported methods return `405` with the correct `Allow` header, and a repeated `DELETE` lands on `204` then `404`. It prints `PASS` once every assertion holds on both stacks; see `examples/05-http-methods-idempotency/README.md` for the full run output.
+The script starts both stacks and runs the method sequence against each. It prints `PASS` once two identical `POST` calls mint distinct ids, two identical `PUT` calls converge on identical state, unsupported methods return `405` with the correct `Allow` header, and a repeated `DELETE` yields `204`, `404`, `404`. `examples/05-http-methods-idempotency/README.md` has the full output.
+
+Experiments:
+
+- Switch the replace path back to the random generator. The `PUT` comparison fails with an id mismatch in the diff.
+- Give `createBooking` a fixed id instead of a fresh ULID. The first `POST` distinctness check fails.
 
 ## For deeper coverage
 
-- [RFC 9110 §9.2, HTTP Semantics: Common Method Properties](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2): the authoritative definitions of safe and idempotent this chapter builds the matrix from.
+- [RFC 9110 §9.2, HTTP Semantics: Common Method Properties](https://www.rfc-editor.org/rfc/rfc9110.html#section-9.2): the authoritative definitions of safe and idempotent.
 - Gough, Bryant & Auburn, *Mastering API Architecture* (O'Reilly, 2022): method semantics and idempotency in the context of a full API architecture.
-- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022): idempotent and safe method patterns, including the retry-safety argument this chapter's Decision callout makes.
+- Mike Amundsen, *RESTful Web API Patterns and Practices Cookbook* (O'Reilly, 2022): idempotent and safe method patterns, including retry safety.
 - Cloud Native Design Patterns, [Appendix A: Protocols](https://github.com/patterncatalyst/cloud-native-design-patterns/blob/main/_docs/14-appendix-a-protocols.md): the companion book's protocol-level reference for HTTP method semantics.

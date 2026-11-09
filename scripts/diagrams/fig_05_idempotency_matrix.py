@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fig 05 — Ch5: HTTP method x {safe, idempotent} grid, with the booking
+"""Fig 05: Ch5: HTTP method x {safe, idempotent} grid, with the booking
 operations placed against each method."""
 import sys
 sys.path.insert(0, "scripts")
@@ -19,12 +19,12 @@ FIRST_ROW_Y = 100
 
 ROWS = [
     # method, safe, idempotent, booking example
-    ("GET", True, True, "GET /bookings — safe, cacheable"),
+    ("GET", True, True, "GET /bookings: safe, cacheable"),
     ("HEAD", True, True, "HEAD /bookings/{id}"),
-    ("PUT", False, True, "PUT /bookings/{id} — idempotent"),
-    ("DELETE", False, True, "DELETE /bookings/{id} — idempotent"),
-    ("POST", False, False, "POST /bookings — creates, not idempotent"),
-    ("PATCH", False, False, "PATCH /bookings/{id} — not idempotent"),
+    ("PUT", False, True, "PUT /bookings/{id}: idempotent"),
+    ("DELETE", False, True, "DELETE /bookings/{id}: idempotent"),
+    ("POST", False, False, "POST /bookings: creates, not idempotent"),
+    ("PATCH", False, False, "PATCH /bookings/{id}: not idempotent"),
 ]
 
 nodes = [

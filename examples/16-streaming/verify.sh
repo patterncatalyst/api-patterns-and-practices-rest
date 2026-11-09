@@ -62,10 +62,10 @@ extract_header() {
 assert_header_absent() {
   local header_name="$1" headers_file="$2" context="${3:-}"
   if grep -qi "^${header_name}:" "$headers_file"; then
-    echo "lib.sh: FAIL — ${context:-header check}: '$header_name' header unexpectedly present" >&2
+    echo "lib.sh: FAIL, ${context:-header check}: '$header_name' header unexpectedly present" >&2
     return 1
   fi
-  echo "lib.sh: ok — ${context:-header check}: '$header_name' header absent" >&2
+  echo "lib.sh: ok, ${context:-header check}: '$header_name' header absent" >&2
 }
 
 awk_ge() {
@@ -74,7 +74,7 @@ awk_ge() {
 }
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -125,7 +125,7 @@ run_stack_tests() {
 
   local booking_id
   booking_id="$(jq -r '.id' "$body_file")"
-  echo "lib.sh: ok — $stack booking $booking_id created"
+  echo "lib.sh: ok, $stack booking $booking_id created"
 
   # -------------------------------------------------------------------
   # 3a. SSE: GET /bookings/{id}/events -> text/event-stream, EXACTLY
@@ -158,7 +158,7 @@ run_stack_tests() {
   content_type="$(extract_header Content-Type "$headers_file")"
   [[ "$content_type" == *"text/event-stream"* ]] \
     || fail "$stack SSE: expected Content-Type text/event-stream, got '$content_type'"
-  echo "lib.sh: ok — $stack SSE Content-Type '$content_type'"
+  echo "lib.sh: ok, $stack SSE Content-Type '$content_type'"
 
   local timed_file="$TMP_DIR/${stack}-sse-timed.txt"
   : > "$timed_file"
@@ -169,7 +169,7 @@ run_stack_tests() {
   mapfile -t data_rows < <(grep '|data:' "$timed_file")
   [[ "${#data_rows[@]}" -eq "$SSE_EVENT_COUNT" ]] \
     || fail "$stack SSE: expected $SSE_EVENT_COUNT 'data:' frames, got ${#data_rows[@]}"
-  echo "lib.sh: ok — $stack SSE emitted ${#data_rows[@]} frames"
+  echo "lib.sh: ok, $stack SSE emitted ${#data_rows[@]} frames"
 
   local i=0 first_ts="" last_ts=""
   for row in "${data_rows[@]}"; do
@@ -183,7 +183,7 @@ run_stack_tests() {
     last_ts="$ts"
     i=$((i + 1))
   done
-  echo "lib.sh: ok — $stack all $i SSE frames validate as BookingEvent"
+  echo "lib.sh: ok, $stack all $i SSE frames validate as BookingEvent"
 
   local spread
   spread="$(awk -v a="$last_ts" -v b="$first_ts" 'BEGIN { printf "%.3f", a - b }')"
@@ -191,7 +191,7 @@ run_stack_tests() {
   if ! awk_ge "$spread" "$SSE_MIN_SPREAD_SECONDS"; then
     fail "$stack SSE: frame-to-frame spread ${spread}s is below the ${SSE_MIN_SPREAD_SECONDS}s floor — these frames look BUFFERED (all arrived in one burst), not delivered incrementally"
   fi
-  echo "lib.sh: ok — $stack SSE spread ${spread}s >= ${SSE_MIN_SPREAD_SECONDS}s floor — delivery is genuinely incremental"
+  echo "lib.sh: ok, $stack SSE spread ${spread}s >= ${SSE_MIN_SPREAD_SECONDS}s floor — delivery is genuinely incremental"
 
   # -- SSE for an unknown booking -> 404, Problem --------------------------
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$base/bookings/$NONEXISTENT_ID/events")"
@@ -209,7 +209,7 @@ run_stack_tests() {
   content_type="$(extract_header Content-Type "$headers_file")"
   [[ "$content_type" == *"application/x-ndjson"* ]] \
     || fail "$stack NDJSON export: expected Content-Type application/x-ndjson, got '$content_type'"
-  echo "lib.sh: ok — $stack NDJSON export Content-Type '$content_type'"
+  echo "lib.sh: ok, $stack NDJSON export Content-Type '$content_type'"
 
   mapfile -t ndjson_lines < <(grep . "$body_file")
   [[ "${#ndjson_lines[@]}" -eq "$EXPORT_EVENT_COUNT" ]] \
@@ -221,7 +221,7 @@ run_stack_tests() {
     validate_body BookingEvent "$frame_file"
     i=$((i + 1))
   done
-  echo "lib.sh: ok — $stack NDJSON export produced $i valid BookingEvent lines"
+  echo "lib.sh: ok, $stack NDJSON export produced $i valid BookingEvent lines"
 
   # -------------------------------------------------------------------
   # 3c. Chunked: GET /bookings/events/export/chunked -> no Content-Length
@@ -237,13 +237,13 @@ run_stack_tests() {
   transfer_encoding="$(extract_header Transfer-Encoding "$headers_file")"
   [[ "$transfer_encoding" == *"chunked"* ]] \
     || fail "$stack chunked export: expected Transfer-Encoding: chunked, got '${transfer_encoding:-<absent>}'"
-  echo "lib.sh: ok — $stack chunked export Transfer-Encoding '$transfer_encoding', no Content-Length"
+  echo "lib.sh: ok, $stack chunked export Transfer-Encoding '$transfer_encoding', no Content-Length"
 
   local chunked_line_count
   chunked_line_count="$(wc -l < "$body_file" | tr -d ' ')"
   [[ "$chunked_line_count" -ge "$CHUNKED_LINE_COUNT" ]] \
     || fail "$stack chunked export: expected >= $CHUNKED_LINE_COUNT lines, got $chunked_line_count"
-  echo "lib.sh: ok — $stack chunked export delivered $chunked_line_count lines"
+  echo "lib.sh: ok, $stack chunked export delivered $chunked_line_count lines"
 
   echo "=== $stack: all assertions passed ==="
 }

@@ -18,52 +18,48 @@ By the end of this chapter you can:
 
 ## Why this matters
 
-Every chapter so far has asked what a response looks like on the wire: the status code, the headers, the framing. This one asks what happens behind the handler while the wire is quiet. A booking confirmation calls a payment service. A manifest export reads from Postgres. A routing lookup calls a carrier's rate API. Every one of those is a request that spends most of its time doing nothing but waiting on something else to finish, and the question this chapter answers is what a server thread does during that wait, because the answer determines how many of those requests can be in flight at once before the server stops accepting new ones.
+A booking confirmation calls a payment service. A manifest export reads from Postgres. A routing lookup calls a carrier's rate API. Each request spends most of its time waiting, and what the server thread does during that wait decides how many requests can be in flight before the server stops accepting new ones.
 
-The example for this chapter (`examples/18-concurrency/`) strips away everything but that question. There's no `Booking` resource, no contract, no Postgres: just `GET /io/slow?ms=200`, which simulates a slow downstream call with a 200ms delay and returns a tiny JSON body naming the thread that handled it. Each stack implements that endpoint two ways: once idiomatically, once naively, so the contrast in behavior under load is visible without anything else in the example competing for attention.
+Strip everything else away: no `Booking`, no contract, no Postgres. `GET /io/slow?ms=200` simulates a slow downstream call with a delay and returns a small JSON body naming the thread that handled it. Each stack implements it twice, once idiomatically and once naively, so the contrast under load is the only thing to see.
+
+{% include excalidraw.html file="18-concurrency-model" alt="Quarkus blocking worker pool exhausting under many concurrent slow calls next to Quarkus reactive Uni and virtual threads serving the same load on a small fixed pool, alongside Python's async event loop interleaving many coroutines on one thread versus a bounded threadpool queuing once its workers are all asleep, all labeled to show the same requests-waiting-on-I/O workload served without thread exhaustion versus with it." caption="Figure 18.1: Blocking pools versus non-blocking/virtual threads and the async event loop." %}
 
 ## The thread-per-request ceiling
 
-A conventional web server keeps a fixed-size pool of threads ready to handle requests (a worker pool, a servlet container's thread pool, whatever the framework calls it). A request comes in, a thread picks it up, and that thread stays assigned to the request until a response goes out. If handling the request means calling something slow (a `Thread.sleep()`, a synchronous JDBC query, a blocking HTTP client waiting on a downstream reply), the thread sits parked for the full duration of that call, doing nothing, holding a slot in the pool that no other request can use.
+A conventional server keeps a fixed pool of threads. A request takes a thread, and the thread stays assigned until the response goes out. If the handler calls something slow, such as `Thread.sleep()`, a synchronous JDBC query or a blocking HTTP client, the thread parks for the whole call and holds a pool slot no other request can use.
 
-The ceiling this creates has nothing to do with CPU. A machine running this kind of server under load can show near-zero CPU utilization while still rejecting or queueing new requests, because every thread in the pool is asleep waiting on I/O rather than computing anything. The pool size, not the hardware, is the bottleneck: a 20-thread pool serving requests that each block for 200ms on a downstream call can sustain at most 20 requests in flight simultaneously, no matter how fast the machine is or how idle its cores are. Request 21 queues behind the first 20 to finish, even though nothing is actually busy.
+The ceiling has nothing to do with CPU. A server in this state can show near-zero CPU while it queues or rejects requests, because every thread is asleep on I/O. A 20-thread pool serving requests that each block 200 ms sustains at most 20 in flight, however idle the cores are. Request 21 waits for one of the first 20 to finish.
 
-Three different techniques get past this ceiling, and the two stacks in this chapter's example reach for a different one of the first two by default.
+## Quarkus: worker pool, event loop, virtual threads
 
-## Quarkus: blocking, reactive, and virtual threads
-
-Quarkus REST decides where to run a resource method based on its return type. A method returning a plain object (`SlowResponse`, a `String`, whatever) is assumed to block, so Quarkus dispatches it to the Vert.x **worker thread pool**, a separate, bounded pool set aside exactly for blocking work so it doesn't stall the event loop. That's the naive path in this example, `slowBlocking`:
+Quarkus REST picks where to run a resource method from its return type. A plain object means blocking, so the method runs on the Vert.x worker pool, a bounded pool set aside so blocking work doesn't stall the event loop:
 
 ```java
 @GET
 @Path("/slow-blocking")
 @Produces(MediaType.APPLICATION_JSON)
-public SlowResponse slowBlocking(@QueryParam("ms") @DefaultValue("200") long ms) throws InterruptedException {
+public SlowResponse slowBlocking(@RestQuery("ms") @DefaultValue("200") long ms) throws InterruptedException {
     Thread.sleep(ms);
     return new SlowResponse(ms, Thread.currentThread().getName());
 }
 ```
 
-Simple, readable, and exactly the shape a thread-per-request mental model expects. But every call ties up one worker thread for the full `ms` milliseconds. Enough concurrent slow callers and the worker pool fills, and the next request queues behind it, the ceiling from the previous section made concrete.
+Every call holds one worker for the full `ms`. Enough concurrent callers fill the pool, and the next request queues.
 
-A method returning Mutiny's `Uni` or `Multi` tells Quarkus the opposite: this method's non-blocking contract is in its type signature, so dispatch it to the **event-loop** threads instead: a small, fixed pool (by default one per CPU core) built to never block. This chapter's idiomatic endpoint, `slow`, returns a `Uni<SlowResponse>` whose completion is scheduled by a Vert.x timer rather than produced by a blocked thread:
+A method returning Mutiny's `Uni` or `Multi` declares a non-blocking contract in its type, so Quarkus runs it on the event-loop threads, a small pool (one per core by default) that must never block. The idiomatic endpoint, `slow`, returns a `Uni<SlowResponse>` whose completion a Vert.x timer schedules; it appears next to its FastAPI twin below.
 
-```java
-@GET
-@Path("/slow")
-@Produces(MediaType.APPLICATION_JSON)
-public Uni<SlowResponse> slow(@QueryParam("ms") @DefaultValue("200") long ms) {
-    return Uni.createFrom()
-            .item(() -> new SlowResponse(ms, Thread.currentThread().getName()))
-            .onItem().delayIt().by(Duration.ofMillis(ms));
-}
-```
+`onItem().delayIt().by(...)` registers a timer and returns. No thread sleeps for the 200 ms. The completion resumes as a callback, possibly on a different event-loop thread, so a handful of threads serve far more concurrent callers than their count.
 
-`onItem().delayIt().by(...)` registers a timer and returns immediately; no thread blocks for the 200ms, it's parked as a callback the Vert.x reactor fires later, possibly resuming on a different event-loop thread than the one that received the request. That's why the handful of event-loop threads can serve far more than a handful of concurrent callers: nothing is ever asleep waiting for the clock, only waiting to be told the clock ran out.
+Virtual threads are the third option. Annotate a resource method `@RunOnVirtualThread` and write it like `slowBlocking`, sequential with `Thread.sleep()`. The JVM parks the virtual thread and frees the OS carrier thread to run others. The code reads as blocking and scales as if it weren't.
 
-A third option exists on the JVM and deserves a place in this picture even though the example doesn't use it: **virtual threads**. Annotate a resource method `@RunOnVirtualThread` and write it exactly like `slowBlocking` above (`Thread.sleep()`, sequential, nothing reactive), and the JVM parks the lightweight virtual thread instead of the expensive OS carrier thread underneath it, freeing that carrier to run other virtual threads while this one waits. The code reads as blocking; the runtime makes it scale like it isn't. That's a materially different trade-off from the reactive `Uni` above: virtual threads let an existing blocking codebase absorb a huge concurrency improvement with essentially no rewrite, while `Uni`/`Multi` force every non-blocking step through a different, more awkward vocabulary: `onItem()`, `.chain()`, callback composition instead of sequential statements. This chapter picked `Uni` for the idiomatic endpoint specifically because the non-blocking contract then shows up in the method's *type*, not just in a runtime guarantee a reader has to already know to look for. Porting an existing blocking service incrementally is the case for reaching for virtual threads instead; building new code where the non-blocking property should be visible in the signature is the case for reactive types. Neither is wrong; they solve the same thread-exhaustion problem from different directions.
+| | `Uni`/`Multi` | `@RunOnVirtualThread` |
+|---|---|---|
+| Code style | Callback composition: `onItem()`, `chain()` | Sequential statements |
+| Existing blocking code | Rewrite | Near-zero rewrite |
+| Non-blocking visible in the signature | Yes | No |
+| Use it for | New code | Porting a blocking service incrementally |
 
-The knob that governs which pool `slowBlocking` competes for is easy to misname. `quarkus.vertx.worker-pool-size` sounds like the right setting but governs raw Vert.x worker verticles, a lower-level primitive most resource methods never touch directly. The setting that actually bounds how many concurrent `slowBlocking`-shaped calls Quarkus REST can run at once is `quarkus.thread-pool.max-threads`: the blocking executor Quarkus REST dispatches plain-return-type resource methods to. Capping it to `1` and re-running the load test turns the blocking endpoint's 20 concurrent calls into something that completes in roughly the 4-second serial floor instead of the sub-second concurrent time, because every call now queues behind the one before it on a pool of exactly one thread.
+The setting that bounds how many `slowBlocking`-shaped calls run at once is `quarkus.thread-pool.max-threads`, the blocking executor Quarkus REST uses. `quarkus.vertx.worker-pool-size` sounds right but governs raw Vert.x worker verticles that resource methods rarely touch. Cap `quarkus.thread-pool.max-threads` at `1` and 20 concurrent blocking calls take about the 4-second serial floor instead of under a second.
 
 {% include codetabs.html langs="Quarkus|Python" %}
 
@@ -71,7 +67,7 @@ The knob that governs which pool `slowBlocking` competes for is easy to misname.
 @GET
 @Path("/slow")
 @Produces(MediaType.APPLICATION_JSON)
-public Uni<SlowResponse> slow(@QueryParam("ms") @DefaultValue("200") long ms) {
+public Uni<SlowResponse> slow(@RestQuery("ms") @DefaultValue("200") long ms) {
     return Uni.createFrom()
             .item(() -> new SlowResponse(ms, Thread.currentThread().getName()))
             .onItem().delayIt().by(Duration.ofMillis(ms));
@@ -85,20 +81,11 @@ async def slow(ms: int = 200) -> dict[str, object]:
     return {"sleptMs": ms, "worker": f"event-loop:{threading.current_thread().name}"}
 ```
 
-## FastAPI: the event loop versus a bounded thread pool
+## FastAPI: event loop versus a bounded thread pool
 
-Python's answer to the same problem predates Quarkus's reactive types by design intent, if not by syntax: `async def` plus `await` runs a coroutine on a single-threaded **event loop**, and `await` is the point where a coroutine voluntarily gives the loop back so it can run some other coroutine's code while this one waits. `asyncio.sleep(ms / 1000)` is the async equivalent of Mutiny's timer; it doesn't block the thread, it suspends the coroutine and schedules a wake-up, letting the one event-loop thread interleave work across every in-flight request:
+`async def` with `await` runs a coroutine on a single-threaded event loop. `await` is where the coroutine gives the loop back so another can run. `asyncio.sleep` doesn't block the thread: it suspends the coroutine and schedules a wake-up. Twenty concurrent callers cost twenty scheduled wake-ups, not twenty threads. It is the same trick as Quarkus event-loop dispatch, with suspension as a keyword instead of a reactive type.
 
-```python
-@app.get("/io/slow")
-async def slow(ms: int = 200) -> dict[str, object]:
-    await asyncio.sleep(ms / 1000)
-    return {"sleptMs": ms, "worker": f"event-loop:{threading.current_thread().name}"}
-```
-
-Twenty concurrent callers of this endpoint cost the event loop twenty scheduled wake-ups, not twenty threads: the same structural trick as Quarkus's event-loop dispatch, expressed in a language where suspension is a keyword instead of a method call on a reactive type.
-
-The naive contrast is a truly blocking call: `time.sleep()` freezes whatever thread calls it, and calling it directly inside an `async def` would freeze the *entire event loop* (every other in-flight request) for the sleep's duration, which is worse than the Quarkus worker-pool case because there's normally only one event loop thread to begin with. FastAPI's example sidesteps that by explicitly offloading the blocking call to a dedicated executor:
+The naive contrast is a truly blocking call. `time.sleep()` called directly inside an `async def` freezes the entire event loop, and with it every other in-flight request. That's worse than the Quarkus worker pool, because there is normally one event loop. The blocking endpoint offloads to a dedicated executor:
 
 ```python
 _BLOCKING_POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix="io-slow-blocking")
@@ -113,31 +100,45 @@ async def slow_blocking(ms: int = 200) -> dict[str, object]:
     return await loop.run_in_executor(_BLOCKING_POOL, _blocking_sleep, ms)
 ```
 
-`_BLOCKING_POOL` is capped at two workers by design: small enough that the exhaustion this endpoint is meant to demonstrate actually shows up at the twenty-concurrent-request scale this chapter's test uses. (FastAPI/Starlette's own default threadpool defaults to around forty workers, comfortably large enough to mask the exhaustion effect at this load, which is exactly why the example wires up its own smaller pool instead of relying on the framework default.) The behavior is the same shape as Quarkus's worker-pool path: a bounded number of threads, each tied up for the full sleep duration per call, and the (K − pool size) extra callers queueing behind them. Shrink `_BLOCKING_POOL` to one worker and the twenty-request batch serializes almost exactly like the Quarkus blocking endpoint does with its thread pool capped to one: both techniques converge on the identical failure mode because the failure mode is the same idea (a small fixed pool of threads, each occupied for the full wait) wearing a different language's syntax.
+The pool has two workers so exhaustion shows at twenty concurrent requests. The framework's own threadpool defaults to about forty workers, enough to hide the effect at this load. The behavior matches the Quarkus worker pool: a bounded number of threads, each held for the full sleep, with the rest queueing. Shrink the pool to one worker and the batch serializes just as the Quarkus blocking endpoint does with its pool capped at one.
 
-## The GIL, and why it doesn't matter here
+## The GIL and I/O-bound work
 
-Python's Global Interpreter Lock gets blamed for concurrency problems it doesn't cause in this chapter. The GIL means only one thread executes Python bytecode at any instant, which sounds like it should prevent exactly the kind of concurrent handling this example demonstrates. But it doesn't, because both endpoints here are **I/O-bound**, not CPU-bound. `asyncio.sleep` doesn't touch a thread at all; it's a pure scheduling operation inside the event loop. `time.sleep`, called from the blocking contrast endpoint's worker pool, releases the GIL for its duration exactly the way any blocking syscall does: waiting on a timer, a socket read, or a disk operation all involve the same release-the-GIL-while-the-OS-does-something pattern, because there's no Python bytecode to execute during the wait regardless of which thread is "holding" anything.
+The Global Interpreter Lock lets one thread execute Python bytecode at a time. That doesn't limit this workload, because it is I/O-bound. `asyncio.sleep` involves no thread at all. `time.sleep` in the worker pool releases the GIL while it waits, as any blocking syscall does, since no bytecode runs during the wait.
 
-The GIL becomes the real constraint for **CPU-bound** work spread across multiple threads: JSON-encoding a large body, hashing, image resizing, any workload where the bottleneck is actual Python bytecode execution rather than waiting on something external. That kind of work doesn't parallelize across threads in CPython the way it would across Quarkus's event-loop or worker threads on the JVM, because the GIL serializes bytecode execution regardless of thread count: running four CPU-bound threads takes roughly the same wall time as running one, since only one of them is ever executing at a time. Getting real parallelism for that kind of work needs multiprocessing (separate interpreter processes, each with its own GIL), a native extension that releases the GIL during its C code, or, from Python 3.13 onward, the experimental free-threaded build that removes the GIL entirely. None of that is this chapter's problem. I/O-bound concurrency (a service waiting on a database, a downstream HTTP call, a file read) was never limited by the GIL, which is precisely why `async def` plus `await` scales to many concurrent slow I/O calls on a single thread without any of those heavier techniques.
+The GIL does constrain CPU-bound work across threads: JSON-encoding a large body, hashing, image resizing. Four CPU-bound threads take about as long as one, because only one executes at a time. Real parallelism there needs multiprocessing, a native extension that releases the GIL, or the free-threaded build available from Python 3.13. I/O-bound concurrency never needed any of them.
 
-## The measured contrast
+## Measure concurrency by wall clock
 
-Every claim above is testable only by measuring wall-clock time across a batch of concurrent calls: a single request's `200` response proves nothing about concurrency, because a serialized implementation returns the exact same correct body, just later. `verify.sh` fires **20 concurrent requests** at each stack's non-blocking `/io/slow?ms=200` endpoint and checks the whole batch against two numbers: the serial floor twenty 200ms calls would take if handled one at a time (20 × 200ms = 4.0s), and the actual elapsed time for the batch, which the test requires to land well under 2 seconds (close to the roughly 0.3-second time one call alone would take, since twenty concurrent non-blocking calls cost barely more wall time than one). Point that same assertion at `/io/slow-blocking` with either stack's small pool capped down to a single worker and the batch converges on the 4-second serial floor instead, because every call now queues fully behind the one before it. That round trip (correct behavior passing, a regressed pool size failing by wall-clock time alone, both status codes still a clean `200` throughout) is the concrete evidence that a concurrency property is not something a status code can certify.
+A single `200` response proves nothing about concurrency, because a serialized implementation returns the same correct body, later. Fire 20 concurrent requests at the non-blocking endpoint and compare the batch time with the serial floor: 20 x 200 ms = 4.0 s. A concurrent implementation finishes well under 2 s, close to the cost of one call. Point the same check at the blocking endpoint with its pool capped to one worker and the batch converges on 4 s, with every response still a clean `200`.
 
-## DB and file I/O behind the same handler
+## Database and file I/O behind the same handler
 
-The same choice applies to every slow dependency a real handler calls, not just a simulated sleep. A Postgres query issued through a blocking JDBC driver from inside a plain-return-type Quarkus resource method behaves exactly like `slowBlocking`: one worker thread tied up for the query's duration, the worker pool filling under load regardless of how fast the database itself responds. The fix is the same pattern this chapter already demonstrated, applied to a real dependency instead of a timer: a reactive database client (Quarkus's reactive Postgres client returning `Uni<Row>`) keeps the query non-blocking end to end, or `@RunOnVirtualThread` lets the same blocking JDBC code scale without a rewrite. File I/O follows the identical logic: reading a large manifest off disk with a blocking `InputStream` read ties up a thread for the read's duration exactly like `Thread.sleep()` does; a non-blocking file API or virtual threads avoid it the same two ways.
+The choice applies to every slow dependency, not only a sleep.
 
-FastAPI's side mirrors this directly. An endpoint that calls `psycopg2` (a synchronous driver) from inside an `async def` blocks the single event-loop thread for the query's duration: the single-event-loop version of the freeze `time.sleep` would cause, affecting every other in-flight request, not just this one. The fix is either an async-native driver (`asyncpg`, used elsewhere in this project's reactive database access, or `aiosqlite` for SQLite) so the query itself is an `await`-able operation that suspends the coroutine without blocking the loop, or (if a synchronous driver is unavoidable) offloading the call to `run_in_executor` the same way `/io/slow-blocking` does here, accepting that the offloaded work now competes for a bounded thread pool instead of the no-limit-but-CPU cost of a truly non-blocking driver. Neither stack has a shortcut around this: whatever is slow and synchronous underneath an async-looking handler reintroduces the exact ceiling this chapter opened with, invisibly, until someone runs a concurrent load test against it.
+| Dependency | Blocks | Fix |
+|---|---|---|
+| Blocking JDBC call in a plain-return Quarkus method | One worker per query | Reactive Postgres client returning `Uni<Row>`, or `@RunOnVirtualThread` |
+| Blocking `InputStream` read of a large manifest | One worker per read | Non-blocking file API, or virtual threads |
+| Synchronous driver such as `psycopg2` inside `async def` | The single event-loop thread, so every in-flight request | Async driver such as `asyncpg`, or `run_in_executor` |
 
-## Proof
+An executor offload competes for a bounded thread pool, where a truly async driver doesn't. Whatever is slow and synchronous under an async-looking handler brings the ceiling back until a concurrent load test finds it.
 
-Quarkus comes up on port 8097, FastAPI on port 8017. The script brings both services up with `docker compose`, waits for health, then fires 20 concurrent requests at each stack's `/io/slow?ms=200` and asserts every response is `200` and the whole batch completes in under 2 seconds: far below the 4-second floor the same 20 requests would need if handled strictly one at a time. It prints `PASS` only once both assertions hold for both stacks. The README documents a drift probe that caps each stack's blocking pool to a single worker by design and points the same assertion at `/io/slow-blocking` instead, watching `verify.sh` fail by wall-clock time with every individual response still a correct `200`: the regression this chapter exists to make visible.
+## When to change the concurrency model
 
-{% include excalidraw.html file="18-concurrency-model" alt="Quarkus blocking worker pool exhausting under many concurrent slow calls next to Quarkus reactive Uni and virtual threads serving the same load on a small fixed pool, alongside Python's async event loop interleaving many coroutines on one thread versus a bounded threadpool queuing once its workers are all asleep, all labeled to show the same requests-waiting-on-I/O workload served without thread exhaustion versus with it." caption="Figure 18.1: Blocking pools versus non-blocking/virtual threads and the async event loop." %}
+| Situation | Choice |
+|---|---|
+| Many concurrent clients each waiting on a slow database, API or service | Event loop, reactive types or virtual threads |
+| Existing blocking code | Virtual threads, or an async driver swap on the Python side |
+| New code where non-blocking should show in the type | `Uni`/`Multi` or `async def` |
+| CPU-bound work | Multiprocessing, native code or more cores, not a different I/O model |
+| Load far below the pool ceiling, such as five callers and fifty workers | Keep the blocking code |
 
-<div class="callout callout--safe"><p class="callout__title">Decision</p><p>Apply the Chapter 2 axes to decide whether a reactive, virtual-thread, or async model shift pays off. Reach for it when the <strong>interaction shape</strong> is many concurrent clients each waiting on a slow downstream dependency (a database, a third-party API, another service) where the slow part is I/O, not computation: that's exactly the shape a thread-per-request pool handles worst and an event loop or virtual threads handle best. Weigh it against <strong>team familiarity</strong> and the codebase's current shape: a service already written as straightforward blocking code gets the biggest win from virtual threads (near-zero rewrite, same mental model) or from an async-native driver swap on the Python side, while a greenfield service where the non-blocking contract should be visible in the type signature is the case for Mutiny's `Uni`/`Multi` or FastAPI's `async def`. Skip the model shift entirely for purely CPU-bound work (hashing, encoding, heavy computation) where no amount of non-blocking I/O helps and the real fix is multiprocessing, native code, or more cores, not a different concurrency primitive. And don't reach for it where the load never approaches the pool ceiling in the first place: a low-traffic internal tool with five callers and a worker pool of fifty has no exhaustion problem to solve, and the extra complexity of reactive types or async-only libraries buys nothing a straightforward blocking implementation wasn't already providing.</p></div>
+> **🤖 Explore with your agent**
+>
+> "In examples/18-concurrency, add a `GET /io/slow-virtual?ms=200` endpoint to the Quarkus service using `@RunOnVirtualThread` with the same sequential body as `slowBlocking`, and report which thread name each of `/io/slow`, `/io/slow-blocking` and `/io/slow-virtual` returns for one call. Then explain which of the three a blocking JDBC call should use and why."
+>
+> Check: fire 20 concurrent requests at `/io/slow-virtual?ms=200` on port 8097. The batch should finish well under 2 seconds, like `/io/slow`, not near the 4-second serial floor.
 
 ## Build, run, observe
 
@@ -145,7 +146,11 @@ Quarkus comes up on port 8097, FastAPI on port 8017. The script brings both serv
 cd examples/18-concurrency && ./verify.sh
 ```
 
-`verify.sh` brings both services up with `docker compose`, fires 20 concurrent requests at each stack's non-blocking `/io/slow?ms=200` endpoint, and asserts every response is `200` and the whole batch completes well under the 4-second serial floor. Expect `PASS` once both stacks clear that bound; the full output from a real run is in `examples/18-concurrency/README.md`.
+The script starts both stacks with `docker compose` (Quarkus on port 8097, FastAPI on port 8017), waits for health, fires 20 concurrent requests at each stack's `/io/slow?ms=200`, and requires every response to be `200` and the batch to finish under 2 seconds. It prints `PASS` when both stacks clear the bound. Full output is in `examples/18-concurrency/README.md`.
+
+Experiments:
+
+- Cap each stack's blocking pool to one worker and point the same check at `/io/slow-blocking`. The batch lands near 4 seconds and the check fails, while every response is still `200`.
 
 ## For deeper coverage
 

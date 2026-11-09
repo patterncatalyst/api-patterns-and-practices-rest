@@ -1,5 +1,5 @@
-# Ch0 boot skeleton — Quarkus, UBI 10, JVM mode (fast-jar), no native.
-# Build: docker build -f Containerfile -t ch00-shipping-quarkus .
+# Boot skeleton: Quarkus, UBI 10, JVM mode (fast-jar), no native.
+# Build: docker build -f Containerfile -t shipping-quarkus .
 #
 # Base image pins (re-check with `skopeo list-tags
 # docker://registry.access.redhat.com/ubi10/openjdk-25`, confirm with

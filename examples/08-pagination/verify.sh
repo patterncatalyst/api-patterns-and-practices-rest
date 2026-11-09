@@ -36,7 +36,7 @@ trap cleanup_tmp EXIT
 CREATE_PAYLOAD='{"origin":{"unLocode":"USNYC","name":"New York","country":"US"},"destination":{"unLocode":"NLRTM","name":"Rotterdam","country":"NL"},"cargo":[{"description":"Palletized electronics","type":"GENERAL","dimensions":{"weightKg":500,"volumeM3":1.5},"hazardous":false}],"requestedPickup":"2026-02-01"}'
 
 fail() {
-  echo "lib.sh: FAIL — $*" >&2
+  echo "lib.sh: FAIL, $*" >&2
   return 1
 }
 
@@ -63,7 +63,7 @@ arrays_equal_ordered() {
       return 1
     fi
   done
-  echo "lib.sh: ok — $context: ${#actual[@]} items matched in order" >&2
+  echo "lib.sh: ok, $context: ${#actual[@]} items matched in order" >&2
 }
 
 # ---------------------------------------------------------------------------
@@ -110,7 +110,7 @@ run_stack_tests() {
     assert_status 201 "$status" "$stack seed booking $i/$SEED_COUNT"
     seeded_ids+=("$(jq -r '.id' "$body_file")")
   done
-  echo "lib.sh: ok — $stack seeded $SEED_COUNT bookings" >&2
+  echo "lib.sh: ok, $stack seeded $SEED_COUNT bookings" >&2
 
   # -- Baseline: default GET /bookings (limit default 20 >= SEED_COUNT)
   #    returns ALL bookings in a single page, sorted ascending by id. This
@@ -135,7 +135,7 @@ run_stack_tests() {
   seeded_sorted="$(printf '%s\n' "${seeded_ids[@]}" | sort)"
   actual_sorted="$(printf '%s\n' "${sorted_ids[@]}" | sort)"
   [[ "$seeded_sorted" == "$actual_sorted" ]] || fail "$stack baseline GET /bookings: item id SET differs from the $SEED_COUNT seeded ids"
-  echo "lib.sh: ok — $stack baseline returns exactly the $SEED_COUNT seeded ids" >&2
+  echo "lib.sh: ok, $stack baseline returns exactly the $SEED_COUNT seeded ids" >&2
 
   # -- Keyset/cursor walk: limit=3, follow page.nextCursor until null -------
   local -a walked_ids=()
@@ -219,7 +219,7 @@ run_stack_tests() {
   missing_status="$(jq -r '[.items[] | has("status")] | all | not' "$body_file")"
   [[ "$missing_id" == "false" ]] || fail "$stack field projection: an item is missing 'id' (must always be included)"
   [[ "$missing_status" == "false" ]] || fail "$stack field projection: an item is missing requested field 'status'"
-  echo "lib.sh: ok — $stack field projection returns only {id,status} per item" >&2
+  echo "lib.sh: ok, $stack field projection returns only {id,status} per item" >&2
 
   # -- Limit cap (DoS guard): limit=1000 -> page.limit clamped to MAX_LIMIT --
   status="$(curl -sS -o "$body_file" -w '%{http_code}' "$base/bookings?limit=1000")"
@@ -228,7 +228,7 @@ run_stack_tests() {
   local returned_limit
   returned_limit="$(jq -r '.page.limit' "$body_file")"
   [[ "$returned_limit" -le "$MAX_LIMIT" ]] || fail "$stack limit cap: requested limit=1000 but page.limit=$returned_limit (expected <= $MAX_LIMIT — the cap was NOT enforced)"
-  echo "lib.sh: ok — $stack limit=1000 clamped to page.limit=$returned_limit (<= $MAX_LIMIT)" >&2
+  echo "lib.sh: ok, $stack limit=1000 clamped to page.limit=$returned_limit (<= $MAX_LIMIT)" >&2
 
   echo "=== $stack: all assertions passed ==="
 }
